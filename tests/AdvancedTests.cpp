@@ -179,14 +179,17 @@ int main(int argc, char **argv) {
             (root /
              "vendor/cydaw2/build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3")
                 .wstring());
-        {
+        if (std::filesystem::is_regular_file(sx::Utf8Path(vstPath) /
+                                             "Contents/x86_64-win/CyDAW Test Gain.vst3")) {
             sf::IsolatedAudio plugin("vst3", vstPath);
             auto params = plugin.parameters();
             std::vector<float> data(256 * 2, .25f);
             plugin.process(0, 256, data, {});
             require(!params.empty() && std::isfinite(data[0]) && data[0] != 0,
                     "CyDAW v2's isolated VST3 worker loads and processes a real VST3 fixture");
-        }
+        } else
+            std::cout
+                << "SKIP: optional CyDAW VST3 fixture not installed; use prepare_dependencies.py --tests.\n";
         sf::Json add = sf::Json::Object();
         add["scope"] = "master";
         add["kind"] = "native";

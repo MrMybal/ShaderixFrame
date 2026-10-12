@@ -765,40 +765,46 @@ int main(int argc, char **argv) {
                         std::abs(renderer.readback().pixels[2] - 188) < 2,
                     "Linear-light alpha composition produces the expected sRGB display value");
         }
-        sf::IsolatedAudio vst(
-            "vst3",
-            sx::Narrow(
+        auto vstFixture =
+            root /
+            "vendor/cydaw2/build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3";
+        if (std::filesystem::is_regular_file(vstFixture / "Contents/x86_64-win/CyDAW Test Gain.vst3")) {
+            sf::IsolatedAudio vst(
+                "vst3", sx::Narrow((root / "vendor/cydaw2/build/desktop-asio/CyDAWTestGain_artefacts/Release/"
+                                           "VST3/CyDAW Test Gain.vst3")
+                                       .wstring()));
+            auto original = vst.parameters();
+            vst.setParameter(0, .2f);
+            auto state = vst.state();
+            vst.setParameter(0, .8f);
+            vst.restoreState(state);
+            require(std::abs(vst.parameters().at("p0") - .2f) < .001 &&
+                        !vst.parameterNames().at("p0").empty(),
+                    "Real CyDAW VST3 worker saves/restores opaque state and exposes named parameters");
+            vst.showEditor(true);
+            vst.showEditor(false);
+            require(!sf::decodeBase64(state).empty(), "VST3 native editor opens/closes through CyDAW IPC v4");
+            require(rejects([] { sf::decodeBase64("bad!!!"); }), "Malformed plugin states are rejected");
+            sf::Session session;
+            sf::Protocol protocol(session);
+            sf::Json add = parse("{\"scope\":\"master\",\"kind\":\"vst3\"}");
+            add["path"] = sx::Narrow(
                 (root /
                  "vendor/cydaw2/build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3")
-                    .wstring()));
-        auto original = vst.parameters();
-        vst.setParameter(0, .2f);
-        auto state = vst.state();
-        vst.setParameter(0, .8f);
-        vst.restoreState(state);
-        require(std::abs(vst.parameters().at("p0") - .2f) < .001 && !vst.parameterNames().at("p0").empty(),
-                "Real CyDAW VST3 worker saves/restores opaque state and exposes named parameters");
-        vst.showEditor(true);
-        vst.showEditor(false);
-        require(!sf::decodeBase64(state).empty(), "VST3 native editor opens/closes through CyDAW IPC v4");
-        require(rejects([] { sf::decodeBase64("bad!!!"); }), "Malformed plugin states are rejected");
-        sf::Session session;
-        sf::Protocol protocol(session);
-        sf::Json add = parse("{\"scope\":\"master\",\"kind\":\"vst3\"}");
-        add["path"] = sx::Narrow(
-            (root /
-             "vendor/cydaw2/build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3")
-                .wstring());
-        auto added = protocol.execute("add_external_audio", add);
-        auto target = parse("{\"scope\":\"master\",\"effect\":0}");
-        target["effect"] = added["effect"];
-        target["state"] = state;
-        protocol.execute("set_plugin_state", target);
-        target["path"] = path("gain.sfvstpreset");
-        protocol.execute("save_plugin_preset", target);
-        protocol.execute("load_plugin_preset", target);
-        require(std::abs(session.project.masterMix.effects.back().params.at("p0").value - .2f) < .001,
-                "Full VST3 presets restore state and parameter values through MCP");
+                    .wstring());
+            auto added = protocol.execute("add_external_audio", add);
+            auto target = parse("{\"scope\":\"master\",\"effect\":0}");
+            target["effect"] = added["effect"];
+            target["state"] = state;
+            protocol.execute("set_plugin_state", target);
+            target["path"] = path("gain.sfvstpreset");
+            protocol.execute("save_plugin_preset", target);
+            protocol.execute("load_plugin_preset", target);
+            require(std::abs(session.project.masterMix.effects.back().params.at("p0").value - .2f) < .001,
+                    "Full VST3 presets restore state and parameter values through MCP");
+        } else
+            std::cout
+                << "SKIP: optional CyDAW VST3 fixture not installed; use prepare_dependencies.py --tests.\n";
         std::vector<float> signal(48000 * 8);
         for (unsigned n = 0; n < signal.size() / 2; ++n)
             signal[n * 2] = signal[n * 2 + 1] =

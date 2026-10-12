@@ -26,6 +26,8 @@ test depuis ce checkout ; il n'est pas fourni dans le paquet utilisateur.
 Si le worker n'est pas installé, le logiciel se compile avec ses traitements internes
 et ses plugins natifs ; l'ouverture d'un VST3 requiert son installation séparée.
 La production d'un paquet Windows complet nécessite le worker.
+Les suites signalent explicitement les essais VST3 omis lorsque leur fixture externe
+n’est pas installée ; les essais vidéo, DSP, plugins natifs et MCP restent exécutés.
 
 La bande sonore originale des exemples peut être générée sans téléchargement :
 

@@ -475,15 +475,20 @@ try:
     call('render_frame', {'path': str(sandbox/'layer-graph.exr'), 'format': 'exr16', 'time': .05})
     assert (sandbox/'layer-graph.exr').read_bytes()[:4] == b'\x76\x2f\x31\x01'
     vst_fixture = Path(__file__).resolve().parents[1]/'vendor/cydaw2/build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3'
-    vst_index = call('add_external_audio', {'scope': 'master', 'kind': 'vst3', 'path': str(vst_fixture)})['effect']
-    vst_target = {'scope': 'master', 'effect': vst_index}
-    call('show_plugin_editor', dict(vst_target, visible=False))
-    opaque = call('capture_plugin_state', vst_target)['state']
-    assert opaque and call('get_plugin_state', vst_target)['parameters']
-    call('set_plugin_state', dict(vst_target, state=opaque))
-    preset = str(sandbox/'gain.sfvstpreset')
-    call('save_plugin_preset', dict(vst_target, path=preset))
-    call('load_plugin_preset', dict(vst_target, path=preset))
+    if (vst_fixture/'Contents/x86_64-win/CyDAW Test Gain.vst3').is_file():
+        vst_index = call('add_external_audio', {'scope': 'master', 'kind': 'vst3', 'path': str(vst_fixture)})['effect']
+        vst_target = {'scope': 'master', 'effect': vst_index}
+        call('show_plugin_editor', dict(vst_target, visible=False))
+        opaque = call('capture_plugin_state', vst_target)['state']
+        assert opaque and call('get_plugin_state', vst_target)['parameters']
+        call('set_plugin_state', dict(vst_target, state=opaque))
+        preset = str(sandbox/'gain.sfvstpreset')
+        call('save_plugin_preset', dict(vst_target, path=preset))
+        call('load_plugin_preset', dict(vst_target, path=preset))
+
+    else:
+        print('SKIP: optional CyDAW VST3 fixture not installed; use prepare_dependencies.py --tests.')
+
     call('new_project', {'name': 'Shutdown test', 'width': 320, 'height': 180, 'duration': 600})
     call('add_generator', {'duration': 600})
     # EOF must cancel and join a running job without replacing a destination.
@@ -492,6 +497,7 @@ try:
     shutdown_job = call('start_export', {'kind': 'video', 'path': str(shutdown_path)})['job']
     assert call('export_status', {'job': shutdown_job})['export']['state'] in ('queued', 'running')
     completed = True
+
     print('MCP stdio integration passed: 99 tools, grading/LUT/scopes/presets/local tracking, ripple/roll, Bezier, proxies, isolated SDK, DSP graphs, render queue and media.')
 finally:
     process.stdin.close()
