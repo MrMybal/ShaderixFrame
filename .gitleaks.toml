@@ -15,4 +15,4 @@ description = "ImGui keyboard enum constants in its input lookup table"
 condition = "AND"
 paths = ['''(^|/)vendor/imgui/imgui\.cpp$''']
 regexTarget = "secret"
-regexes = ['''^ImGuiKey_(Tab|Space|Apostrophe|Comma|Minus|Period|Slash|Semicolon|Equal|LeftBracket|RightBracket|GraveAccent|KeypadDecimal|KeypadDivide|KeypadMultiply|KeypadSubtract|KeypadAdd|KeypadEqual)$''']
+regexes = ['''^ImGuiKey_(Keypad0|Tab|Space|Apostrophe|Comma|Minus|Period|Slash|Semicolon|Equal|LeftBracket|RightBracket|GraveAccent|KeypadDecimal|KeypadDivide|KeypadMultiply|KeypadSubtract|KeypadAdd|KeypadEqual)$''']
