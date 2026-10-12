@@ -1,0 +1,27 @@
+{
+  "format": "shaderixframe",
+  "schema": 5,
+  "name": "Migration fixture",
+  "width": 320,
+  "height": 180,
+  "fps": 30,
+  "duration": 1,
+  "master": 0,
+  "nextId": 3,
+  "tracks": [
+    {
+      "id": 1,
+      "name": "Video",
+      "kind": 0,
+      "clips": [
+        {
+          "id": 2,
+          "name": "Generator",
+          "generator": true,
+          "duration": 1,
+          "effects": []
+        }
+      ]
+    }
+  ]
+}

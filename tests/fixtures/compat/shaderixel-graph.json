@@ -1,0 +1,92 @@
+{
+  "name": "D\u00e9saturation Shaderixel",
+  "category": "\u00c9tudes",
+  "inputs": 1,
+  "premultiplied": false,
+  "nextId": 5,
+  "nodes": [
+    {
+      "id": 1,
+      "op": "input",
+      "pos": [
+        -100,
+        -80
+      ],
+      "in": [],
+      "value": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": 2,
+      "op": "desaturate",
+      "pos": [
+        140,
+        -50
+      ],
+      "in": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          0
+        ]
+      ],
+      "value": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": 3,
+      "op": "param",
+      "name": "amount",
+      "pos": [
+        -100,
+        95
+      ],
+      "in": [],
+      "value": [
+        0.45,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": 4,
+      "op": "output",
+      "pos": [
+        400,
+        -50
+      ],
+      "in": [
+        [
+          0,
+          0
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          0,
+          0
+        ]
+      ],
+      "value": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

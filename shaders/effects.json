@@ -1,0 +1,11 @@
+{
+  "apiVersion": 1,
+  "name": "ShaderixFrame",
+  "effects": [
+    {"id":"color","name":"Exposition & couleur","category":"Couleur","shader":"color.hlsl"},
+    {"id":"vignette","name":"Vignette","category":"Optique","shader":"vignette.hlsl"},
+    {"id":"chroma","name":"Incrustation chromatique","category":"Composition","shader":"chroma.hlsl"},
+    {"id":"blur","name":"Flou spatial","category":"Optique","shader":"blur.hlsl"},
+    {"id":"scanlines","name":"Signal analogique","category":"Temps","shader":"scanlines.hlsl"}
+  ]
+}

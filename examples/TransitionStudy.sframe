@@ -1,0 +1,357 @@
+{
+  "format": "shaderixframe",
+  "schema": 6,
+  "name": "Étude de transitions · fondu et balayage",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 10,
+  "master": 0,
+  "masterMix": {
+    "output": 0,
+    "sends": [],
+    "effects": [],
+    "params": {}
+  },
+  "buses": [],
+  "nextId": 23,
+  "tracks": [
+    {
+      "id": 19,
+      "name": "01 / Titre",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 20,
+          "name": "Première lumière · titre",
+          "source": "",
+          "generator": false,
+          "start": 0,
+          "duration": 10,
+          "in": 0,
+          "speed": 1,
+          "link": 0,
+          "fadeIn": 0,
+          "fadeOut": 0.5,
+          "title": {
+            "enabled": true,
+            "text": "FONDU  /  BALAYAGE HLSL",
+            "font": "Segoe UI",
+            "alignment": 1,
+            "bold": true,
+            "italic": false
+          },
+          "mask": {
+            "shape": 0,
+            "inverted": false
+          },
+          "params": {
+            "font_size": {
+              "value": 44,
+              "keys": []
+            },
+            "text_r": {
+              "value": 1,
+              "keys": []
+            },
+            "text_g": {
+              "value": 0.93,
+              "keys": []
+            },
+            "text_b": {
+              "value": 0.84,
+              "keys": []
+            },
+            "text_a": {
+              "value": 1,
+              "keys": []
+            },
+            "y": {
+              "value": 0.3,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "opacity": {
+              "value": 1,
+              "keys": []
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 15,
+      "name": "02 / Plan entrant · balayage",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 16,
+          "name": "03 / Balayage · teinte chaude",
+          "source": "",
+          "generator": true,
+          "start": 6,
+          "duration": 4,
+          "in": 0,
+          "speed": 1,
+          "link": 0,
+          "fadeIn": 0,
+          "fadeOut": 0,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": []
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            },
+            "transition_direction": {
+              "value": 0,
+              "keys": []
+            },
+            "transition_softness": {
+              "value": 0.06,
+              "keys": []
+            },
+            "transition_progress": {
+              "value": 0,
+              "keys": [
+                {
+                  "time": 6,
+                  "value": 0,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 6.4,
+                  "value": 0.25,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 7,
+                  "value": 1,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            }
+          },
+          "effects": [
+            {
+              "id": "study-warm",
+              "enabled": true,
+              "graph": null,
+              "params": {},
+              "code": "float4 Effect(EffectContext ctx){float4 c=InputUV(0,ctx.uv);c.rgb*=float3(1.5,.55,.25);return c;}"
+            }
+          ],
+          "transition": {
+            "enabled": true,
+            "id": "transition.wipe",
+            "duration": 1,
+            "code": "//@param transition_softness float 0.03 0 1 \"Contour du balayage\"\n//@param transition_direction int 0 0 3 \"Direction (droite/gauche/bas/haut)\"\nfloat4 Effect(EffectContext ctx) {\n    float progress = saturate(ctx.transitionProgress);\n    float4 before = InputUV(1, ctx.uv), after = InputUV(0, ctx.uv);\n    if (progress <= 0) return before;\n    if (progress >= 1) return after;\n    float axis = transition_direction < 2 ? ctx.uv.x : ctx.uv.y;\n    if (transition_direction == 1 || transition_direction == 3) axis = 1 - axis;\n    float feather = max(transition_softness, transition_direction < 2 ? ctx.texel.x : ctx.texel.y);\n    float coverage = 1 - smoothstep(progress - feather * 0.5, progress + feather * 0.5, axis);\n    return lerp(before, after, coverage);\n}\n"
+          }
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 13,
+      "name": "03 / Plan entrant · fondu",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 14,
+          "name": "02 / Fondu · teinte froide",
+          "source": "",
+          "generator": true,
+          "start": 3,
+          "duration": 4,
+          "in": 0,
+          "speed": 1,
+          "link": 0,
+          "fadeIn": 0,
+          "fadeOut": 0,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": []
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": [
+            {
+              "id": "study-cold",
+              "enabled": true,
+              "graph": null,
+              "params": {},
+              "code": "float4 Effect(EffectContext ctx){float4 c=InputUV(0,ctx.uv);c.rgb=c.bgr*float3(.45,.9,1.5);return c;}"
+            }
+          ],
+          "transition": {
+            "enabled": true,
+            "id": "transition.crossfade",
+            "duration": 1,
+            "code": "// Input 0: composition with the incoming clip; input 1: layers beneath it.\nfloat4 Effect(EffectContext ctx) {\n    return lerp(InputUV(1, ctx.uv), InputUV(0, ctx.uv), saturate(ctx.transitionProgress));\n}\n"
+          }
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 11,
+      "name": "04 / Plan initial",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 12,
+          "name": "01 / Lumière initiale",
+          "source": "",
+          "generator": true,
+          "start": 0,
+          "duration": 4,
+          "in": 0,
+          "speed": 1,
+          "link": 0,
+          "fadeIn": 0,
+          "fadeOut": 0,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": []
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 17,
+      "name": "05 / Bande sonore",
+      "kind": 1,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 18,
+          "name": "Première lumière · pad original",
+          "source": "firstlight.wav",
+          "generator": false,
+          "start": 0,
+          "duration": 10,
+          "in": 0,
+          "speed": 1,
+          "link": 0,
+          "fadeIn": 0.1,
+          "fadeOut": 1,
+          "params": {
+            "gain": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    }
+  ]
+}

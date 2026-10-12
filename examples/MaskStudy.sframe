@@ -1,0 +1,274 @@
+{
+  "format": "shaderixframe",
+  "schema": 6,
+  "name": "Étude de masque · ellipse animée",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 12,
+  "master": 0,
+  "masterMix": {
+    "output": 0,
+    "sends": [],
+    "effects": [],
+    "params": {}
+  },
+  "buses": [],
+  "nextId": 8,
+  "tracks": [
+    {
+      "id": 1,
+      "name": "02 / Lumière procédurale",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 2,
+          "name": "Aurora · lumière HLSL",
+          "source": "",
+          "generator": true,
+          "start": 0,
+          "duration": 12,
+          "in": 0,
+          "speed": 1,
+          "link": 5,
+          "fadeIn": 0,
+          "fadeOut": 1.5,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": [
+                {
+                  "time": 3,
+                  "value": 1,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 6,
+                  "value": 0.65,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 9,
+                  "value": 1,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            },
+            "mask_x": {
+              "value": 0,
+              "keys": [
+                {
+                  "time": 0,
+                  "value": -0.15,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 6,
+                  "value": 0.15,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 12,
+                  "value": -0.15,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            },
+            "mask_y": {
+              "value": 0,
+              "keys": []
+            },
+            "mask_width": {
+              "value": 0.8,
+              "keys": []
+            },
+            "mask_height": {
+              "value": 0.9,
+              "keys": []
+            },
+            "mask_rotation": {
+              "value": -15,
+              "keys": [
+                {
+                  "time": 0,
+                  "value": -15,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 12,
+                  "value": 15,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            },
+            "mask_feather": {
+              "value": 36,
+              "keys": []
+            }
+          },
+          "effects": [
+            {
+              "id": "color",
+              "enabled": true,
+              "code": "//@param exposure float 0 -5 5 \"Exposition\"\n//@param saturation float 1 0 2 \"Saturation\"\n//@param contrast float 1 0 2 \"Contraste\"\nfloat4 Effect(EffectContext ctx) {\n    float4 c=InputUV(0,ctx.uv);\n    c.rgb*=exp2(exposure);\n    c.rgb=lerp(dot(c.rgb,float3(0.2126,0.7152,0.0722)).xxx,c.rgb,saturation);\n    c.rgb=(c.rgb-0.5)*contrast+0.5;\n    return float4(saturate(c.rgb),c.a);\n}\n",
+              "graph": null,
+              "params": {
+                "exposure": {
+                  "value": 0.15,
+                  "keys": [
+                    {
+                      "time": 0,
+                      "value": -0.4,
+                      "curve": 1,
+                      "shape": 0
+                    },
+                    {
+                      "time": 4,
+                      "value": 0.2,
+                      "curve": 1,
+                      "shape": 0
+                    },
+                    {
+                      "time": 8,
+                      "value": 0,
+                      "curve": 1,
+                      "shape": 0
+                    },
+                    {
+                      "time": 12,
+                      "value": 0.3,
+                      "curve": 1,
+                      "shape": 0
+                    }
+                  ]
+                },
+                "saturation": {
+                  "value": 1.05,
+                  "keys": []
+                },
+                "contrast": {
+                  "value": 1,
+                  "keys": []
+                }
+              }
+            },
+            {
+              "id": "film-grain",
+              "enabled": true,
+              "code": "//@param amount float 0.06 0 0.3 \"Grain\"\nfloat4 Effect(EffectContext ctx) {\n    float4 c=InputUV(0,ctx.uv);\n    float n=frac(sin(dot(ctx.px,float2(12.9898,78.233))+ctx.frame*37.12)*43758.5453)-0.5;\n    return float4(saturate(c.rgb+n*amount),c.a);\n}\n",
+              "graph": null,
+              "params": {
+                "amount": {
+                  "value": 0.025,
+                  "keys": []
+                }
+              }
+            }
+          ],
+          "mask": {
+            "shape": 2,
+            "inverted": false
+          }
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 3,
+      "name": "03 / Bande sonore originale",
+      "kind": 1,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 4,
+          "name": "Première lumière · pad original",
+          "source": "firstlight.wav",
+          "generator": false,
+          "start": 0,
+          "duration": 12,
+          "in": 0,
+          "speed": 1,
+          "link": 5,
+          "fadeIn": 0.1,
+          "fadeOut": 0.2,
+          "params": {
+            "gain": {
+              "value": 0,
+              "keys": [
+                {
+                  "time": 0,
+                  "value": -12,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 2,
+                  "value": 0,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 10,
+                  "value": 0,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 12,
+                  "value": -18,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    }
+  ]
+}

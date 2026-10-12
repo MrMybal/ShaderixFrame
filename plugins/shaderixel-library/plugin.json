@@ -1,0 +1,1908 @@
+{
+  "apiVersion": 2,
+  "name": "Shaderixel",
+  "effects": [
+    {
+      "id": "shaderixel.black_white",
+      "name": "Noir et blanc",
+      "category": "Shaderixel / Réglages",
+      "shader": "black_white.hlsl"
+    },
+    {
+      "id": "shaderixel.brightness_contrast",
+      "name": "Luminosité / Contraste",
+      "category": "Shaderixel / Réglages",
+      "shader": "brightness_contrast.hlsl"
+    },
+    {
+      "id": "shaderixel.camera_raw",
+      "name": "Camera Raw",
+      "category": "Shaderixel / Réglages",
+      "shader": "camera_raw.hlsl"
+    },
+    {
+      "id": "shaderixel.channel_mixer",
+      "name": "Mélangeur de couches",
+      "category": "Shaderixel / Réglages",
+      "shader": "channel_mixer.hlsl"
+    },
+    {
+      "id": "shaderixel.checker",
+      "name": "Damier",
+      "category": "Shaderixel / Générateurs",
+      "shader": "checker.hlsl"
+    },
+    {
+      "id": "shaderixel.color_balance",
+      "name": "Balance des couleurs",
+      "category": "Shaderixel / Réglages",
+      "shader": "color_balance.hlsl"
+    },
+    {
+      "id": "shaderixel.color_lookup",
+      "name": "Correspondance de couleur",
+      "category": "Shaderixel / Réglages",
+      "shader": "color_lookup.hlsl"
+    },
+    {
+      "id": "shaderixel.combine_rgba",
+      "name": "Combiner RGBA",
+      "category": "Shaderixel / Canaux",
+      "shader": "combine_rgba.hlsl"
+    },
+    {
+      "id": "shaderixel.curves",
+      "name": "Courbes",
+      "category": "Shaderixel / Réglages",
+      "shader": "curves.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_add",
+      "name": "Add",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_add.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_alpha_erase",
+      "name": "Alpha Erase",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_alpha_erase.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_average",
+      "name": "Average",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_average.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_channel_replace",
+      "name": "Channel Replace",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_channel_replace.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_color",
+      "name": "Color",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_color_burn",
+      "name": "Color Burn",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_color_burn.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_color_dodge",
+      "name": "Color Dodge",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_color_dodge.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_darken",
+      "name": "Darken",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_darken.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_darker_color",
+      "name": "Darker Color",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_darker_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_difference",
+      "name": "Difference",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_difference.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_dissolve",
+      "name": "Dissolve",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_dissolve.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_divide",
+      "name": "Divide",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_divide.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_exclusion",
+      "name": "Exclusion",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_exclusion.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_freeze",
+      "name": "Freeze",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_freeze.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_glow",
+      "name": "Glow",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_glow.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_grain_extract",
+      "name": "Grain Extract",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_grain_extract.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_grain_merge",
+      "name": "Grain Merge",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_grain_merge.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_hard_light",
+      "name": "Hard Light",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_hard_light.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_hard_mix",
+      "name": "Hard Mix",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_hard_mix.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_hdr_soft_add",
+      "name": "HDR Soft Add",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_hdr_soft_add.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_height_blend",
+      "name": "Height Blend",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_height_blend.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_height_max",
+      "name": "Height Max",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_height_max.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_hue",
+      "name": "Hue",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_hue.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_lighten",
+      "name": "Lighten",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_lighten.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_lighter_color",
+      "name": "Lighter Color",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_lighter_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_linear_burn",
+      "name": "Linear Burn",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_linear_burn.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_linear_light",
+      "name": "Linear Light",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_linear_light.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_luminosity",
+      "name": "Luminosity",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_luminosity.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_micro_detail_overlay",
+      "name": "Micro Detail Overlay",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_micro_detail_overlay.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_multiply",
+      "name": "Multiply",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_multiply.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_negation",
+      "name": "Negation",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_negation.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_normal",
+      "name": "Normal",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_normal.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_normal_udn",
+      "name": "Normal UDN",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_normal_udn.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_normal_whiteout",
+      "name": "Normal Whiteout",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_normal_whiteout.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_overlay",
+      "name": "Overlay",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_overlay.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_pbr_channel_merge",
+      "name": "PBR Channel Merge",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_pbr_channel_merge.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_phoenix",
+      "name": "Phoenix",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_phoenix.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_pin_light",
+      "name": "Pin Light",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_pin_light.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_reflect",
+      "name": "Reflect",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_reflect.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_rnm_normal",
+      "name": "RNM Normal",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_rnm_normal.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_roughness_energy",
+      "name": "Roughness Energy",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_roughness_energy.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_saturation",
+      "name": "Saturation",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_saturation.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_screen",
+      "name": "Screen",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_screen.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_signed_detail",
+      "name": "Signed Detail",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_signed_detail.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_soft_light",
+      "name": "Soft Light",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_soft_light.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_subtract",
+      "name": "Subtract",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_subtract.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_blend_vivid_light",
+      "name": "Vivid Light",
+      "category": "Shaderixel / Fusions",
+      "shader": "cy_blend_vivid_light.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_abstract01",
+      "name": "Advanced Abstract01",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_abstract01.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_abstract_flare",
+      "name": "Advanced Abstract Flare",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_abstract_flare.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_abstract_flare02",
+      "name": "Advanced Abstract Flare02",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_abstract_flare02.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_abstract_flare03",
+      "name": "Advanced Abstract Flare03",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_abstract_flare03.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_anamorph",
+      "name": "Advanced Anamorph",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_anamorph.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_basic_flare",
+      "name": "Advanced Basic Flare",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_basic_flare.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_cir_flare",
+      "name": "Advanced Cir Flare",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_cir_flare.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_cir_flare_tri",
+      "name": "Advanced Cir Flare Tri",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_cir_flare_tri.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_circle",
+      "name": "Advanced Circle",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_circle.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_circular",
+      "name": "Advanced Circular",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_circular.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_circular_no_gradient",
+      "name": "Advanced Circular No Gradient",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_circular_no_gradient.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_corona",
+      "name": "Advanced Corona",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_corona.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_corona2",
+      "name": "Advanced Corona2",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_corona2.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_flare2",
+      "name": "Advanced Flare2",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_flare2.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_gradient_color",
+      "name": "Advanced Gradient Color",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_gradient_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_noise_gradient_com",
+      "name": "Advanced Noise Gradient Com",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_noise_gradient_com.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_noise_gradient_com_variant",
+      "name": "Advanced Noise Gradient Com Variant",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_noise_gradient_com_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_noise_gradient_tex",
+      "name": "Advanced Noise Gradient Tex",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_noise_gradient_tex.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_noise_simplex",
+      "name": "Advanced Noise Simplex",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_noise_simplex.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_noise_value_com",
+      "name": "Advanced Noise Value Com",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_noise_value_com.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_noise_voronoi",
+      "name": "Advanced Noise Voronoi",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_noise_voronoi.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_shape_lens",
+      "name": "Advanced Shape Lens",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_shape_lens.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_advanced_shape_lens_variant",
+      "name": "Advanced Shape Lens Variant",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_advanced_shape_lens_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_anamorphic_lens_flare",
+      "name": "Anamorphic Lens Flare",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_anamorphic_lens_flare.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_aurora_bands",
+      "name": "Aurora Bands",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_aurora_bands.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_bokeh_rings",
+      "name": "Bokeh Rings",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_bokeh_rings.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_brick_bond",
+      "name": "Brick Bond",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_brick_bond.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_camouflage",
+      "name": "Camouflage",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_camouflage.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_caustics",
+      "name": "Caustics",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_caustics.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_checker",
+      "name": "Checker",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_checker.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_circle",
+      "name": "Circle",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_circle.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_circuit_board",
+      "name": "Circuit Board",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_circuit_board.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_cracks",
+      "name": "Cracks",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_cracks.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_crosshatch",
+      "name": "Crosshatch",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_crosshatch.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_fabric_weave",
+      "name": "Fabric Weave",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_fabric_weave.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_fractal_noise",
+      "name": "Fractal Noise",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_fractal_noise.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_grid",
+      "name": "Grid",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_grid.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_hex_grid",
+      "name": "Hex Grid",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_hex_grid.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_lens_flare",
+      "name": "Lens Flare",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_lens_flare.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_linear_gradient",
+      "name": "Linear Gradient",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_linear_gradient.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_marble_veins",
+      "name": "Marble Veins",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_marble_veins.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_procedural_noise",
+      "name": "Procedural Noise",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_procedural_noise.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_radial_gradient",
+      "name": "Radial Gradient",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_radial_gradient.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_rounded_rectangle",
+      "name": "Rounded Rectangle",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_rounded_rectangle.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_rust_patches",
+      "name": "Rust Patches",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_rust_patches.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_scratches",
+      "name": "Scratches",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_scratches.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_sdf_arc",
+      "name": "SDF Arc",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_sdf_arc.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_solid_color",
+      "name": "Solid Color",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_solid_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_star",
+      "name": "Star",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_star.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_starfield",
+      "name": "Starfield",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_starfield.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_stripes",
+      "name": "Stripes",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_stripes.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_truchet_tiles",
+      "name": "Truchet Tiles",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_truchet_tiles.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_voronoi",
+      "name": "Voronoi",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_voronoi.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_draw_wood_grain",
+      "name": "Wood Grain",
+      "category": "Shaderixel / Dessin",
+      "shader": "cy_draw_wood_grain.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_aberration_hlsl_blur",
+      "name": "Advanced Aberration HLSL Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_aberration_hlsl_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_base_chroma",
+      "name": "Advanced Base Chroma",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_base_chroma.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_blur_poly3",
+      "name": "Advanced Blur Poly3",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_blur_poly3.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_blur_poly3_variant",
+      "name": "Advanced Blur Poly3 Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_blur_poly3_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_box_blur",
+      "name": "Advanced Box Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_box_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_box_blur_variant",
+      "name": "Advanced Box Blur Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_box_blur_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_chroma_hlsl_blur2",
+      "name": "Advanced Chroma HLSL Blur2",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_chroma_hlsl_blur2.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_circular_blur",
+      "name": "Advanced Circular Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_circular_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_circular_blur_variant",
+      "name": "Advanced Circular Blur Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_circular_blur_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_cubic_uv",
+      "name": "Advanced Cubic UV",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_cubic_uv.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_curve3_utilities",
+      "name": "Advanced Curve3 Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_curve3_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_desaturation_color",
+      "name": "Advanced Desaturation Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_desaturation_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_dia_gra_mask",
+      "name": "Advanced Dia Gra Mask",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_dia_gra_mask.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_gradient_grad",
+      "name": "Advanced Gradient Grad",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_gradient_grad.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_hlsl_sharpen",
+      "name": "Advanced HLSL Sharpen",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_hlsl_sharpen.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_hlsl_sharpen_variant",
+      "name": "Advanced HLSL Sharpen Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_hlsl_sharpen_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_hue_utilities",
+      "name": "Advanced HUE Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_hue_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_invert_utilities",
+      "name": "Advanced Invert Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_invert_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_kaleidoscope2_uv",
+      "name": "Advanced Kaleidoscope2 UV",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_kaleidoscope2_uv.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_kaleidoscope_uv",
+      "name": "Advanced Kaleidoscope UV",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_kaleidoscope_uv.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_level_color",
+      "name": "Advanced Level Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_level_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_luma_contrast_utilities",
+      "name": "Advanced Luma Contrast Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_luma_contrast_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_mirrored",
+      "name": "Advanced Mirrored",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_mirrored.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_mixer_rgb_color",
+      "name": "Advanced Mixer RGB Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_mixer_rgb_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_mul_utilities",
+      "name": "Advanced Mul Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_mul_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_poly3",
+      "name": "Advanced Poly3",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_poly3.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_poly3_variant",
+      "name": "Advanced Poly3 Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_poly3_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_poly3lensflare",
+      "name": "Advanced Poly3lensflare",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_poly3lensflare.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_poly3lensflare_variant",
+      "name": "Advanced Poly3lensflare Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_poly3lensflare_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_poly6",
+      "name": "Advanced Poly6",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_poly6.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_poly6_variant",
+      "name": "Advanced Poly6 Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_poly6_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_poly_expo",
+      "name": "Advanced Poly Expo",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_poly_expo.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_poly_expo_variant",
+      "name": "Advanced Poly Expo Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_poly_expo_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_power_utilities",
+      "name": "Advanced Power Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_power_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_r_gexp_mask",
+      "name": "Advanced R Gexp Mask",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_r_gexp_mask.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_rad_grad_distortion",
+      "name": "Advanced Rad Grad Distortion",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_rad_grad_distortion.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_rad_grad_distortion2",
+      "name": "Advanced Rad Grad Distortion2",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_rad_grad_distortion2.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_radial_blur",
+      "name": "Advanced Radial Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_radial_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_radial_blur_chroma",
+      "name": "Advanced Radial Blur Chroma",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_radial_blur_chroma.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_radial_blur_chroma_variant",
+      "name": "Advanced Radial Blur Chroma Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_radial_blur_chroma_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_radial_blur_variant",
+      "name": "Advanced Radial Blur Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_radial_blur_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_radial_hlsl_blur",
+      "name": "Advanced Radial HLSL Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_radial_hlsl_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_radial_hlsl_blur2",
+      "name": "Advanced Radial HLSL Blur2",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_radial_hlsl_blur2.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_radial_hlsl_chroma",
+      "name": "Advanced Radial HLSL Chroma",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_radial_hlsl_chroma.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_range_selector_color",
+      "name": "Advanced Range Selector Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_range_selector_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_re_range_color_color",
+      "name": "Advanced Re Range Color Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_re_range_color_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_rotate_blur",
+      "name": "Advanced Rotate Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_rotate_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_rotate_blur2",
+      "name": "Advanced Rotate Blur2",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_rotate_blur2.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_rotate_blur2_variant",
+      "name": "Advanced Rotate Blur2 Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_rotate_blur2_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_rotate_blur_chroma_p_pm1",
+      "name": "Advanced Rotate Blur Chroma P Pm1",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_rotate_blur_chroma_p_pm1.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_rotate_blur_chroma_p_pm1_variant",
+      "name": "Advanced Rotate Blur Chroma P Pm1 Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_rotate_blur_chroma_p_pm1_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_sharpen",
+      "name": "Advanced Sharpen",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_sharpen.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_sharpen_depth_ppm2",
+      "name": "Advanced Sharpen Depth Ppm2",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_sharpen_depth_ppm2.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_sharpen_depth_ppm2_variant",
+      "name": "Advanced Sharpen Depth Ppm2 Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_sharpen_depth_ppm2_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_sharpen_variant",
+      "name": "Advanced Sharpen Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_sharpen_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_sine_chroma",
+      "name": "Advanced Sine Chroma",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_sine_chroma.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_sine_shift_chroma1",
+      "name": "Advanced Sine Shift Chroma1",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_sine_shift_chroma1.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_smooth_curve_utilities",
+      "name": "Advanced Smooth Curve Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_smooth_curve_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_spiral_blur",
+      "name": "Advanced Spiral Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_spiral_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_spiral_blur_variant",
+      "name": "Advanced Spiral Blur Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_spiral_blur_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_spiral_blurchroma_p_pm2",
+      "name": "Advanced Spiral Blurchroma P Pm2",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_spiral_blurchroma_p_pm2.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_spiral_blurchroma_p_pm2_variant",
+      "name": "Advanced Spiral Blurchroma P Pm2 Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_spiral_blurchroma_p_pm2_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_spiral_hlsl_blur",
+      "name": "Advanced Spiral HLSL Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_spiral_hlsl_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_split_rgba_utilities",
+      "name": "Advanced Split RGBA Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_split_rgba_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_switch_rgba_utilities",
+      "name": "Advanced Switch RGBA Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_switch_rgba_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_test",
+      "name": "Advanced TEST",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_test.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_test_variant",
+      "name": "Advanced TEST Variant",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_test_variant.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_tiling_uv",
+      "name": "Advanced Tiling UV",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_tiling_uv.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_tint_color",
+      "name": "Advanced Tint Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_tint_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_advanced_tint_utilities",
+      "name": "Advanced Tint Utilities",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_advanced_tint_utilities.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_alpha_remap",
+      "name": "Alpha Remap",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_alpha_remap.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_anamorphic_bloom",
+      "name": "Anamorphic Bloom",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_anamorphic_bloom.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_ao_from_height",
+      "name": "AO From Height",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_ao_from_height.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_bilateral_blur",
+      "name": "Bilateral Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_bilateral_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_black_white",
+      "name": "Black White",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_black_white.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_bloom",
+      "name": "Bloom",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_bloom.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_bokeh_blur",
+      "name": "Bokeh Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_bokeh_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_box_blur",
+      "name": "Box Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_box_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_brightness_contrast",
+      "name": "Brightness Contrast",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_brightness_contrast.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_channel_mixer",
+      "name": "Channel Mixer",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_channel_mixer.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_channel_normalize",
+      "name": "Channel Normalize",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_channel_normalize.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_chroma_key",
+      "name": "Chroma Key",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_chroma_key.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_chromatic_aberration",
+      "name": "Chromatic Aberration",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_chromatic_aberration.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_clamp_range",
+      "name": "Clamp Range",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_clamp_range.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_color_balance",
+      "name": "Color Balance",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_color_balance.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_color_grading",
+      "name": "Color Grading",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_color_grading.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_color_lookup",
+      "name": "Color Lookup",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_color_lookup.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_colorize",
+      "name": "Colorize",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_colorize.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_crt_display",
+      "name": "CRT Display",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_crt_display.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_curvature_from_normal",
+      "name": "Curvature From Normal",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_curvature_from_normal.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_dehaze",
+      "name": "Dehaze",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_dehaze.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_despill",
+      "name": "Despill",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_despill.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_directional_blur",
+      "name": "Directional Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_directional_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_dither",
+      "name": "Dither",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_dither.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_drop_shadow",
+      "name": "Drop Shadow",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_drop_shadow.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_edge_detect",
+      "name": "Edge Detect",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_edge_detect.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_edge_wear",
+      "name": "Edge Wear",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_edge_wear.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_emboss",
+      "name": "Emboss",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_emboss.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_equalize",
+      "name": "Equalize",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_equalize.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_exposure",
+      "name": "Exposure",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_exposure.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_film_grain",
+      "name": "Film Grain",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_film_grain.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_filmic_tone_map",
+      "name": "Filmic Tone Map",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_filmic_tone_map.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_gamma",
+      "name": "Gamma",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_gamma.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_gaussian_blur",
+      "name": "Gaussian Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_gaussian_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_gradient_map",
+      "name": "Gradient Map",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_gradient_map.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_grayscale",
+      "name": "Grayscale",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_grayscale.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_halftone",
+      "name": "Halftone",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_halftone.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_hdr_toning",
+      "name": "HDR Toning",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_hdr_toning.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_heat_haze",
+      "name": "Heat Haze",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_heat_haze.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_height_erosion",
+      "name": "Height Erosion",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_height_erosion.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_high_pass",
+      "name": "High Pass",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_high_pass.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_hue_saturation",
+      "name": "Hue Saturation",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_hue_saturation.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_impulse_denoise",
+      "name": "Impulse Denoise",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_impulse_denoise.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_invert",
+      "name": "Invert",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_invert.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_kaleidoscope",
+      "name": "Kaleidoscope",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_kaleidoscope.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_kuwahara",
+      "name": "Kuwahara",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_kuwahara.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_lens_distortion",
+      "name": "Lens Distortion",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_lens_distortion.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_lens_flare_ghosts",
+      "name": "Lens Flare Ghosts",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_lens_flare_ghosts.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_levels",
+      "name": "Levels",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_levels.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_local_contrast",
+      "name": "Local Contrast",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_local_contrast.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_luminance_curve",
+      "name": "Luminance Curve",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_luminance_curve.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_lut",
+      "name": "LUT",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_lut.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_match_color",
+      "name": "Match Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_match_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_morphology",
+      "name": "Morphology",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_morphology.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_mosaic_glass",
+      "name": "Mosaic Glass",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_mosaic_glass.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_motion_blur",
+      "name": "Motion Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_motion_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_normal_detail",
+      "name": "Normal Detail",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_normal_detail.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_normal_from_height",
+      "name": "Normal From Height",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_normal_from_height.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_normal_strength",
+      "name": "Normal Strength",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_normal_strength.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_normalize_range",
+      "name": "Normalize Range",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_normalize_range.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_orton_glow",
+      "name": "Orton Glow",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_orton_glow.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_outline",
+      "name": "Outline",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_outline.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_pbr_clamp",
+      "name": "PBR Clamp",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_pbr_clamp.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_pencil_sketch",
+      "name": "Pencil Sketch",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_pencil_sketch.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_photo_filter",
+      "name": "Photo Filter",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_photo_filter.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_pixelate",
+      "name": "Pixelate",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_pixelate.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_polar_transform",
+      "name": "Polar Transform",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_polar_transform.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_posterize",
+      "name": "Posterize",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_posterize.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_premultiply_alpha",
+      "name": "Premultiply Alpha",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_premultiply_alpha.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_radial_blur",
+      "name": "Radial Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_radial_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_replace_color",
+      "name": "Replace Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_replace_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_roughness_remap",
+      "name": "Roughness Remap",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_roughness_remap.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_scanlines",
+      "name": "Scanlines",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_scanlines.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_seamless_offset",
+      "name": "Seamless Offset",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_seamless_offset.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_selective_color",
+      "name": "Selective Color",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_selective_color.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_sepia",
+      "name": "Sepia",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_sepia.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_shadows_highlights",
+      "name": "Shadows Highlights",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_shadows_highlights.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_sharpen",
+      "name": "Sharpen",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_sharpen.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_solarize",
+      "name": "Solarize",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_solarize.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_spin_blur",
+      "name": "Spin Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_spin_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_spiral_blur",
+      "name": "Spiral Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_spiral_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_threshold",
+      "name": "Threshold",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_threshold.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_tilt_shift_blur",
+      "name": "Tilt Shift Blur",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_tilt_shift_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_tint",
+      "name": "Tint",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_tint.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_unpremultiply_alpha",
+      "name": "Unpremultiply Alpha",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_unpremultiply_alpha.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_unsharp_mask",
+      "name": "Unsharp Mask",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_unsharp_mask.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_uv_transform",
+      "name": "UV Transform",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_uv_transform.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_vhs_glitch",
+      "name": "VHS Glitch",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_vhs_glitch.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_vibrance",
+      "name": "Vibrance",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_vibrance.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_vignette",
+      "name": "Vignette",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_vignette.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_wave_distortion",
+      "name": "Wave Distortion",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_wave_distortion.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_effect_white_balance",
+      "name": "White Balance",
+      "category": "Shaderixel / Traitements",
+      "shader": "cy_effect_white_balance.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_alpha",
+      "name": "Alpha",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_alpha.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_alpha_feather",
+      "name": "Alpha Feather",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_alpha_feather.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_blue_channel",
+      "name": "Blue Channel",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_blue_channel.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_checker",
+      "name": "Checker",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_checker.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_edge",
+      "name": "Edge",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_edge.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_green_channel",
+      "name": "Green Channel",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_green_channel.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_luminance",
+      "name": "Luminance",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_luminance.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_noise",
+      "name": "Noise",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_noise.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_radial",
+      "name": "Radial",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_radial.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_range",
+      "name": "Range",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_range.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_red_channel",
+      "name": "Red Channel",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_red_channel.hlsl"
+    },
+    {
+      "id": "shaderixel.cy_mask_threshold",
+      "name": "Threshold",
+      "category": "Shaderixel / Masques",
+      "shader": "cy_mask_threshold.hlsl"
+    },
+    {
+      "id": "shaderixel.edge_detect",
+      "name": "Contours (Sobel)",
+      "category": "Shaderixel / Esthétiques",
+      "shader": "edge_detect.hlsl"
+    },
+    {
+      "id": "shaderixel.emboss",
+      "name": "Estampage",
+      "category": "Shaderixel / Esthétiques",
+      "shader": "emboss.hlsl"
+    },
+    {
+      "id": "shaderixel.exposure",
+      "name": "Exposition",
+      "category": "Shaderixel / Réglages",
+      "shader": "exposure.hlsl"
+    },
+    {
+      "id": "shaderixel.gaussian_blur",
+      "name": "Flou gaussien",
+      "category": "Shaderixel / Flou",
+      "shader": "gaussian_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.gradient_fill",
+      "name": "Dégradé",
+      "category": "Shaderixel / Générateurs",
+      "shader": "gradient_fill.hlsl"
+    },
+    {
+      "id": "shaderixel.gradient_map",
+      "name": "Courbe de transfert de dégradé",
+      "category": "Shaderixel / Réglages",
+      "shader": "gradient_map.hlsl"
+    },
+    {
+      "id": "shaderixel.hue_saturation",
+      "name": "Teinte / Saturation",
+      "category": "Shaderixel / Réglages",
+      "shader": "hue_saturation.hlsl"
+    },
+    {
+      "id": "shaderixel.invert",
+      "name": "Négatif",
+      "category": "Shaderixel / Réglages",
+      "shader": "invert.hlsl"
+    },
+    {
+      "id": "shaderixel.lab_adjust",
+      "name": "Réglage Lab",
+      "category": "Shaderixel / Réglages",
+      "shader": "lab_adjust.hlsl"
+    },
+    {
+      "id": "shaderixel.lens_blur",
+      "name": "Flou de l'objectif",
+      "category": "Shaderixel / Flou",
+      "shader": "lens_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.levels",
+      "name": "Niveaux",
+      "category": "Shaderixel / Réglages",
+      "shader": "levels.hlsl"
+    },
+    {
+      "id": "shaderixel.luminance_mask",
+      "name": "Masque de luminance",
+      "category": "Shaderixel / Composition",
+      "shader": "luminance_mask.hlsl"
+    },
+    {
+      "id": "shaderixel.mix",
+      "name": "Mélange A/B",
+      "category": "Shaderixel / Composition",
+      "shader": "mix.hlsl"
+    },
+    {
+      "id": "shaderixel.motion_blur",
+      "name": "Flou directionnel",
+      "category": "Shaderixel / Flou",
+      "shader": "motion_blur.hlsl"
+    },
+    {
+      "id": "shaderixel.noise",
+      "name": "Bruit fractal",
+      "category": "Shaderixel / Générateurs",
+      "shader": "noise.hlsl"
+    },
+    {
+      "id": "shaderixel.photo_filter",
+      "name": "Filtre photo",
+      "category": "Shaderixel / Réglages",
+      "shader": "photo_filter.hlsl"
+    },
+    {
+      "id": "shaderixel.pixelate",
+      "name": "Mosaïque",
+      "category": "Shaderixel / Pixellisation",
+      "shader": "pixelate.hlsl"
+    },
+    {
+      "id": "shaderixel.posterize",
+      "name": "Isohélie",
+      "category": "Shaderixel / Réglages",
+      "shader": "posterize.hlsl"
+    },
+    {
+      "id": "shaderixel.selective_color",
+      "name": "Correction sélective",
+      "category": "Shaderixel / Réglages",
+      "shader": "selective_color.hlsl"
+    },
+    {
+      "id": "shaderixel.sharpen",
+      "name": "Netteté (masque flou)",
+      "category": "Shaderixel / Netteté",
+      "shader": "sharpen.hlsl"
+    },
+    {
+      "id": "shaderixel.solid_color",
+      "name": "Couleur unie",
+      "category": "Shaderixel / Générateurs",
+      "shader": "solid_color.hlsl"
+    },
+    {
+      "id": "shaderixel.style_bevel",
+      "name": "Biseautage et estampage",
+      "category": "Shaderixel / Styles de calque",
+      "shader": "style_bevel.hlsl"
+    },
+    {
+      "id": "shaderixel.style_color_overlay",
+      "name": "Incrustation couleur",
+      "category": "Shaderixel / Styles de calque",
+      "shader": "style_color_overlay.hlsl"
+    },
+    {
+      "id": "shaderixel.style_drop_shadow",
+      "name": "Ombre portée",
+      "category": "Shaderixel / Styles de calque",
+      "shader": "style_drop_shadow.hlsl"
+    },
+    {
+      "id": "shaderixel.style_gradient_overlay",
+      "name": "Incrustation en dégradé",
+      "category": "Shaderixel / Styles de calque",
+      "shader": "style_gradient_overlay.hlsl"
+    },
+    {
+      "id": "shaderixel.style_inner_shadow",
+      "name": "Ombre interne",
+      "category": "Shaderixel / Styles de calque",
+      "shader": "style_inner_shadow.hlsl"
+    },
+    {
+      "id": "shaderixel.style_outer_glow",
+      "name": "Lueur externe",
+      "category": "Shaderixel / Styles de calque",
+      "shader": "style_outer_glow.hlsl"
+    },
+    {
+      "id": "shaderixel.style_stroke",
+      "name": "Contour",
+      "category": "Shaderixel / Styles de calque",
+      "shader": "style_stroke.hlsl"
+    },
+    {
+      "id": "shaderixel.threshold",
+      "name": "Seuil",
+      "category": "Shaderixel / Réglages",
+      "shader": "threshold.hlsl"
+    },
+    {
+      "id": "shaderixel.transform_2d",
+      "name": "Transformation",
+      "category": "Shaderixel / Traitements",
+      "shader": "transform_2d.hlsl"
+    },
+    {
+      "id": "shaderixel.twirl",
+      "name": "Tourbillon",
+      "category": "Shaderixel / Déformation",
+      "shader": "twirl.hlsl"
+    },
+    {
+      "id": "shaderixel.vibrance",
+      "name": "Vibrance",
+      "category": "Shaderixel / Réglages",
+      "shader": "vibrance.hlsl"
+    },
+    {
+      "id": "shaderixel.wave",
+      "name": "Ondulation",
+      "category": "Shaderixel / Déformation",
+      "shader": "wave.hlsl"
+    }
+  ]
+}

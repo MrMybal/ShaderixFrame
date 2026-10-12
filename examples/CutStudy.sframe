@@ -1,0 +1,560 @@
+{
+  "format": "shaderixframe",
+  "schema": 6,
+  "name": "Étude de montage · trois séquences liées",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 9,
+  "master": 0,
+  "masterMix": {
+    "output": 0,
+    "sends": [],
+    "effects": [],
+    "params": {}
+  },
+  "buses": [],
+  "nextId": 20,
+  "tracks": [
+    {
+      "id": 6,
+      "name": "01 / Titre",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 9,
+          "name": "01 / Première lumière · titre",
+          "source": "",
+          "generator": false,
+          "start": 0,
+          "duration": 3,
+          "in": 0,
+          "speed": 1,
+          "link": 8,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "title": {
+            "enabled": true,
+            "text": "PREMIÈRE LUMIÈRE",
+            "font": "Segoe UI",
+            "alignment": 1,
+            "bold": true,
+            "italic": false
+          },
+          "mask": {
+            "shape": 0,
+            "inverted": false
+          },
+          "params": {
+            "font_size": {
+              "value": 44,
+              "keys": []
+            },
+            "text_r": {
+              "value": 1,
+              "keys": []
+            },
+            "text_g": {
+              "value": 0.93,
+              "keys": []
+            },
+            "text_b": {
+              "value": 0.84,
+              "keys": []
+            },
+            "text_a": {
+              "value": 1,
+              "keys": []
+            },
+            "y": {
+              "value": 0.3,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "opacity": {
+              "value": 1,
+              "keys": []
+            }
+          },
+          "effects": []
+        },
+        {
+          "id": 13,
+          "name": "02 / Première lumière · titre",
+          "source": "",
+          "generator": false,
+          "start": 3,
+          "duration": 3,
+          "in": 3,
+          "speed": 1,
+          "link": 12,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "title": {
+            "enabled": true,
+            "text": "LE TEMPS DU MONTAGE",
+            "font": "Segoe UI",
+            "alignment": 1,
+            "bold": true,
+            "italic": false
+          },
+          "mask": {
+            "shape": 0,
+            "inverted": false
+          },
+          "params": {
+            "font_size": {
+              "value": 44,
+              "keys": []
+            },
+            "text_r": {
+              "value": 1,
+              "keys": []
+            },
+            "text_g": {
+              "value": 0.93,
+              "keys": []
+            },
+            "text_b": {
+              "value": 0.84,
+              "keys": []
+            },
+            "text_a": {
+              "value": 1,
+              "keys": []
+            },
+            "y": {
+              "value": 0.3,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "opacity": {
+              "value": 1,
+              "keys": []
+            }
+          },
+          "effects": []
+        },
+        {
+          "id": 17,
+          "name": "03 / Première lumière · titre",
+          "source": "",
+          "generator": false,
+          "start": 6,
+          "duration": 3,
+          "in": 6,
+          "speed": 1,
+          "link": 16,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "title": {
+            "enabled": true,
+            "text": "UN NOUVEL HORIZON",
+            "font": "Segoe UI",
+            "alignment": 1,
+            "bold": true,
+            "italic": false
+          },
+          "mask": {
+            "shape": 0,
+            "inverted": false
+          },
+          "params": {
+            "font_size": {
+              "value": 44,
+              "keys": []
+            },
+            "text_r": {
+              "value": 1,
+              "keys": []
+            },
+            "text_g": {
+              "value": 0.93,
+              "keys": []
+            },
+            "text_b": {
+              "value": 0.84,
+              "keys": []
+            },
+            "text_a": {
+              "value": 1,
+              "keys": []
+            },
+            "y": {
+              "value": 0.3,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "opacity": {
+              "value": 1,
+              "keys": []
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 1,
+      "name": "02 / Lumière procédurale",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 10,
+          "name": "01 / Aurora · lumière HLSL",
+          "source": "",
+          "generator": true,
+          "start": 0,
+          "duration": 3,
+          "in": 0,
+          "speed": 1,
+          "link": 8,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": []
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": [
+            {
+              "id": "color",
+              "enabled": true,
+              "code": "//@param exposure float 0 -5 5 \"Exposition\"\n//@param saturation float 1 0 2 \"Saturation\"\n//@param contrast float 1 0 2 \"Contraste\"\nfloat4 Effect(EffectContext ctx) {\n    float4 c=InputUV(0,ctx.uv);\n    c.rgb*=exp2(exposure);\n    c.rgb=lerp(dot(c.rgb,float3(0.2126,0.7152,0.0722)).xxx,c.rgb,saturation);\n    c.rgb=(c.rgb-0.5)*contrast+0.5;\n    return float4(saturate(c.rgb),c.a);\n}\n",
+              "graph": null,
+              "params": {
+                "exposure": {
+                  "value": 0.0,
+                  "keys": [
+                    {
+                      "time": 0,
+                      "value": -0.2,
+                      "curve": 1,
+                      "shape": 0
+                    },
+                    {
+                      "time": 3,
+                      "value": 0.2,
+                      "curve": 1,
+                      "shape": 0
+                    }
+                  ]
+                },
+                "saturation": {
+                  "value": 1.05,
+                  "keys": []
+                },
+                "contrast": {
+                  "value": 1,
+                  "keys": []
+                }
+              }
+            },
+            {
+              "id": "film-grain",
+              "enabled": true,
+              "code": "//@param amount float 0.06 0 0.3 \"Grain\"\nfloat4 Effect(EffectContext ctx) {\n    float4 c=InputUV(0,ctx.uv);\n    float n=frac(sin(dot(ctx.px,float2(12.9898,78.233))+ctx.frame*37.12)*43758.5453)-0.5;\n    return float4(saturate(c.rgb+n*amount),c.a);\n}\n",
+              "graph": null,
+              "params": {
+                "amount": {
+                  "value": 0.025,
+                  "keys": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "name": "02 / Aurora · lumière HLSL",
+          "source": "",
+          "generator": true,
+          "start": 3,
+          "duration": 3,
+          "in": 3,
+          "speed": 1,
+          "link": 12,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": []
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": [
+            {
+              "id": "color",
+              "enabled": true,
+              "code": "//@param exposure float 0 -5 5 \"Exposition\"\n//@param saturation float 1 0 2 \"Saturation\"\n//@param contrast float 1 0 2 \"Contraste\"\nfloat4 Effect(EffectContext ctx) {\n    float4 c=InputUV(0,ctx.uv);\n    c.rgb*=exp2(exposure);\n    c.rgb=lerp(dot(c.rgb,float3(0.2126,0.7152,0.0722)).xxx,c.rgb,saturation);\n    c.rgb=(c.rgb-0.5)*contrast+0.5;\n    return float4(saturate(c.rgb),c.a);\n}\n",
+              "graph": null,
+              "params": {
+                "exposure": {
+                  "value": 0.1,
+                  "keys": [
+                    {
+                      "time": 3,
+                      "value": -0.2,
+                      "curve": 1,
+                      "shape": 0
+                    },
+                    {
+                      "time": 6,
+                      "value": 0.2,
+                      "curve": 1,
+                      "shape": 0
+                    }
+                  ]
+                },
+                "saturation": {
+                  "value": 1.05,
+                  "keys": []
+                },
+                "contrast": {
+                  "value": 1,
+                  "keys": []
+                }
+              }
+            },
+            {
+              "id": "film-grain",
+              "enabled": true,
+              "code": "//@param amount float 0.06 0 0.3 \"Grain\"\nfloat4 Effect(EffectContext ctx) {\n    float4 c=InputUV(0,ctx.uv);\n    float n=frac(sin(dot(ctx.px,float2(12.9898,78.233))+ctx.frame*37.12)*43758.5453)-0.5;\n    return float4(saturate(c.rgb+n*amount),c.a);\n}\n",
+              "graph": null,
+              "params": {
+                "amount": {
+                  "value": 0.025,
+                  "keys": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": 18,
+          "name": "03 / Aurora · lumière HLSL",
+          "source": "",
+          "generator": true,
+          "start": 6,
+          "duration": 3,
+          "in": 6,
+          "speed": 1,
+          "link": 16,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": []
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": [
+            {
+              "id": "color",
+              "enabled": true,
+              "code": "//@param exposure float 0 -5 5 \"Exposition\"\n//@param saturation float 1 0 2 \"Saturation\"\n//@param contrast float 1 0 2 \"Contraste\"\nfloat4 Effect(EffectContext ctx) {\n    float4 c=InputUV(0,ctx.uv);\n    c.rgb*=exp2(exposure);\n    c.rgb=lerp(dot(c.rgb,float3(0.2126,0.7152,0.0722)).xxx,c.rgb,saturation);\n    c.rgb=(c.rgb-0.5)*contrast+0.5;\n    return float4(saturate(c.rgb),c.a);\n}\n",
+              "graph": null,
+              "params": {
+                "exposure": {
+                  "value": 0.2,
+                  "keys": [
+                    {
+                      "time": 6,
+                      "value": -0.2,
+                      "curve": 1,
+                      "shape": 0
+                    },
+                    {
+                      "time": 9,
+                      "value": 0.2,
+                      "curve": 1,
+                      "shape": 0
+                    }
+                  ]
+                },
+                "saturation": {
+                  "value": 1.05,
+                  "keys": []
+                },
+                "contrast": {
+                  "value": 1,
+                  "keys": []
+                }
+              }
+            },
+            {
+              "id": "film-grain",
+              "enabled": true,
+              "code": "//@param amount float 0.06 0 0.3 \"Grain\"\nfloat4 Effect(EffectContext ctx) {\n    float4 c=InputUV(0,ctx.uv);\n    float n=frac(sin(dot(ctx.px,float2(12.9898,78.233))+ctx.frame*37.12)*43758.5453)-0.5;\n    return float4(saturate(c.rgb+n*amount),c.a);\n}\n",
+              "graph": null,
+              "params": {
+                "amount": {
+                  "value": 0.025,
+                  "keys": []
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 3,
+      "name": "03 / Bande sonore originale",
+      "kind": 1,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 11,
+          "name": "01 / Première lumière · pad original",
+          "source": "firstlight.wav",
+          "generator": false,
+          "start": 0,
+          "duration": 3,
+          "in": 0,
+          "speed": 1,
+          "link": 8,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "params": {
+            "gain": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": []
+        },
+        {
+          "id": 15,
+          "name": "02 / Première lumière · pad original",
+          "source": "firstlight.wav",
+          "generator": false,
+          "start": 3,
+          "duration": 3,
+          "in": 3,
+          "speed": 1,
+          "link": 12,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "params": {
+            "gain": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": []
+        },
+        {
+          "id": 19,
+          "name": "03 / Première lumière · pad original",
+          "source": "firstlight.wav",
+          "generator": false,
+          "start": 6,
+          "duration": 3,
+          "in": 6,
+          "speed": 1,
+          "link": 16,
+          "fadeIn": 0.25,
+          "fadeOut": 0.25,
+          "params": {
+            "gain": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    }
+  ]
+}

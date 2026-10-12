@@ -1,0 +1,273 @@
+{
+  "format": "shaderixframe",
+  "schema": 6,
+  "name": "Étude de graphe · désaturation Shaderixel",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 12,
+  "master": 0,
+  "masterMix": {
+    "output": 0,
+    "sends": [],
+    "effects": [],
+    "params": {}
+  },
+  "buses": [],
+  "nextId": 8,
+  "tracks": [
+    {
+      "id": 1,
+      "name": "02 / Lumière procédurale",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 2,
+          "name": "Aurora · lumière HLSL",
+          "source": "",
+          "generator": true,
+          "start": 0,
+          "duration": 12,
+          "in": 0,
+          "speed": 1,
+          "link": 5,
+          "fadeIn": 1.2,
+          "fadeOut": 1.5,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": [
+                {
+                  "time": 3,
+                  "value": 1,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 6,
+                  "value": 0.65,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 9,
+                  "value": 1,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": [
+            {
+              "id": "graph",
+              "enabled": true,
+              "code": "",
+              "graph": {
+                "name": "Désaturation Shaderixel",
+                "category": "Études",
+                "inputs": 1,
+                "premultiplied": false,
+                "nextId": 5,
+                "nodes": [
+                  {
+                    "id": 1,
+                    "op": "input",
+                    "pos": [
+                      -100,
+                      -80
+                    ],
+                    "in": [],
+                    "value": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "id": 2,
+                    "op": "desaturate",
+                    "pos": [
+                      140,
+                      -50
+                    ],
+                    "in": [
+                      [
+                        1,
+                        1
+                      ],
+                      [
+                        3,
+                        0
+                      ]
+                    ],
+                    "value": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "id": 3,
+                    "op": "param",
+                    "name": "amount",
+                    "pos": [
+                      -100,
+                      95
+                    ],
+                    "in": [],
+                    "value": [
+                      0.45,
+                      0,
+                      0,
+                      0
+                    ]
+                  },
+                  {
+                    "id": 4,
+                    "op": "output",
+                    "pos": [
+                      400,
+                      -50
+                    ],
+                    "in": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        2,
+                        0
+                      ],
+                      [
+                        0,
+                        0
+                      ]
+                    ],
+                    "value": [
+                      0,
+                      0,
+                      0,
+                      0
+                    ]
+                  }
+                ]
+              },
+              "params": {
+                "amount": {
+                  "value": 0.45,
+                  "keys": [
+                    {
+                      "time": 0,
+                      "value": 0.1,
+                      "curve": 1,
+                      "shape": 0
+                    },
+                    {
+                      "time": 12,
+                      "value": 0.85,
+                      "curve": 1,
+                      "shape": 0
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 3,
+      "name": "03 / Bande sonore originale",
+      "kind": 1,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 4,
+          "name": "Première lumière · pad original",
+          "source": "firstlight.wav",
+          "generator": false,
+          "start": 0,
+          "duration": 12,
+          "in": 0,
+          "speed": 1,
+          "link": 5,
+          "fadeIn": 0.1,
+          "fadeOut": 0.2,
+          "params": {
+            "gain": {
+              "value": 0,
+              "keys": [
+                {
+                  "time": 0,
+                  "value": -12,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 2,
+                  "value": 0,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 10,
+                  "value": 0,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 12,
+                  "value": -18,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    }
+  ]
+}

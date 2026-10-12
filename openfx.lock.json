@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/AcademySoftwareFoundation/openfx",
+  "commit": "e40728885390ec16276d11e00025de9b4282060c",
+  "files": {
+    "LICENSE.md": "63b0f0533a90223e7dbe5dd50b94821b069672f91797ac03dbbad496b4ca7d9b",
+    "include/ofx-native-v1.5_aces-v1.3_ocio-v2.3.h": "299f3d471b57889ddf5f50299bc74cb09f710d55a7def1406a49d5b5437e87c0",
+    "include/ofxColour.h": "0ba428d98d712bbf60be38aba7685ebed6d150cf10582cef266218ccb3dc55f2",
+    "include/ofxCore.h": "e2ad90185153aa4b415422ac172418d43edbf4af63750d7b1e968cf154ad3884",
+    "include/ofxDialog.h": "d4eae980e789a9eb231b1bff481f11b2e282f5f11e44c6274e5f4902046b4036",
+    "include/ofxDrawSuite.h": "3f4326bbbc352cae9a4af41a66b2781f758995ba1d61aa190d22c1c6add36b9d",
+    "include/ofxGPURender.h": "3186ae3e24dd3ae3aff07e8d49235423b1e63d61b5ee6ec5391c1908ef3c2c6e",
+    "include/ofxImageEffect.h": "d42af3b7985837ce3799aea0466d2a8257add1daae62feb43f7afc87376ede31",
+    "include/ofxInteract.h": "64ede699c53c075e7498c383314a8b41fece6291677698a76b4af44cda6f7283",
+    "include/ofxKeySyms.h": "06003fc0be9d1c07bb6d93994392eefd3be5abacf08a6adfec1ccf3e3f17cf05",
+    "include/ofxMemory.h": "52ba2b7ee3fcb88a04b8ce80e5af3485b1ad25743c58b31b32457a13ea41e871",
+    "include/ofxMessage.h": "6cdf7598431fdd58c5efc0144cea585083d03aa151d2cda601198136ae860963",
+    "include/ofxMultiThread.h": "d59a6816e3b17e2de7639ace9fc03c9a81d58587d64368553d9bcac6473733ba",
+    "include/ofxOld.h": "e61dad86aeff3187d41b80fc596f405af3d8afaaed035c11bec03fb9fffd764b",
+    "include/ofxOpenGLRender.h": "8d427d3635773f30d71ce8eb32dc993da5d0dfd550012507f56cf9e7ebac4722",
+    "include/ofxParam.h": "a56c76aac856cadd307ed2c7c62e132afb7dd5ab8e69436decd28e45b24cb6b3",
+    "include/ofxParametricParam.h": "0e5c2344431996899c3c6e3d42a2607da49b185c1f4a53ce9a79b5c914badf2e",
+    "include/ofxPixels.h": "b86e4256d2392394f977c570e6ce14d0f836840ecab4c0cca98a1553cd9dde5b",
+    "include/ofxProgress.h": "2d57ce3a4201add43d8dbbd9a926d95bd0fa3839e5357927e1b01831c81f4c22",
+    "include/ofxProperty.h": "b3340b71499571ff55ec05260209dab3311b30b4adc7a04e82df9f2c913e0929",
+    "include/ofxTimeLine.h": "c36cded0c96c26797092e1574808806af4428b3560b589e6edc54eae2562182a",
+    "Examples/Basic/basic.cpp": "d55551e378154e69b650f180416424a8d750fd0726b03040e1b2017fde87f77d",
+    "Examples/Invert/invert.cpp": "47c8740a1c23db88c50be21eb50bc8e224a93d388d19b1cb1fe46c92aa884268",
+    "Examples/include/ofxUtilities.H": "f651dbba0bd762650906ccac668bc9f868ec76a2cd1b5d39c187aa3c299d6e51",
+    "Examples/include/ofxSpdlogCompat.h": "4c7e993e82046e2f1473b01f6dfcb06c48ca081352902009542add62be8dd887"
+  }
+}

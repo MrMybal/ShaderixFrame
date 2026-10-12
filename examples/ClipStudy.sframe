@@ -1,0 +1,357 @@
+{
+  "format": "shaderixframe",
+  "schema": 10,
+  "name": "Éditeur de clip · composition imbriquée",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 8,
+  "timeOrigin": 0,
+  "master": -18,
+  "nextId": 3,
+  "tracks": [
+    {
+      "id": 1,
+      "name": "Carte / conteneur",
+      "kind": 0,
+      "clips": [
+        {
+          "name": "Carte / conteneur",
+          "source": "",
+          "start": 0,
+          "duration": 8,
+          "params": {},
+          "effects": [],
+          "composition": {
+            "format": "shaderixframe",
+            "schema": 10,
+            "name": "Motion design · hiérarchie et animations",
+            "width": 1280,
+            "height": 720,
+            "fps": 30,
+            "duration": 8,
+            "timeOrigin": 0,
+            "master": -18,
+            "nextId": 15,
+            "tracks": [
+              {
+                "id": 13,
+                "name": "Audio dans la composition",
+                "kind": 1,
+                "clips": [
+                  {
+                    "name": "Audio dans la composition",
+                    "source": "firstlight.wav",
+                    "start": 0,
+                    "duration": 8,
+                    "params": {},
+                    "effects": [],
+                    "id": 14
+                  }
+                ]
+              },
+              {
+                "id": 9,
+                "name": "Accent animé",
+                "kind": 0,
+                "clips": [
+                  {
+                    "name": "Accent animé",
+                    "source": "",
+                    "start": 0,
+                    "duration": 8,
+                    "params": {
+                      "widget_width": {
+                        "value": 8,
+                        "keys": [
+                          {
+                            "time": 0,
+                            "value": 8,
+                            "curve": 1,
+                            "shape": 0
+                          },
+                          {
+                            "time": 2,
+                            "value": 32,
+                            "curve": 1,
+                            "shape": 0
+                          },
+                          {
+                            "time": 6,
+                            "value": 32,
+                            "curve": 1,
+                            "shape": 0
+                          },
+                          {
+                            "time": 8,
+                            "value": 8,
+                            "curve": 1,
+                            "shape": 0
+                          }
+                        ]
+                      },
+                      "widget_height": {
+                        "value": 32,
+                        "keys": []
+                      }
+                    },
+                    "effects": [
+                      {
+                        "id": "custom",
+                        "code": "//@generator\nfloat4 Effect(EffectContext ctx){float d=length((ctx.uv-.5)*2)-1;return float4(.95,.27,.035,1-smoothstep(-.004,.004,d));}"
+                      }
+                    ],
+                    "generator": true,
+                    "widget": {
+                      "type": "ellipse",
+                      "parent": 2,
+                      "anchorX": 0.5,
+                      "anchorY": 0.82,
+                      "pivotX": 0.5,
+                      "pivotY": 0.5
+                    },
+                    "id": 10
+                  }
+                ]
+              },
+              {
+                "id": 7,
+                "name": "Sous-titre",
+                "kind": 0,
+                "clips": [
+                  {
+                    "name": "Sous-titre",
+                    "source": "",
+                    "start": 0,
+                    "duration": 8,
+                    "params": {
+                      "widget_width": {
+                        "value": 690,
+                        "keys": []
+                      },
+                      "widget_height": {
+                        "value": 70,
+                        "keys": []
+                      },
+                      "font_size": {
+                        "value": 24,
+                        "keys": []
+                      }
+                    },
+                    "effects": [],
+                    "title": {
+                      "enabled": true,
+                      "text": "TIMELINE  ·  SHADERS  ·  MOTION DESIGN",
+                      "font": "Segoe UI",
+                      "alignment": 1,
+                      "bold": false
+                    },
+                    "widget": {
+                      "type": "text",
+                      "parent": 2,
+                      "anchorX": 0.5,
+                      "anchorY": 0.62,
+                      "pivotX": 0.5,
+                      "pivotY": 0.5
+                    },
+                    "id": 8
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "Titre",
+                "kind": 0,
+                "clips": [
+                  {
+                    "name": "Titre",
+                    "source": "",
+                    "start": 0,
+                    "duration": 8,
+                    "params": {
+                      "widget_width": {
+                        "value": 700,
+                        "keys": []
+                      },
+                      "widget_height": {
+                        "value": 100,
+                        "keys": []
+                      },
+                      "font_size": {
+                        "value": 48,
+                        "keys": []
+                      }
+                    },
+                    "effects": [],
+                    "title": {
+                      "enabled": true,
+                      "text": "SHADERIXFRAME",
+                      "font": "Segoe UI",
+                      "alignment": 1,
+                      "bold": true
+                    },
+                    "widget": {
+                      "type": "text",
+                      "parent": 2,
+                      "anchorX": 0.5,
+                      "anchorY": 0.35,
+                      "pivotX": 0.5,
+                      "pivotY": 0.5
+                    },
+                    "id": 6
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "Carte arrondie",
+                "kind": 0,
+                "clips": [
+                  {
+                    "name": "Carte arrondie",
+                    "source": "",
+                    "start": 0,
+                    "duration": 8,
+                    "params": {
+                      "widget_width": {
+                        "value": 800,
+                        "keys": []
+                      },
+                      "widget_height": {
+                        "value": 320,
+                        "keys": []
+                      }
+                    },
+                    "effects": [
+                      {
+                        "id": "custom",
+                        "code": "//@generator\nfloat4 Effect(EffectContext ctx){float d=length(max(abs(ctx.uv-.5)-(.5-.04),0))-.04;return float4(.025,.055,.11,1-smoothstep(-.004,.004,d));}"
+                      }
+                    ],
+                    "generator": true,
+                    "widget": {
+                      "type": "rectangle",
+                      "parent": 2,
+                      "anchorX": 0.5,
+                      "anchorY": 0.5,
+                      "pivotX": 0.5,
+                      "pivotY": 0.5
+                    },
+                    "id": 4
+                  }
+                ]
+              },
+              {
+                "id": 1,
+                "name": "Groupe / carte",
+                "kind": 0,
+                "clips": [
+                  {
+                    "name": "Groupe / carte",
+                    "source": "",
+                    "start": 0,
+                    "duration": 8,
+                    "params": {
+                      "widget_width": {
+                        "value": 840,
+                        "keys": []
+                      },
+                      "widget_height": {
+                        "value": 360,
+                        "keys": []
+                      },
+                      "widget_y": {
+                        "value": 120,
+                        "keys": [
+                          {
+                            "time": 0,
+                            "value": 120,
+                            "curve": 1,
+                            "shape": 0
+                          },
+                          {
+                            "time": 2,
+                            "value": 0,
+                            "curve": 1,
+                            "shape": 0
+                          },
+                          {
+                            "time": 6,
+                            "value": 0,
+                            "curve": 1,
+                            "shape": 0
+                          },
+                          {
+                            "time": 8,
+                            "value": -120,
+                            "curve": 1,
+                            "shape": 0
+                          }
+                        ]
+                      }
+                    },
+                    "effects": [
+                      {
+                        "id": "custom",
+                        "code": "//@generator\nfloat4 Effect(EffectContext ctx){return 0;}"
+                      }
+                    ],
+                    "generator": true,
+                    "widget": {
+                      "type": "group",
+                      "parent": 0,
+                      "anchorX": 0.5,
+                      "anchorY": 0.5,
+                      "pivotX": 0.5,
+                      "pivotY": 0.5
+                    },
+                    "id": 2
+                  }
+                ]
+              },
+              {
+                "id": 11,
+                "name": "Fond HLSL",
+                "kind": 0,
+                "clips": [
+                  {
+                    "name": "Fond HLSL",
+                    "source": "",
+                    "start": 0,
+                    "duration": 8,
+                    "params": {},
+                    "effects": [
+                      {
+                        "id": "custom",
+                        "code": "//@generator\nfloat4 Effect(EffectContext ctx){return float4(.006+ctx.uv.x*.012,.012+ctx.uv.y*.016,.028,1);}"
+                      }
+                    ],
+                    "generator": true,
+                    "id": 12
+                  }
+                ]
+              }
+            ],
+            "buses": [],
+            "color": {
+              "space": "linear709",
+              "tone": "clip",
+              "exposure": 0,
+              "backgroundAlpha": 0
+            },
+            "imageFormat": "png16"
+          },
+          "id": 2
+        }
+      ]
+    }
+  ],
+  "buses": [],
+  "color": {
+    "space": "linear709",
+    "tone": "clip",
+    "exposure": 0,
+    "backgroundAlpha": 0
+  },
+  "imageFormat": "png16"
+}

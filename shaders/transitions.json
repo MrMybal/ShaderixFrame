@@ -1,0 +1,8 @@
+{
+  "apiVersion": 2,
+  "name": "ShaderixFrame transitions",
+  "effects": [
+    {"id":"transition.crossfade","name":"Transition · fondu","kind":"transition","category":"Transitions","shader":"crossfade.hlsl"},
+    {"id":"transition.wipe","name":"Transition · balayage","kind":"transition","category":"Transitions","shader":"wipe.hlsl"}
+  ]
+}

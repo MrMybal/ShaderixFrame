@@ -1,0 +1,1560 @@
+{
+  "schema": 1,
+  "files": {
+    "shaderixel/src/core/Common.h": {
+      "source": "src/core/Common.h",
+      "sha256": "566157daf9b88ba1806ce28764f44a1b75372feea5948e7081e1a589c2d52407"
+    },
+    "shaderixel/src/core/Json.h": {
+      "source": "src/core/Json.h",
+      "sha256": "79fd12a2d9c76737a3da1262a989e1c39696bb4eefb0e5575505038136696061"
+    },
+    "shaderixel/src/core/Json.cpp": {
+      "source": "src/core/Json.cpp",
+      "sha256": "45ade241fbf77baecc13bd27ca5c2c800becdacbab71e5bc943ace867ce9a711"
+    },
+    "shaderixel/src/doc/EffectGraph.h": {
+      "source": "src/doc/EffectGraph.h",
+      "sha256": "944128717f2fe3462b2c74be84e06d402e8e0b4492f66f86fd2b4e0f4f76447b"
+    },
+    "shaderixel/src/doc/EffectGraph.cpp": {
+      "source": "src/doc/EffectGraph.cpp",
+      "sha256": "a778fd76d55e45b208af2b5958d4e18fefe0fb28f9444df68653280ffab519d4"
+    },
+    "shaderixel/src/ui/Theme.h": {
+      "source": "src/ui/Theme.h",
+      "sha256": "88008e23d864bf3a774e7eb910cd9615971ea639ac058c0a9ddf5bce32afdce4"
+    },
+    "shaderixel/src/ui/Theme.cpp": {
+      "source": "src/ui/Theme.cpp",
+      "sha256": "8139ebfc92fe575e00f1c057ba6b817fd26ef6925e78fca654d141e0777f2418"
+    },
+    "cydaw2/include/cydaw/graph/GraphDefinition.h": {
+      "source": "include/cydaw/graph/GraphDefinition.h",
+      "sha256": "c0233fb63d2279769c1c4cb3abfa8487a369e5da4ca93530edd82819e2368f0d"
+    },
+    "cydaw2/src/graph/GraphDefinition.cpp": {
+      "source": "src/graph/GraphDefinition.cpp",
+      "sha256": "e04194f4cea0be4618d0122f372167a9046c3e3599d140d02535809c3484ed10"
+    },
+    "cydaw2/include/cydaw/engine/AudioBuffer.h": {
+      "source": "include/cydaw/engine/AudioBuffer.h",
+      "sha256": "966b9763ed9ad457660511c6f6d6b8834eca6b2a1e0a7393f1f05b55379afff6"
+    },
+    "cydaw2/src/engine/AudioBuffer.cpp": {
+      "source": "src/engine/AudioBuffer.cpp",
+      "sha256": "b22e34200aa2385ec3c6f1ef809b8a45eadc8a087a4622683494ffdd8388aca8"
+    },
+    "cydaw2/include/cydaw/engine/AudioAnalysis.h": {
+      "source": "include/cydaw/engine/AudioAnalysis.h",
+      "sha256": "dde2c71edf51c9c2172fa8ac2635688130a7df04be068ebc519b1425596c77af"
+    },
+    "cydaw2/src/engine/AudioAnalysis.cpp": {
+      "source": "src/engine/AudioAnalysis.cpp",
+      "sha256": "8b08b862692af3ab8658dfdc95835c834befa2614b3c3430e7f13706a896518e"
+    },
+    "cydaw2/src/v2/ArrangementView.cpp": {
+      "source": "src/v2/ArrangementView.cpp",
+      "sha256": "486895f5b179646ff4b0b1e161758c6968ae93121fa67d07cb33f3b1b879311c"
+    },
+    "cydaw2/src/v2/ArrangementView.h": {
+      "source": "src/v2/ArrangementView.h",
+      "sha256": "fcb0ea93f05aa68003a9d0ca7369da77cc448a5ce7cce0f3351c480487000b7e"
+    },
+    "cydaw2/src/v2/Theme.h": {
+      "source": "src/v2/Theme.h",
+      "sha256": "9012e501607f4cdcb7b573966b72b99c2da4c2d790637cb92402ab0a70313998"
+    },
+    "imgui/imgui.h": {
+      "source": "imgui.h",
+      "sha256": "28c9091d343919703fa0767d9afbc97f0fe5626d682289e63ffc6cb35023de14"
+    },
+    "imgui/imconfig.h": {
+      "source": "imconfig.h",
+      "sha256": "94882c9a5b16ec84bbb1b4e9836ce2593ba3a77f665ae3363b62801a74d1fbdf"
+    },
+    "imgui/imgui_internal.h": {
+      "source": "imgui_internal.h",
+      "sha256": "6734dd514b542d49bf5f047956fbfe5c2058c18a3efc5831f41e46b082d456fc"
+    },
+    "imgui/imgui.cpp": {
+      "source": "imgui.cpp",
+      "sha256": "4db50d1900731aea9485f45d85f27b98c94957a1a9931fa34980b38f90a56055"
+    },
+    "imgui/imgui_draw.cpp": {
+      "source": "imgui_draw.cpp",
+      "sha256": "387f04867c06d14a97e30fc95d8784f286411fc7e4be32b8e2fcaeeb3b01b601"
+    },
+    "imgui/imgui_tables.cpp": {
+      "source": "imgui_tables.cpp",
+      "sha256": "6b5916cc0f96376ffca953c52639df5b7fda8fea0ca142e43fc110f343800afa"
+    },
+    "imgui/imgui_widgets.cpp": {
+      "source": "imgui_widgets.cpp",
+      "sha256": "69df1a8ed2b2e7934fea7cbb2078f17eab0f71e9073993997384164e2c76b78a"
+    },
+    "imgui/imstb_rectpack.h": {
+      "source": "imstb_rectpack.h",
+      "sha256": "7f9bffb8ac5e79d20787fdc20d29d29f7474dca673f64d4a9a8a9f9373e40972"
+    },
+    "imgui/imstb_textedit.h": {
+      "source": "imstb_textedit.h",
+      "sha256": "24a8db00354af8f4057417841635a1b6dfd8986f1608336fe6f10d6fd9769aaa"
+    },
+    "imgui/imstb_truetype.h": {
+      "source": "imstb_truetype.h",
+      "sha256": "a4131c7a2e324c0625250830af6976adb5732b453f0fc6e8bc5ad70065bc2b79"
+    },
+    "imgui/LICENSE.txt": {
+      "source": "LICENSE.txt",
+      "sha256": "f20418b409e53c8c9f4e90917ff395554a60320d4dfbf833da89b339cad8628a"
+    },
+    "imgui/backends/imgui_impl_dx11.h": {
+      "source": "backends/imgui_impl_dx11.h",
+      "sha256": "9e6dfc36ccddfb21f0283dedc3cd79646ed8ba24fcc7a7717c1f77e14b9ccaa3"
+    },
+    "imgui/backends/imgui_impl_dx11.cpp": {
+      "source": "backends/imgui_impl_dx11.cpp",
+      "sha256": "4c4eff88ffb2c372dbafb306bf7120c00ca29bafe432fd502a98d27ded6b8667"
+    },
+    "imgui/backends/imgui_impl_win32.h": {
+      "source": "backends/imgui_impl_win32.h",
+      "sha256": "2f6c01267b71042a549bca90b2bc461bee8365b4290c4d44167ca037ddb7c325"
+    },
+    "imgui/backends/imgui_impl_win32.cpp": {
+      "source": "backends/imgui_impl_win32.cpp",
+      "sha256": "a007dca6cd910c08655380ef214190bd16c3f83b1937037b6b8e1589dc236c20"
+    },
+    "imgui/misc/cpp/imgui_stdlib.h": {
+      "source": "misc/cpp/imgui_stdlib.h",
+      "sha256": "0712b39030b15b08be89d6c4f63a203af03f4e0f31fecd43f686a5ca69573c99"
+    },
+    "imgui/misc/cpp/imgui_stdlib.cpp": {
+      "source": "misc/cpp/imgui_stdlib.cpp",
+      "sha256": "04b990c9d26d4041fa64e582fa007d6ccc8628def33fd5af96d15295b5336d4f"
+    },
+    "cydaw2/include/cydaw/engine/EffectProcessors.h": {
+      "source": "include/cydaw/engine/EffectProcessors.h",
+      "sha256": "fec01edec70246b97e05c9cd7a187380b598b4d3762fb2159f8aa17585a0732f"
+    },
+    "cydaw2/src/engine/EffectProcessors.cpp": {
+      "source": "src/engine/EffectProcessors.cpp",
+      "sha256": "8befc2db3e5975abb4df9506805bc8c2ed56470f82f994897834ca624bf26767"
+    },
+    "cydaw2/include/cydaw/engine/EffectCatalogue.h": {
+      "source": "include/cydaw/engine/EffectCatalogue.h",
+      "sha256": "a5b378f771fd35d0e8a43c4182ee2d370b1d7aa8e3b34d4b48e8df819751d33e"
+    },
+    "cydaw2/include/cydaw/engine/NativeDspGraph.h": {
+      "source": "include/cydaw/engine/NativeDspGraph.h",
+      "sha256": "64a1ec110b951091767da76bff74a0f63af2cbe472f0a162bae9ca5019e8b1b1"
+    },
+    "cydaw2/include/cydaw/engine/BiquadDesign.h": {
+      "source": "include/cydaw/engine/BiquadDesign.h",
+      "sha256": "cb9c11243b2e19a6256e590f9a31de9903d8bdadcfaa2e0447299bb1895d0410"
+    },
+    "cydaw2/include/cydaw/engine/AudioProcessor.h": {
+      "source": "include/cydaw/engine/AudioProcessor.h",
+      "sha256": "875b84889d2bfeff066031a7219353628bf05845e9572404cee4d1f635d86205"
+    },
+    "cydaw2/include/cydaw/engine/Transport.h": {
+      "source": "include/cydaw/engine/Transport.h",
+      "sha256": "a6f6941167333120ba5bc1e8b9d03a969ac2bf7a6fff2b510a6499d8fe6d7e76"
+    },
+    "cydaw2/include/cydaw/engine/Sampler.h": {
+      "source": "include/cydaw/engine/Sampler.h",
+      "sha256": "31446545d3bd3bcd80d309350e9a848f1022f97816c60588d7870dd42966497b"
+    },
+    "cydaw2/include/cydaw/engine/SoundModel.h": {
+      "source": "include/cydaw/engine/SoundModel.h",
+      "sha256": "1c7f2251ed210ab9c76ea60a019fa51f4b165c19bea2a82e8a4693affd6ba85c"
+    },
+    "cydaw2/include/cydaw/engine/WavetableShape.h": {
+      "source": "include/cydaw/engine/WavetableShape.h",
+      "sha256": "efbe3aad1d75ce342ce10d4d16e568be5a4a5fe1e9ee72df4bc0d65bd2387702"
+    },
+    "cydaw2/include/cydaw/plugins/PluginIsolation.h": {
+      "source": "include/cydaw/plugins/PluginIsolation.h",
+      "sha256": "42d723d0e4df7b185c7c3df14dbbc30c02aa6c3a2942726900b2e4126e3f4e8b"
+    },
+    "cydaw2/src/plugin_worker/PluginWorkerMain.cpp": {
+      "source": "src/plugin_worker/PluginWorkerMain.cpp",
+      "sha256": "7b0463c03bf5d1f1733914d70f56116f6f0e300d3dc6c52b4aee3096478ec1d5"
+    },
+    "cydaw2/build/desktop-asio/CyDAWPluginWorker_artefacts/Release/CyDAWPluginWorker.exe": {
+      "source": "build/desktop-asio/CyDAWPluginWorker_artefacts/Release/CyDAWPluginWorker.exe",
+      "sha256": "a0ae1edd242da26e7046f5b726d7353b1dd59783cddd1a5a87f6aeb8e5543bb0",
+      "externalArtifact": true
+    },
+    "juce-license/LICENSE.md": {
+      "source": "LICENSE.md",
+      "sha256": "ca3a08368c9ed3195253f2df63ef08db1b0ea6be99388bb130c921b7c3e54616"
+    },
+    "cydaw2/build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3/Contents/Resources/moduleinfo.json": {
+      "source": "build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3/Contents/Resources/moduleinfo.json",
+      "sha256": "0043f3a74d82438f6044f8bb47149555afd637661f19b01dbd28d448d6c1e149",
+      "externalArtifact": true
+    },
+    "cydaw2/build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3/Contents/x86_64-win/CyDAW Test Gain.vst3": {
+      "source": "build/desktop-asio/CyDAWTestGain_artefacts/Release/VST3/CyDAW Test Gain.vst3/Contents/x86_64-win/CyDAW Test Gain.vst3",
+      "sha256": "363dee8630cda34d0c9e75ea4ed70a495f62a8e47c41a95588209b89883c3332",
+      "externalArtifact": true
+    },
+    "cydaw2/src/v2/GraphEditor.h": {
+      "source": "src/v2/GraphEditor.h",
+      "sha256": "daefaa8ddaa2a8f3c6e017f874c6efd3144bde6c3a02af950ef5d3c3935a31f9"
+    },
+    "cydaw2/src/v2/GraphEditor.cpp": {
+      "source": "src/v2/GraphEditor.cpp",
+      "sha256": "7aad085c48a858c1f2d5770e4c1a609f45075ac99d7918c6eaad0145636bd638"
+    },
+    "cydaw2/src/v2/GraphLayout.h": {
+      "source": "src/v2/GraphLayout.h",
+      "sha256": "307b60cdaa9695f4db5f91f522954f17e52be617c7a9389f16acc758d63426a8"
+    },
+    "cydaw2/src/v2/GraphLayout.cpp": {
+      "source": "src/v2/GraphLayout.cpp",
+      "sha256": "20b4e9447ae7458cd793e83c4075692cd24dddedf355e76af550369f27d0e26e"
+    },
+    "cydaw2/src/v2/Widgets.h": {
+      "source": "src/v2/Widgets.h",
+      "sha256": "1ed8399b0fb7a56edc21a8214c4ec2f7abe5790f916963ec42c69bccf9531d85"
+    },
+    "cydaw2/src/v2/Widgets.cpp": {
+      "source": "src/v2/Widgets.cpp",
+      "sha256": "8be2e11173343a8db5cc0163c3cdbafd16279097f7720c1c0fd5d1f833feff34"
+    },
+    "cydaw2/src/app/AudioTrackController.h": {
+      "source": "src/app/AudioTrackController.h",
+      "sha256": "a18025684d129bc40185a9e1ba27e2210a54d90f8687c3a4d04e2c077ab50669"
+    },
+    "cydaw2/src/app/AudioTrackController.cpp": {
+      "source": "src/app/AudioTrackController.cpp",
+      "sha256": "9a3f85f0e4f1a02803b6dfce668a86110cb9cec946dbe9359cd781f06a16d2b7"
+    },
+    "cydaw2/include/cydaw/engine/AudioGraph.h": {
+      "source": "include/cydaw/engine/AudioGraph.h",
+      "sha256": "5a6b9fe8e01530f0d36df25ec5e519db848b3dce793e2d1bcc64c1f2f0d76432"
+    },
+    "cydaw2/include/cydaw/engine/AudioRenderPlan.h": {
+      "source": "include/cydaw/engine/AudioRenderPlan.h",
+      "sha256": "6c7f27cd08ed49c2cb16b5f1f276ebb7e7ce83057c77d8becbc94490dc639648"
+    },
+    "cydaw2/src/engine/AudioGraph.cpp": {
+      "source": "src/engine/AudioGraph.cpp",
+      "sha256": "cd2ae6d7e1550bbf794003bd133650c0d8fcee320d3cfd251ac4bd5ad3a44f63"
+    },
+    "cydaw2/src/engine/AudioRenderPlan.cpp": {
+      "source": "src/engine/AudioRenderPlan.cpp",
+      "sha256": "93c08fa31d73f41f4fc90236edff9eabe4238f6e409a157af28905c68e2ed9ab"
+    },
+    "shaderixel/src/doc/Document.h": {
+      "source": "src/doc/Document.h",
+      "sha256": "c02b8304cbe8dfbc21fa0ac8562e89e6f3a492e0c21d12412ea6b00fe83d30b9"
+    },
+    "shaderixel/src/doc/Document.cpp": {
+      "source": "src/doc/Document.cpp",
+      "sha256": "63e2ef8c954a4a9f1c5de53481c21e3cdbeb5b2db7c6fc3f549c1f8ff812dad8"
+    },
+    "shaderixel/src/ui/NodeEditor.cpp": {
+      "source": "src/ui/NodeEditor.cpp",
+      "sha256": "ebc822b4847a7accd26f3cbfbbff9a10c119380f4b783bdf5eda0e4ab0acae97"
+    },
+    "shaderixel/shaders/blend_modes.slang": {
+      "source": "shaders/blend_modes.slang",
+      "sha256": "aff875cf1fa98fdf082b8b15649fdef45399d11c4c91b34eeef2f74db4b56b32"
+    },
+    "shaderixel/shaders/composite.slang": {
+      "source": "shaders/composite.slang",
+      "sha256": "d22aba8e51973ecc8035a73cf05ad178c2ce76a006bb0fd6ca4f971f210abc0d"
+    },
+    "cydaw2/src/v2/Theme.cpp": {
+      "source": "src/v2/Theme.cpp",
+      "sha256": "b0c09584fdbd076aeb880667a9b01c69511ec62399833fdcdcdc58dbca9c0a69"
+    },
+    "cydaw2/src/v2/MixerView.cpp": {
+      "source": "src/v2/MixerView.cpp",
+      "sha256": "c38bc2daaed6ddfe3c41263d65c8beb8f3669e2c03ee2e939612187ed5bb61b8"
+    },
+    "cydaw2/src/v2/MixerView.h": {
+      "source": "src/v2/MixerView.h",
+      "sha256": "e7c89a06bd30fe527b1fb567c6f008300362eae2159b9e28e6dc9de640f46d4d"
+    },
+    "shaderixel/shaders/common.slang": {
+      "source": "shaders/common.slang",
+      "sha256": "16b2259382e4017346f01af2b9337bd6255012a2aed8872762a3c6416911d679"
+    },
+    "cydaw2/resources/i18n/fr.json": {
+      "source": "resources/i18n/fr.json",
+      "sha256": "c36e7e7022301c3f41572f82fd839d0b8f291439aa1acab8833b31c93671faac"
+    },
+    "shaderixel/shaders/effects/black_white.slang": {
+      "source": "shaders/effects/black_white.slang",
+      "sha256": "8ee181873d691615cda733963bc0ac2fe3b251b0530dff056fbc7e1b9cda3a78"
+    },
+    "shaderixel/shaders/effects/brightness_contrast.slang": {
+      "source": "shaders/effects/brightness_contrast.slang",
+      "sha256": "8804ad85b1093eaed900620db9a71cdfb47519fa03294379cef822a959793861"
+    },
+    "shaderixel/shaders/effects/camera_raw.slang": {
+      "source": "shaders/effects/camera_raw.slang",
+      "sha256": "284b7cb20e1df1c1e6f1f7ba4a7c105b4281044e2dd95817666a22ce1fb7a44c"
+    },
+    "shaderixel/shaders/effects/channel_mixer.slang": {
+      "source": "shaders/effects/channel_mixer.slang",
+      "sha256": "4f938abff7e37d09b079fe6b604b921a66c136363df1e40597600a687c703116"
+    },
+    "shaderixel/shaders/effects/checker.slang": {
+      "source": "shaders/effects/checker.slang",
+      "sha256": "734730d754c4eabce7ba3ea13c249f7a77dd8e87326e9291c742f9be22783e27"
+    },
+    "shaderixel/shaders/effects/color_balance.slang": {
+      "source": "shaders/effects/color_balance.slang",
+      "sha256": "975ffa908ca5e154f01a446578698c4f25147f4c65a539201af5c780a0d28144"
+    },
+    "shaderixel/shaders/effects/color_lookup.slang": {
+      "source": "shaders/effects/color_lookup.slang",
+      "sha256": "669882c8196a4914a6ad6c92520d8565764463682272f79666330e3a3a8190e7"
+    },
+    "shaderixel/shaders/effects/combine_rgba.slang": {
+      "source": "shaders/effects/combine_rgba.slang",
+      "sha256": "39baf71f9c46fffa2d2907404e787f44eaa76296658c5be3baede7f89ab849e3"
+    },
+    "shaderixel/shaders/effects/curves.slang": {
+      "source": "shaders/effects/curves.slang",
+      "sha256": "98e195744f8da6c134cead121da303cd873539c2af9df6438f4f795eb8e903f7"
+    },
+    "shaderixel/shaders/effects/cy_blend_add.slang": {
+      "source": "shaders/effects/cy_blend_add.slang",
+      "sha256": "e6c373dfbaaa51760b7ebe6b97f308f4b575128aa5d12c45167632871c365fb3"
+    },
+    "shaderixel/shaders/effects/cy_blend_alpha_erase.slang": {
+      "source": "shaders/effects/cy_blend_alpha_erase.slang",
+      "sha256": "028a87cb699607dbc44fd781e01912cb84cb71efb030e2b8395e8dba11bfc81c"
+    },
+    "shaderixel/shaders/effects/cy_blend_average.slang": {
+      "source": "shaders/effects/cy_blend_average.slang",
+      "sha256": "70ff452b4e7b56a8c121708f139e9133d400ac2765c11f2e8e344cb8c4d911ad"
+    },
+    "shaderixel/shaders/effects/cy_blend_channel_replace.slang": {
+      "source": "shaders/effects/cy_blend_channel_replace.slang",
+      "sha256": "1493f19d7d6e2b2a2933a025e9a6ed346c0ca2b8ac9247b5ce81fa908ff11d64"
+    },
+    "shaderixel/shaders/effects/cy_blend_color.slang": {
+      "source": "shaders/effects/cy_blend_color.slang",
+      "sha256": "87cefbe1538660ddba87b89dca7ddfcd83c5254b7b6d70b881bdde8006c86cf2"
+    },
+    "shaderixel/shaders/effects/cy_blend_color_burn.slang": {
+      "source": "shaders/effects/cy_blend_color_burn.slang",
+      "sha256": "0888e2371ed8e330f0e317dd570ed49e2d3a36fcd59a2efc115391fabe9e13a0"
+    },
+    "shaderixel/shaders/effects/cy_blend_color_dodge.slang": {
+      "source": "shaders/effects/cy_blend_color_dodge.slang",
+      "sha256": "4b4e75d8e6dfc44a97fcdaa982b31cf4fa137a7158cf3d6a3c368b9bc911f3b9"
+    },
+    "shaderixel/shaders/effects/cy_blend_darken.slang": {
+      "source": "shaders/effects/cy_blend_darken.slang",
+      "sha256": "683a678543ea8f5a8cf6cfcc9dbaf6505bf2a624eb24ec0216e54e41ab4a8216"
+    },
+    "shaderixel/shaders/effects/cy_blend_darker_color.slang": {
+      "source": "shaders/effects/cy_blend_darker_color.slang",
+      "sha256": "2018a8c90fd24b36a6d144433c98714230e571ebdcfa439087d196b5cbfadd0c"
+    },
+    "shaderixel/shaders/effects/cy_blend_difference.slang": {
+      "source": "shaders/effects/cy_blend_difference.slang",
+      "sha256": "c326fd2f36deda768ebf11f6acde0c24e804575b2efbbc5ec7a83d71a0a4e626"
+    },
+    "shaderixel/shaders/effects/cy_blend_dissolve.slang": {
+      "source": "shaders/effects/cy_blend_dissolve.slang",
+      "sha256": "b90c0c0ca00eda779a0611e4090440fad2aab69384f7ea68ca0ab7d12c583e9a"
+    },
+    "shaderixel/shaders/effects/cy_blend_divide.slang": {
+      "source": "shaders/effects/cy_blend_divide.slang",
+      "sha256": "307292755164305b7373b7451f70e0208328c6ecf54e03098b0f0e56e7699e59"
+    },
+    "shaderixel/shaders/effects/cy_blend_exclusion.slang": {
+      "source": "shaders/effects/cy_blend_exclusion.slang",
+      "sha256": "50594beddf5494efd255281200611f3f9377c0c33b50e0e2e94d798d0ddedd04"
+    },
+    "shaderixel/shaders/effects/cy_blend_freeze.slang": {
+      "source": "shaders/effects/cy_blend_freeze.slang",
+      "sha256": "102f6ea051b8b17e26ce7bf6d104f970953613c408b0b81de235b1c7460b6774"
+    },
+    "shaderixel/shaders/effects/cy_blend_glow.slang": {
+      "source": "shaders/effects/cy_blend_glow.slang",
+      "sha256": "5ea82b9349b4d06c9403f26daef45735ef18375cdff7d0c03e572dac818fd68d"
+    },
+    "shaderixel/shaders/effects/cy_blend_grain_extract.slang": {
+      "source": "shaders/effects/cy_blend_grain_extract.slang",
+      "sha256": "ce3931deae56c276e6861c1598c59b3a957f5ba2f2b381004de50c19bfbbc631"
+    },
+    "shaderixel/shaders/effects/cy_blend_grain_merge.slang": {
+      "source": "shaders/effects/cy_blend_grain_merge.slang",
+      "sha256": "5ffc8b12c19d60bb3feac3b7b36f85bc9e83f62c101e8a882450fa601a03a3c2"
+    },
+    "shaderixel/shaders/effects/cy_blend_hard_light.slang": {
+      "source": "shaders/effects/cy_blend_hard_light.slang",
+      "sha256": "63cd4518a1e46c4b8e88f8f6f4e4211aaf1dcb49c87e9a17f81d7a0059136366"
+    },
+    "shaderixel/shaders/effects/cy_blend_hard_mix.slang": {
+      "source": "shaders/effects/cy_blend_hard_mix.slang",
+      "sha256": "c55110e89856cbf1ff7ab52b4b45cff3aef78f06241b6b2ae490786b9f9320c9"
+    },
+    "shaderixel/shaders/effects/cy_blend_hdr_soft_add.slang": {
+      "source": "shaders/effects/cy_blend_hdr_soft_add.slang",
+      "sha256": "2fd81687f6f1403359645c5aa3dcdd9a381a237562cce0576903cc7013cc1866"
+    },
+    "shaderixel/shaders/effects/cy_blend_height_blend.slang": {
+      "source": "shaders/effects/cy_blend_height_blend.slang",
+      "sha256": "acf99cab5fe2bb66627eeb4c380940a6ee4a61a7c608935659bce144f89dc3f4"
+    },
+    "shaderixel/shaders/effects/cy_blend_height_max.slang": {
+      "source": "shaders/effects/cy_blend_height_max.slang",
+      "sha256": "98e93837073d52cc43b90d0c0e2f51539ccc51244b825bf518289bd8e5d96158"
+    },
+    "shaderixel/shaders/effects/cy_blend_hue.slang": {
+      "source": "shaders/effects/cy_blend_hue.slang",
+      "sha256": "7f9656e5f7dbcf4a3434cf82cafef31c742541598e7df3a3a58de1286314e166"
+    },
+    "shaderixel/shaders/effects/cy_blend_lighten.slang": {
+      "source": "shaders/effects/cy_blend_lighten.slang",
+      "sha256": "19b4c61a7ffea021b54b642e85ae31d6545e0ca177632f62bca85831648726d1"
+    },
+    "shaderixel/shaders/effects/cy_blend_lighter_color.slang": {
+      "source": "shaders/effects/cy_blend_lighter_color.slang",
+      "sha256": "69abf57eb8d590581e7f6f57c48a94738e6e9baa203ba8c09675f2110a2ee1f7"
+    },
+    "shaderixel/shaders/effects/cy_blend_linear_burn.slang": {
+      "source": "shaders/effects/cy_blend_linear_burn.slang",
+      "sha256": "bc33b3f4c400a0919b959ab375c0f35e435bc991be491812a9f9420ead2dabfe"
+    },
+    "shaderixel/shaders/effects/cy_blend_linear_light.slang": {
+      "source": "shaders/effects/cy_blend_linear_light.slang",
+      "sha256": "ed3a5ba34b22f4001185c5ef909e32163f2f076879a7cd8b433110797347846c"
+    },
+    "shaderixel/shaders/effects/cy_blend_luminosity.slang": {
+      "source": "shaders/effects/cy_blend_luminosity.slang",
+      "sha256": "4fb31199ac1b9677c99d5f45cd37502d805fcadaece3fd0a54f3fa75c464f54a"
+    },
+    "shaderixel/shaders/effects/cy_blend_micro_detail_overlay.slang": {
+      "source": "shaders/effects/cy_blend_micro_detail_overlay.slang",
+      "sha256": "48f47daa65481911282c4b6ef5ae78c5299afba4365973b60d7d36dd9b43ae49"
+    },
+    "shaderixel/shaders/effects/cy_blend_multiply.slang": {
+      "source": "shaders/effects/cy_blend_multiply.slang",
+      "sha256": "df78c49fa2d041aa7031d67116314f32fba9f84a5ee15a6eb0215e1afa65e419"
+    },
+    "shaderixel/shaders/effects/cy_blend_negation.slang": {
+      "source": "shaders/effects/cy_blend_negation.slang",
+      "sha256": "84c91387206dac10c593e838033a8cec968861073a64406833bb92b84d6cabc6"
+    },
+    "shaderixel/shaders/effects/cy_blend_normal.slang": {
+      "source": "shaders/effects/cy_blend_normal.slang",
+      "sha256": "21a39793670f7b7e85a4291e009e7a590bc24bce31c4e1da559cbc4853a23bd8"
+    },
+    "shaderixel/shaders/effects/cy_blend_normal_udn.slang": {
+      "source": "shaders/effects/cy_blend_normal_udn.slang",
+      "sha256": "0b53c2154f64249347f1e2e168156c3848b14e4f6f61f34c859beaeb68cd2a50"
+    },
+    "shaderixel/shaders/effects/cy_blend_normal_whiteout.slang": {
+      "source": "shaders/effects/cy_blend_normal_whiteout.slang",
+      "sha256": "2012f8c4cd0e10794264caafc6b8be555874a12516109428f5f3a59ffacd870d"
+    },
+    "shaderixel/shaders/effects/cy_blend_overlay.slang": {
+      "source": "shaders/effects/cy_blend_overlay.slang",
+      "sha256": "dccef29666d78167465ef27f0b6b6b42246bf680a8f26d4c3217d00d97ea654e"
+    },
+    "shaderixel/shaders/effects/cy_blend_pbr_channel_merge.slang": {
+      "source": "shaders/effects/cy_blend_pbr_channel_merge.slang",
+      "sha256": "12bf623ac5dd803474e4375667685abdd18916be802c24d612c864e4475b0bd0"
+    },
+    "shaderixel/shaders/effects/cy_blend_phoenix.slang": {
+      "source": "shaders/effects/cy_blend_phoenix.slang",
+      "sha256": "96669da733e7d28dc47f41cbdd16615fa2ed345cf779b7e60e18c17d7cfbb42c"
+    },
+    "shaderixel/shaders/effects/cy_blend_pin_light.slang": {
+      "source": "shaders/effects/cy_blend_pin_light.slang",
+      "sha256": "9b223231950b8924c5fbaf93169ec53ba3ecafc26e062acda3fb40d77b85d1cd"
+    },
+    "shaderixel/shaders/effects/cy_blend_reflect.slang": {
+      "source": "shaders/effects/cy_blend_reflect.slang",
+      "sha256": "107c6d1707072597f1f794d734f9f90d4c6170594bfafddfd36804fd97d50854"
+    },
+    "shaderixel/shaders/effects/cy_blend_rnm_normal.slang": {
+      "source": "shaders/effects/cy_blend_rnm_normal.slang",
+      "sha256": "e7eb1dcf55e3e4a52312443dc2f4a4bf274de9335d9f3571ae6ceeab84992246"
+    },
+    "shaderixel/shaders/effects/cy_blend_roughness_energy.slang": {
+      "source": "shaders/effects/cy_blend_roughness_energy.slang",
+      "sha256": "f83034ac0f7a6956a3697217c83cc69e6c624047685eb541eebe721cd59a08a8"
+    },
+    "shaderixel/shaders/effects/cy_blend_saturation.slang": {
+      "source": "shaders/effects/cy_blend_saturation.slang",
+      "sha256": "e1d11601549d22df3a1dd9e78758d87c09a9e050dd4f78db4ff6fd3e940d1234"
+    },
+    "shaderixel/shaders/effects/cy_blend_screen.slang": {
+      "source": "shaders/effects/cy_blend_screen.slang",
+      "sha256": "19e7519b9717c7c4240532b57570aa5c369ba2fbfbdce4d6f90ee7e682097408"
+    },
+    "shaderixel/shaders/effects/cy_blend_signed_detail.slang": {
+      "source": "shaders/effects/cy_blend_signed_detail.slang",
+      "sha256": "03d979f1e66f1c0e7567f9222f5d098a5a3c445b6c5e059d0722b27f11542a9b"
+    },
+    "shaderixel/shaders/effects/cy_blend_soft_light.slang": {
+      "source": "shaders/effects/cy_blend_soft_light.slang",
+      "sha256": "d65a9b7fd9aeca627bd41f335ec0b85c9ad545001f621972d60be07482f17a93"
+    },
+    "shaderixel/shaders/effects/cy_blend_subtract.slang": {
+      "source": "shaders/effects/cy_blend_subtract.slang",
+      "sha256": "75bdeafe74225169bfecd32dd99ae7b360e63bcc45c94b4849e78abc7e129364"
+    },
+    "shaderixel/shaders/effects/cy_blend_vivid_light.slang": {
+      "source": "shaders/effects/cy_blend_vivid_light.slang",
+      "sha256": "bb2accc2dab375f31d02cf5947b0a15e413fd2e40dcc264b3d52527f9efca76f"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_abstract01.slang": {
+      "source": "shaders/effects/cy_draw_advanced_abstract01.slang",
+      "sha256": "bac2d16d30979b6e8501fcc4207762705ea654d9ee1dadd1ed716c5714c3f3b4"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_abstract_flare.slang": {
+      "source": "shaders/effects/cy_draw_advanced_abstract_flare.slang",
+      "sha256": "8ae6483cbf082abb284c24e657dc2450635731bd42515e89b3e5f9a4de12ba1e"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_abstract_flare02.slang": {
+      "source": "shaders/effects/cy_draw_advanced_abstract_flare02.slang",
+      "sha256": "d77469cf1244559b6c01f11478db3d9c7545ecb241673a048eac0edfaa3fa0fc"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_abstract_flare03.slang": {
+      "source": "shaders/effects/cy_draw_advanced_abstract_flare03.slang",
+      "sha256": "22cda53c7110d810367ddb6f8d9ce13ef75aa74d187566afe510738822fc8194"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_anamorph.slang": {
+      "source": "shaders/effects/cy_draw_advanced_anamorph.slang",
+      "sha256": "ebb5ebc83badb551dcf35adee241a516b1b02ef352f9eaabc694cdb499a6c917"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_basic_flare.slang": {
+      "source": "shaders/effects/cy_draw_advanced_basic_flare.slang",
+      "sha256": "c921163d69d86ba905fd9570ab8d53ce89d3c0e70286b2a708d1c2a1ebfe77fc"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_cir_flare.slang": {
+      "source": "shaders/effects/cy_draw_advanced_cir_flare.slang",
+      "sha256": "4b29ff72e17d80586aea4dd998d083aa5e1e19db8a97d95f93261505ec7c214a"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_cir_flare_tri.slang": {
+      "source": "shaders/effects/cy_draw_advanced_cir_flare_tri.slang",
+      "sha256": "85ede31d76127e0d1a403d5a3aa8e5ca4262a370848a4af8509d95295d76b05e"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_circle.slang": {
+      "source": "shaders/effects/cy_draw_advanced_circle.slang",
+      "sha256": "e25ffa2be34ed839d0dd7faf12c503db8090c1861a481c2d8820ba7217b7533c"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_circular.slang": {
+      "source": "shaders/effects/cy_draw_advanced_circular.slang",
+      "sha256": "1c627178792821e5beed0673559083fcaf8f9229643f615282d261d2d6e9e002"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_circular_no_gradient.slang": {
+      "source": "shaders/effects/cy_draw_advanced_circular_no_gradient.slang",
+      "sha256": "b9f8326ed05de37d66fd1dcb037c68a627e9cfc97c0049e3729e17c89e517622"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_corona.slang": {
+      "source": "shaders/effects/cy_draw_advanced_corona.slang",
+      "sha256": "cbbadc4075dcc1de481f08d59cc71da3a114a841fa2430f4c589c4b3c409e3d7"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_corona2.slang": {
+      "source": "shaders/effects/cy_draw_advanced_corona2.slang",
+      "sha256": "2d5fd7fb8b08a30f16e42d5fd21677799043c833dbbffa49e1ba08e069e52da3"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_flare2.slang": {
+      "source": "shaders/effects/cy_draw_advanced_flare2.slang",
+      "sha256": "28b49c5deb74d602e6bc1322b4cdf78eb06affb6c1658415443ca7ab40f8874f"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_gradient_color.slang": {
+      "source": "shaders/effects/cy_draw_advanced_gradient_color.slang",
+      "sha256": "54064776f02a66abc3a33e32616f33b3de8fa26d84b69039f12e557a9f86cefd"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_noise_gradient_com.slang": {
+      "source": "shaders/effects/cy_draw_advanced_noise_gradient_com.slang",
+      "sha256": "ee44bb0f066b6abc037558b3eaf8564bac0649fdb93b37b24f6a2ee5afbe7f6e"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_noise_gradient_com_variant.slang": {
+      "source": "shaders/effects/cy_draw_advanced_noise_gradient_com_variant.slang",
+      "sha256": "7b2c61c1aacc628ed501d784a41223ad13d48dae12094f68d4be82c39a2d8540"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_noise_gradient_tex.slang": {
+      "source": "shaders/effects/cy_draw_advanced_noise_gradient_tex.slang",
+      "sha256": "6445ac82efe32805e69c885c8f0bb429fcd843bc4ed529790958b48ce738a185"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_noise_simplex.slang": {
+      "source": "shaders/effects/cy_draw_advanced_noise_simplex.slang",
+      "sha256": "29a7183e39b6d70d388fdcd345b4a6a28444354e4d794b5d6646844617620811"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_noise_value_com.slang": {
+      "source": "shaders/effects/cy_draw_advanced_noise_value_com.slang",
+      "sha256": "81b111d2c4ce62daf90c1696ae01a6dd55ad44c1dfb9f043491934ec4df99d99"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_noise_voronoi.slang": {
+      "source": "shaders/effects/cy_draw_advanced_noise_voronoi.slang",
+      "sha256": "cd247cf7a9cf5e635ca8922d8c33a308d46abb4923e4c68c35fce6748b758a65"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_shape_lens.slang": {
+      "source": "shaders/effects/cy_draw_advanced_shape_lens.slang",
+      "sha256": "63fa7552d2b8bccbc5e334035b7a7ea9b22e59cdb09d4708e0025526c219f6f8"
+    },
+    "shaderixel/shaders/effects/cy_draw_advanced_shape_lens_variant.slang": {
+      "source": "shaders/effects/cy_draw_advanced_shape_lens_variant.slang",
+      "sha256": "3236eabbea2435c54eecf621032a32f173a67fbcf9dc4cf310dad34f8c5d354d"
+    },
+    "shaderixel/shaders/effects/cy_draw_anamorphic_lens_flare.slang": {
+      "source": "shaders/effects/cy_draw_anamorphic_lens_flare.slang",
+      "sha256": "f3e3a2c736f92be3a125a95fd2626db17bd5653fdecb911aa2713a0931c12797"
+    },
+    "shaderixel/shaders/effects/cy_draw_aurora_bands.slang": {
+      "source": "shaders/effects/cy_draw_aurora_bands.slang",
+      "sha256": "ad747e24e804e8c84cef7ffb25024ef36f89fdbb50a09081a68045add16018b1"
+    },
+    "shaderixel/shaders/effects/cy_draw_bokeh_rings.slang": {
+      "source": "shaders/effects/cy_draw_bokeh_rings.slang",
+      "sha256": "04071e8c1f0e1ca48176494928ae65b653530d12ca5eeaeffe411a41aa8a58b4"
+    },
+    "shaderixel/shaders/effects/cy_draw_brick_bond.slang": {
+      "source": "shaders/effects/cy_draw_brick_bond.slang",
+      "sha256": "38b199dc1d3c945ddb945fe03db0a11a41c978f7bcb980949b8c82e9851c0c20"
+    },
+    "shaderixel/shaders/effects/cy_draw_camouflage.slang": {
+      "source": "shaders/effects/cy_draw_camouflage.slang",
+      "sha256": "d618bcf296e6e801895b4e7926c67ce44b2689e1b2ba8c2b0a4138f3dfbbf7e8"
+    },
+    "shaderixel/shaders/effects/cy_draw_caustics.slang": {
+      "source": "shaders/effects/cy_draw_caustics.slang",
+      "sha256": "56d20ef40b9a6d3e873c1db46f285740d59f5e5d7cd46a1b8345ffb1c7484dcc"
+    },
+    "shaderixel/shaders/effects/cy_draw_checker.slang": {
+      "source": "shaders/effects/cy_draw_checker.slang",
+      "sha256": "eadf2cf9c2b9dcbfd9c60900a11ee6c2ef995dc5e25e346921b2623bc57166df"
+    },
+    "shaderixel/shaders/effects/cy_draw_circle.slang": {
+      "source": "shaders/effects/cy_draw_circle.slang",
+      "sha256": "f25b920f236eff4fc7e7d43e4185a063a2f192535ea74187b43c6a369dafbdee"
+    },
+    "shaderixel/shaders/effects/cy_draw_circuit_board.slang": {
+      "source": "shaders/effects/cy_draw_circuit_board.slang",
+      "sha256": "1bc2e12b9b373db548152ef6f542608e71109a42ee24634e9a0bf17b8c8c70af"
+    },
+    "shaderixel/shaders/effects/cy_draw_cracks.slang": {
+      "source": "shaders/effects/cy_draw_cracks.slang",
+      "sha256": "aadc3a96829786571a92115c866a592bd02b78f2e5bb7321c79610d5884cedb2"
+    },
+    "shaderixel/shaders/effects/cy_draw_crosshatch.slang": {
+      "source": "shaders/effects/cy_draw_crosshatch.slang",
+      "sha256": "eebaa3665ce7d16d38ff1f235d830758873d6f3c1040acaecaf5e1da7f0e8ec9"
+    },
+    "shaderixel/shaders/effects/cy_draw_fabric_weave.slang": {
+      "source": "shaders/effects/cy_draw_fabric_weave.slang",
+      "sha256": "e163034be48592a9fd1eca7ab21e07fd51cd4f159243cddeacfec8e5ccaabc8e"
+    },
+    "shaderixel/shaders/effects/cy_draw_fractal_noise.slang": {
+      "source": "shaders/effects/cy_draw_fractal_noise.slang",
+      "sha256": "16286d68eb2b5988ec012f8af814449701476ae9894643d8f111001fe9883974"
+    },
+    "shaderixel/shaders/effects/cy_draw_grid.slang": {
+      "source": "shaders/effects/cy_draw_grid.slang",
+      "sha256": "d7819c5318945032c688aff4cdd4a95668dd56cb0eeef80061eb7db68526b7f3"
+    },
+    "shaderixel/shaders/effects/cy_draw_hex_grid.slang": {
+      "source": "shaders/effects/cy_draw_hex_grid.slang",
+      "sha256": "3a0b58c2fe9b75afefed458b2d9636e2b25fdc00cf36686e7df551a428ca9a35"
+    },
+    "shaderixel/shaders/effects/cy_draw_lens_flare.slang": {
+      "source": "shaders/effects/cy_draw_lens_flare.slang",
+      "sha256": "6db92d5b2dab4ea13add3e54ee0f363a6a969de2e83557646f850ac8e9670a2c"
+    },
+    "shaderixel/shaders/effects/cy_draw_linear_gradient.slang": {
+      "source": "shaders/effects/cy_draw_linear_gradient.slang",
+      "sha256": "5335fa5b8e641d8d42918ebc6a5f04b583b174b2d391d302f10001ca6b67b2ab"
+    },
+    "shaderixel/shaders/effects/cy_draw_marble_veins.slang": {
+      "source": "shaders/effects/cy_draw_marble_veins.slang",
+      "sha256": "1ec2dfac39c60c798ad874f3781bc9ecb66214978e4d5dff9e37a8e79ddf2c68"
+    },
+    "shaderixel/shaders/effects/cy_draw_procedural_noise.slang": {
+      "source": "shaders/effects/cy_draw_procedural_noise.slang",
+      "sha256": "6f72e088c2170f014beb9781fd4602bfbd8d4c5f6a8c48737505021d7df9b1d3"
+    },
+    "shaderixel/shaders/effects/cy_draw_radial_gradient.slang": {
+      "source": "shaders/effects/cy_draw_radial_gradient.slang",
+      "sha256": "8ac52c8b6eb440b70cbdf330d076a8c19459263f615e5ca9629780b89a574b22"
+    },
+    "shaderixel/shaders/effects/cy_draw_rounded_rectangle.slang": {
+      "source": "shaders/effects/cy_draw_rounded_rectangle.slang",
+      "sha256": "c2cb0e2fd3f0d9f9c773c6c1877958569b57c2477acfbbba4fda5ab4d1060c93"
+    },
+    "shaderixel/shaders/effects/cy_draw_rust_patches.slang": {
+      "source": "shaders/effects/cy_draw_rust_patches.slang",
+      "sha256": "a821f05395830e3bf48ef1243bffcf6d3ec73121a0a99524327c6920dc47bfb7"
+    },
+    "shaderixel/shaders/effects/cy_draw_scratches.slang": {
+      "source": "shaders/effects/cy_draw_scratches.slang",
+      "sha256": "6b839dc973aeee1b959056cf5fecdfe91fdd8f0abbd754614bafab5708534611"
+    },
+    "shaderixel/shaders/effects/cy_draw_sdf_arc.slang": {
+      "source": "shaders/effects/cy_draw_sdf_arc.slang",
+      "sha256": "73327260fa0fd6ec10081b2a9439fda123e3f1c582554c09c2e87e72f209cd74"
+    },
+    "shaderixel/shaders/effects/cy_draw_solid_color.slang": {
+      "source": "shaders/effects/cy_draw_solid_color.slang",
+      "sha256": "007e5191f3cd67e23e1a585a5d400181e75bf61d5700e9170b0662cb01f67583"
+    },
+    "shaderixel/shaders/effects/cy_draw_star.slang": {
+      "source": "shaders/effects/cy_draw_star.slang",
+      "sha256": "ae706a4f174f90c5a907709cb7266cdb8e5b53f45393f999d4199b5dcf6e6107"
+    },
+    "shaderixel/shaders/effects/cy_draw_starfield.slang": {
+      "source": "shaders/effects/cy_draw_starfield.slang",
+      "sha256": "45bdd25116a669bbece14a561f71ecff5b6a52e505b05f4216bb6ac8ecc10e98"
+    },
+    "shaderixel/shaders/effects/cy_draw_stripes.slang": {
+      "source": "shaders/effects/cy_draw_stripes.slang",
+      "sha256": "6b78ee66d8357fc4675928baddec6f7ac1d12118c1c4900ef7ea3582f55c9ca8"
+    },
+    "shaderixel/shaders/effects/cy_draw_truchet_tiles.slang": {
+      "source": "shaders/effects/cy_draw_truchet_tiles.slang",
+      "sha256": "6701fdbbca448761cebe5982ffa0dedbd10ca67344368bc69e0634dde908f38f"
+    },
+    "shaderixel/shaders/effects/cy_draw_voronoi.slang": {
+      "source": "shaders/effects/cy_draw_voronoi.slang",
+      "sha256": "bf4f2691a1a8b4dc01921257c488faa100b0590d27063ef601a87f6c930a9212"
+    },
+    "shaderixel/shaders/effects/cy_draw_wood_grain.slang": {
+      "source": "shaders/effects/cy_draw_wood_grain.slang",
+      "sha256": "4a997db13d5d019f02a9b31c796f3d3435ddcfc4d4d6f7739b0ac35b8e725879"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_aberration_hlsl_blur.slang": {
+      "source": "shaders/effects/cy_effect_advanced_aberration_hlsl_blur.slang",
+      "sha256": "08a0923340e7eb54996810326ce52a92c154c98f9761d574d8541a3366b0f000"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_base_chroma.slang": {
+      "source": "shaders/effects/cy_effect_advanced_base_chroma.slang",
+      "sha256": "88f69be6b4465706e8b7cd2e7ac2eaf15c636017273b6be7c33f8ab2364b28b3"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_blur_poly3.slang": {
+      "source": "shaders/effects/cy_effect_advanced_blur_poly3.slang",
+      "sha256": "b20efc1666ded95dc89cd69d32ad35d4a8be3586ed3dc8d34e7c56604af75b4d"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_blur_poly3_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_blur_poly3_variant.slang",
+      "sha256": "2e36e5465afe11ed674c2cf05b4a1cdd111ed02e19d5f2d34ca133322a2afe89"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_box_blur.slang": {
+      "source": "shaders/effects/cy_effect_advanced_box_blur.slang",
+      "sha256": "5066d40c9b0ddfe0743aed8e05f25d594414a0ff6169945c50e986ead9a761da"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_box_blur_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_box_blur_variant.slang",
+      "sha256": "e753c79bf1a7d42a4c2fce7946f6450bb1f48bc3f00c58b7ccc617e1c99c483d"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_chroma_hlsl_blur2.slang": {
+      "source": "shaders/effects/cy_effect_advanced_chroma_hlsl_blur2.slang",
+      "sha256": "06fb993d8798e7aade490703d9578200b095abd8b8758f48370f1ddc8a3d5c7d"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_circular_blur.slang": {
+      "source": "shaders/effects/cy_effect_advanced_circular_blur.slang",
+      "sha256": "0d5cb61eb33f8f6313c5e0a5f012b75d147192c08d9b2805f37e62da5ea12aba"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_circular_blur_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_circular_blur_variant.slang",
+      "sha256": "28886acb4b3ead19e33a31da5332d132557dbb636329e2c30fa682f2f3d23795"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_cubic_uv.slang": {
+      "source": "shaders/effects/cy_effect_advanced_cubic_uv.slang",
+      "sha256": "483e6bc0cba3e8602460be46954ecac07b5e21941e6ec57b5ff4645e6b1b78d0"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_curve3_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_curve3_utilities.slang",
+      "sha256": "0e102a5cd008ba3751e2a0b6795ae5c779899cae25757fb9347f894069586dbb"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_desaturation_color.slang": {
+      "source": "shaders/effects/cy_effect_advanced_desaturation_color.slang",
+      "sha256": "22f8886720bf8e94826fc6d692c9ed2e28fbe25247564d8f8a6326c53bb27270"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_dia_gra_mask.slang": {
+      "source": "shaders/effects/cy_effect_advanced_dia_gra_mask.slang",
+      "sha256": "a51eb3474644077fa81c97ed29c6960f91beebbd060977af18612d12ce83684b"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_gradient_grad.slang": {
+      "source": "shaders/effects/cy_effect_advanced_gradient_grad.slang",
+      "sha256": "3c2b22674a622a4de233c9851aa541479a7f95f68c1b3c0cb7f2487c3d1c4000"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_hlsl_sharpen.slang": {
+      "source": "shaders/effects/cy_effect_advanced_hlsl_sharpen.slang",
+      "sha256": "755139c7442d8e796bc9fc1a8908ebdb64bf7d586dd6c0c0295839ffa49b3f28"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_hlsl_sharpen_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_hlsl_sharpen_variant.slang",
+      "sha256": "68cde41734cb48996e6f10f34c6c6e6f0123a915427a8193f9fc4bf5dc6624ad"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_hue_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_hue_utilities.slang",
+      "sha256": "f6d9f573f99cc9664ff8b47c4ad9eaaf8db1c1fd9756059dcbd4895dec4ac999"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_invert_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_invert_utilities.slang",
+      "sha256": "c85f9b24de9b93595d426a384e250d9b96776890a1dab70349d04fefb7e95439"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_kaleidoscope2_uv.slang": {
+      "source": "shaders/effects/cy_effect_advanced_kaleidoscope2_uv.slang",
+      "sha256": "840cc1e75cad662879f3291d705e60d208c4501269cd12a2f90ed5727e4b0d6c"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_kaleidoscope_uv.slang": {
+      "source": "shaders/effects/cy_effect_advanced_kaleidoscope_uv.slang",
+      "sha256": "2b364d3ab5d8512fce7f7ad32d5d0f9bba45f4248da7b95c11c3efcb733fc779"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_level_color.slang": {
+      "source": "shaders/effects/cy_effect_advanced_level_color.slang",
+      "sha256": "dc5d7791f6bffcf05ed2099803b3fb5cf0ef8db33460325b61895375968afe23"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_luma_contrast_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_luma_contrast_utilities.slang",
+      "sha256": "0279d6e5a2a04f3221c77546866556fa8e8ddc81ae029989a2c4852f8e1dcbf5"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_mirrored.slang": {
+      "source": "shaders/effects/cy_effect_advanced_mirrored.slang",
+      "sha256": "120f410ed4f858655a3d428cb874fcb37fc31c3ce3b14f4115edfe2dd49a9bcb"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_mixer_rgb_color.slang": {
+      "source": "shaders/effects/cy_effect_advanced_mixer_rgb_color.slang",
+      "sha256": "36e1d5e22c629f73d21b0816cdf530614b80fc87f5fc21fd84db965819be858c"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_mul_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_mul_utilities.slang",
+      "sha256": "2dc50e27e1254af9eb8bf09eb15255ba6ae9f2e979300a562d657ca49951788a"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_poly3.slang": {
+      "source": "shaders/effects/cy_effect_advanced_poly3.slang",
+      "sha256": "b40dc00d47e1c21f3541a0cfa3c553eeabeb39d2d85483a4a5d508f51f247e15"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_poly3_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_poly3_variant.slang",
+      "sha256": "291cb93a4ee37bebad12a10f39a6302b11d1f96e4de77720b16057a79d897238"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_poly3lensflare.slang": {
+      "source": "shaders/effects/cy_effect_advanced_poly3lensflare.slang",
+      "sha256": "5a52393d31771cdebd5eda2eb88aa4b54346fbba6d73f1791761bbcc1dc332f2"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_poly3lensflare_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_poly3lensflare_variant.slang",
+      "sha256": "9bf09db5b56adb250bdbb1bae5761d0c03043a90a2b3af3955f3812b4190d669"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_poly6.slang": {
+      "source": "shaders/effects/cy_effect_advanced_poly6.slang",
+      "sha256": "0cb4954a1c79db794d87626051ba9f04e4076b78fa9f5d02958beb5de131bff9"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_poly6_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_poly6_variant.slang",
+      "sha256": "698a9da2d0dc1861b6ec040de2bf9349720fb91825361653786d4d91b164ec6c"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_poly_expo.slang": {
+      "source": "shaders/effects/cy_effect_advanced_poly_expo.slang",
+      "sha256": "2c41bc810fea745409e35edb17eca0ad7ddacdd0868e5590bb6b79c525ad759b"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_poly_expo_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_poly_expo_variant.slang",
+      "sha256": "9e57e632cd122b3ad19efd407f3164b342a8383e85da7f76cb2375141f4c2003"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_power_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_power_utilities.slang",
+      "sha256": "b83254c6cdea263eb6c69a057ce606fbae407e352d1458863198c647847ae328"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_r_gexp_mask.slang": {
+      "source": "shaders/effects/cy_effect_advanced_r_gexp_mask.slang",
+      "sha256": "d06e7e17d0521695aeaab91ee5f0a13f06b6367b6bff46670c6718794a459762"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_rad_grad_distortion.slang": {
+      "source": "shaders/effects/cy_effect_advanced_rad_grad_distortion.slang",
+      "sha256": "f89e65887bd49955eaed773d64071aabed31d49199e4cb737ce946296969cc4f"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_rad_grad_distortion2.slang": {
+      "source": "shaders/effects/cy_effect_advanced_rad_grad_distortion2.slang",
+      "sha256": "c5114d42c3e912fd8d57c7f7e7770cc4f5a659b556c0e2b02d1a19cb1035b3b9"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_radial_blur.slang": {
+      "source": "shaders/effects/cy_effect_advanced_radial_blur.slang",
+      "sha256": "020ca9e6e62d75a0c2d04cace0786c6d5a680f5a3b13dba5c50b52ecf71b045b"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_radial_blur_chroma.slang": {
+      "source": "shaders/effects/cy_effect_advanced_radial_blur_chroma.slang",
+      "sha256": "c4b88ba1c47143e324af848529c491b268b1f260395e2808029c1d451066d87a"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_radial_blur_chroma_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_radial_blur_chroma_variant.slang",
+      "sha256": "62dcd88fae58dd32f08c750a965a7c3d1d8457c79d6f16c508b3c8fac76856f9"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_radial_blur_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_radial_blur_variant.slang",
+      "sha256": "45a7baff5adb8d93c25de4565726ccbf5ecdd5da4e241090c0124245b9a67d9e"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_radial_hlsl_blur.slang": {
+      "source": "shaders/effects/cy_effect_advanced_radial_hlsl_blur.slang",
+      "sha256": "6414eb6a1e39ca6a6d0ade83804895fe3b36731a97e20f89d1dcac19ef390d04"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_radial_hlsl_blur2.slang": {
+      "source": "shaders/effects/cy_effect_advanced_radial_hlsl_blur2.slang",
+      "sha256": "15c212e2668c4757dbd0a3fd59728e2cc2d0fa2e1e93e1241089f8b74b7da1f4"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_radial_hlsl_chroma.slang": {
+      "source": "shaders/effects/cy_effect_advanced_radial_hlsl_chroma.slang",
+      "sha256": "821111253d1a5159b3e8a7b4459a2d344c6b2ee96710fd4f0596f018eb0b11df"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_range_selector_color.slang": {
+      "source": "shaders/effects/cy_effect_advanced_range_selector_color.slang",
+      "sha256": "e8f467126e295988aa9120de706c15fc0c32a05d498621c39c2c3c1b13d5c257"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_re_range_color_color.slang": {
+      "source": "shaders/effects/cy_effect_advanced_re_range_color_color.slang",
+      "sha256": "a88744295061d6f27d1d239b517e90cf4dda6ba2cd6676d138502d96968a4b6f"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_rotate_blur.slang": {
+      "source": "shaders/effects/cy_effect_advanced_rotate_blur.slang",
+      "sha256": "79a2794cd65f551f5e3528bf2cb992031a3d4828207b7e91d11a6ed39265b703"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_rotate_blur2.slang": {
+      "source": "shaders/effects/cy_effect_advanced_rotate_blur2.slang",
+      "sha256": "fe3cfd985bc51cefa4a640a3e24194bd6b166c9e5564c0d2cd3594afbf112ec1"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_rotate_blur2_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_rotate_blur2_variant.slang",
+      "sha256": "df25091c1ca8a98fefd8177ab99613025a659db3b5b0b71a7a21571b6e62bd05"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_rotate_blur_chroma_p_pm1.slang": {
+      "source": "shaders/effects/cy_effect_advanced_rotate_blur_chroma_p_pm1.slang",
+      "sha256": "a25a548ef9a740ee48dd38ba6aab43c7d8592f97dbd3a58148d2183d3ff31674"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_rotate_blur_chroma_p_pm1_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_rotate_blur_chroma_p_pm1_variant.slang",
+      "sha256": "ed916ca946a6fbdf67e47dc8d165bd8bb50ba7c5dbd9763fdd6b40ef9205ad37"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_sharpen.slang": {
+      "source": "shaders/effects/cy_effect_advanced_sharpen.slang",
+      "sha256": "734426b90761df59deabdcada27aabe2a66586374b4758f0daf2da426c3d9bc6"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_sharpen_depth_ppm2.slang": {
+      "source": "shaders/effects/cy_effect_advanced_sharpen_depth_ppm2.slang",
+      "sha256": "6bd7908241653529a973665eb232ab51aa96e447225372cc188902e8047fdcad"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_sharpen_depth_ppm2_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_sharpen_depth_ppm2_variant.slang",
+      "sha256": "aaebe520d673efec556fd864eecfc027085387b83aa85e2261048400e5bad29f"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_sharpen_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_sharpen_variant.slang",
+      "sha256": "15a913df84537069a15f4e9fa354f720af0846ada72c9d767bfb7c8107e5fcf3"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_sine_chroma.slang": {
+      "source": "shaders/effects/cy_effect_advanced_sine_chroma.slang",
+      "sha256": "6f7873ddffd3bdb1fa9eceefc1a09b28872fb38aca688ea8cdbe442b321fa0eb"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_sine_shift_chroma1.slang": {
+      "source": "shaders/effects/cy_effect_advanced_sine_shift_chroma1.slang",
+      "sha256": "fdf8aeacada6d3b9ba67355df1fa71f82e9cd63351b37155c165689dcff446a8"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_smooth_curve_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_smooth_curve_utilities.slang",
+      "sha256": "bcddc5729c5bb023cf2358d0c106b2a18958df64ff18f0ceb37d0bd5f162fe38"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_spiral_blur.slang": {
+      "source": "shaders/effects/cy_effect_advanced_spiral_blur.slang",
+      "sha256": "a88ea309ffbd30bf83717ed4548500ed7f2f2d0037c90d53dcd9efaf200a2717"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_spiral_blur_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_spiral_blur_variant.slang",
+      "sha256": "d3e2bd66ef46db1facf23297e06e09f8a1c8fe75db9d9866f0bc4d196dd4712d"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_spiral_blurchroma_p_pm2.slang": {
+      "source": "shaders/effects/cy_effect_advanced_spiral_blurchroma_p_pm2.slang",
+      "sha256": "0c52da85fd0776a3ae1478f2d72c2b279b3c4417012a5d1041f5ce6147e07d5b"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_spiral_blurchroma_p_pm2_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_spiral_blurchroma_p_pm2_variant.slang",
+      "sha256": "3f35af721f203fda66d63114ea60e02bba11c4b04b1f258b0b1331f4d78ce910"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_spiral_hlsl_blur.slang": {
+      "source": "shaders/effects/cy_effect_advanced_spiral_hlsl_blur.slang",
+      "sha256": "7d7a8aa1fe63f9c39d7a2205b3f35200f137ae4a1a175cce2be92ffa6190e6ca"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_split_rgba_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_split_rgba_utilities.slang",
+      "sha256": "449dd66081e25bd53e3b8d89bc3e6a257f657bb134b5fd2d8f74abe14d51c9e0"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_switch_rgba_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_switch_rgba_utilities.slang",
+      "sha256": "21485523a01d759a334a7dfef015cc77f74acc65c717f2738528a19a90f6a348"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_test.slang": {
+      "source": "shaders/effects/cy_effect_advanced_test.slang",
+      "sha256": "53d813639c255f11d74e0a0e817273685947399b80680cd8fe1542d2e56ab77a"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_test_variant.slang": {
+      "source": "shaders/effects/cy_effect_advanced_test_variant.slang",
+      "sha256": "a8902e3897add0fbdbbb4ebb271ec45df5fc379a7cac20aaacbf2b1ed117d964"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_tiling_uv.slang": {
+      "source": "shaders/effects/cy_effect_advanced_tiling_uv.slang",
+      "sha256": "221e506ba98864bf378de71394c0c30af2da7ae2778678b1733e81d8d4301624"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_tint_color.slang": {
+      "source": "shaders/effects/cy_effect_advanced_tint_color.slang",
+      "sha256": "a6166c35b2bbc3a7d389646fb9a495b9c2fa8fe05da6ae7ea6beda6af30d226c"
+    },
+    "shaderixel/shaders/effects/cy_effect_advanced_tint_utilities.slang": {
+      "source": "shaders/effects/cy_effect_advanced_tint_utilities.slang",
+      "sha256": "885701231f2f04365c41b517ea3594f516b87fe136b0c08b40038904400ec7bb"
+    },
+    "shaderixel/shaders/effects/cy_effect_alpha_remap.slang": {
+      "source": "shaders/effects/cy_effect_alpha_remap.slang",
+      "sha256": "c4be3eeea42968e08925c8830fa9df174d566d6d8cc62fe9eef85a60d5849ed1"
+    },
+    "shaderixel/shaders/effects/cy_effect_anamorphic_bloom.slang": {
+      "source": "shaders/effects/cy_effect_anamorphic_bloom.slang",
+      "sha256": "7ec582d911f7424e1a9d04df30a84cb9ab5e899622d17803e66a42d67a68e8ea"
+    },
+    "shaderixel/shaders/effects/cy_effect_ao_from_height.slang": {
+      "source": "shaders/effects/cy_effect_ao_from_height.slang",
+      "sha256": "b79ac373cf60843dafe3464c0da5b8b5a95ebda842b7c888952bf0fa8bde7fa7"
+    },
+    "shaderixel/shaders/effects/cy_effect_bilateral_blur.slang": {
+      "source": "shaders/effects/cy_effect_bilateral_blur.slang",
+      "sha256": "3183d9d3ffb1ac68c7cb69126a6557a5a7a69e9b325b3c62e236c4aa0b9d89e1"
+    },
+    "shaderixel/shaders/effects/cy_effect_black_white.slang": {
+      "source": "shaders/effects/cy_effect_black_white.slang",
+      "sha256": "80e5d9e92da3d4a02abcde684997948be3daa8e6453549180efe1ca34eb063cc"
+    },
+    "shaderixel/shaders/effects/cy_effect_bloom.slang": {
+      "source": "shaders/effects/cy_effect_bloom.slang",
+      "sha256": "2f073ac3b9f416aa7efde9875ce0496435cdc3494d4db6d25d365c0c14db148a"
+    },
+    "shaderixel/shaders/effects/cy_effect_bokeh_blur.slang": {
+      "source": "shaders/effects/cy_effect_bokeh_blur.slang",
+      "sha256": "69963cedbb2d92ddfb8ee2992a4234b46f782eeedff2d4534a27420974a43624"
+    },
+    "shaderixel/shaders/effects/cy_effect_box_blur.slang": {
+      "source": "shaders/effects/cy_effect_box_blur.slang",
+      "sha256": "41d7597e4dea09791b44ff84ce0dd32c80454a0b5464dd84ba42df33d455db7c"
+    },
+    "shaderixel/shaders/effects/cy_effect_brightness_contrast.slang": {
+      "source": "shaders/effects/cy_effect_brightness_contrast.slang",
+      "sha256": "daf92eff0370753e6f73254882b8d402b6b8a3c983000b7f6228d75c114a3e46"
+    },
+    "shaderixel/shaders/effects/cy_effect_channel_mixer.slang": {
+      "source": "shaders/effects/cy_effect_channel_mixer.slang",
+      "sha256": "63cacc42f51dca15adf780c2b6f5048ea7feda01683faac7cc6be7e334144320"
+    },
+    "shaderixel/shaders/effects/cy_effect_channel_normalize.slang": {
+      "source": "shaders/effects/cy_effect_channel_normalize.slang",
+      "sha256": "294b50c1e8cba5850233ee290594fc145ccd12c3161358501a6c3f7b8a7ab439"
+    },
+    "shaderixel/shaders/effects/cy_effect_chroma_key.slang": {
+      "source": "shaders/effects/cy_effect_chroma_key.slang",
+      "sha256": "35bc532ddb5271307be9371b990c8fa2c381084a3c272fb96e5cfb7be3c5266f"
+    },
+    "shaderixel/shaders/effects/cy_effect_chromatic_aberration.slang": {
+      "source": "shaders/effects/cy_effect_chromatic_aberration.slang",
+      "sha256": "e7047e4888c759d5bb743d98f273b00e3e251bcaae13ac463b76ffd2f9d5faaf"
+    },
+    "shaderixel/shaders/effects/cy_effect_clamp_range.slang": {
+      "source": "shaders/effects/cy_effect_clamp_range.slang",
+      "sha256": "2518ce7637f3be43301609addfb6f91189d32e4b3e307f32cd9232ae2bfbc34c"
+    },
+    "shaderixel/shaders/effects/cy_effect_color_balance.slang": {
+      "source": "shaders/effects/cy_effect_color_balance.slang",
+      "sha256": "00f2eac496df59650883566125782f804264368f56f12762cff3ab3f15190a7e"
+    },
+    "shaderixel/shaders/effects/cy_effect_color_grading.slang": {
+      "source": "shaders/effects/cy_effect_color_grading.slang",
+      "sha256": "5d732c12b1039445b3308b7e3ccbd80ce9ae3a8eed23d66dbdd0224bd919223b"
+    },
+    "shaderixel/shaders/effects/cy_effect_color_lookup.slang": {
+      "source": "shaders/effects/cy_effect_color_lookup.slang",
+      "sha256": "432cd07863940f59f6b03edbdf519d776f6c17ddd55f3529138885e5fe1d79c3"
+    },
+    "shaderixel/shaders/effects/cy_effect_colorize.slang": {
+      "source": "shaders/effects/cy_effect_colorize.slang",
+      "sha256": "915545ff6955b016e2a53cf8656005ebc5b625bd269242fce77b6e8bc1e2410d"
+    },
+    "shaderixel/shaders/effects/cy_effect_crt_display.slang": {
+      "source": "shaders/effects/cy_effect_crt_display.slang",
+      "sha256": "def36a1d9ed4b48aa21de8f3e416bc243112d9263c647cf50687bb6f487fc413"
+    },
+    "shaderixel/shaders/effects/cy_effect_curvature_from_normal.slang": {
+      "source": "shaders/effects/cy_effect_curvature_from_normal.slang",
+      "sha256": "cdbb776906fb1df9119f402fe0b06ebfb52cbe89a8f81629d35150cb0cbe8524"
+    },
+    "shaderixel/shaders/effects/cy_effect_dehaze.slang": {
+      "source": "shaders/effects/cy_effect_dehaze.slang",
+      "sha256": "29f68e7ad02b3073d331cef43f3cf45015734dd68f43158870490c9fc299212e"
+    },
+    "shaderixel/shaders/effects/cy_effect_despill.slang": {
+      "source": "shaders/effects/cy_effect_despill.slang",
+      "sha256": "d79d7bd8b8be85d406cba4f155970f8204739fa46e12e551025be08d2384b6aa"
+    },
+    "shaderixel/shaders/effects/cy_effect_directional_blur.slang": {
+      "source": "shaders/effects/cy_effect_directional_blur.slang",
+      "sha256": "6f2ea9ba2e91ef8f7b74cc299ac279653329b096e5f0425a22984803afcedc0a"
+    },
+    "shaderixel/shaders/effects/cy_effect_dither.slang": {
+      "source": "shaders/effects/cy_effect_dither.slang",
+      "sha256": "438ede8f97f9c45bf82a0d0e15a88a87c2f47bb0b77ace7c2cb8c32e86852e72"
+    },
+    "shaderixel/shaders/effects/cy_effect_drop_shadow.slang": {
+      "source": "shaders/effects/cy_effect_drop_shadow.slang",
+      "sha256": "828210a48638b0c1a86d7ef20cc060e13e8f97f0cb68a23f733c4581e7e5001e"
+    },
+    "shaderixel/shaders/effects/cy_effect_edge_detect.slang": {
+      "source": "shaders/effects/cy_effect_edge_detect.slang",
+      "sha256": "1a840263d3b280cbc264a3c16825caab04889b0ebb13f3e8674ea7740da7e931"
+    },
+    "shaderixel/shaders/effects/cy_effect_edge_wear.slang": {
+      "source": "shaders/effects/cy_effect_edge_wear.slang",
+      "sha256": "797fecefb93071281fc3887be0d9eb333c28cc6389abe567bae2472b7c4c9bd7"
+    },
+    "shaderixel/shaders/effects/cy_effect_emboss.slang": {
+      "source": "shaders/effects/cy_effect_emboss.slang",
+      "sha256": "8edc3aa1c7c8d2e691607757ed9edd3253e2e29497f93a39946ff26df08cd266"
+    },
+    "shaderixel/shaders/effects/cy_effect_equalize.slang": {
+      "source": "shaders/effects/cy_effect_equalize.slang",
+      "sha256": "2664b226e88d11fd80ff49e428b0f49015fc3c501478484e109cc8ce4586b6fe"
+    },
+    "shaderixel/shaders/effects/cy_effect_exposure.slang": {
+      "source": "shaders/effects/cy_effect_exposure.slang",
+      "sha256": "2490deea441518e63b56f0667e46c2deb3e4afe56dbe2108ee7900873c35bfc6"
+    },
+    "shaderixel/shaders/effects/cy_effect_film_grain.slang": {
+      "source": "shaders/effects/cy_effect_film_grain.slang",
+      "sha256": "0ed6de1e452f65aa78102a3b4033c668c52bdadc2be3e0d2e8195290f6e7a8fa"
+    },
+    "shaderixel/shaders/effects/cy_effect_filmic_tone_map.slang": {
+      "source": "shaders/effects/cy_effect_filmic_tone_map.slang",
+      "sha256": "bb4bd95e1275c23e61a7d47b968975d909738ff3125ca7be02bc36f08a44b8bf"
+    },
+    "shaderixel/shaders/effects/cy_effect_gamma.slang": {
+      "source": "shaders/effects/cy_effect_gamma.slang",
+      "sha256": "de468f8e4a6eb3e0fa289f3eea1ec897a90eb03294a9fd9c3518999b9c293267"
+    },
+    "shaderixel/shaders/effects/cy_effect_gaussian_blur.slang": {
+      "source": "shaders/effects/cy_effect_gaussian_blur.slang",
+      "sha256": "d068483e53e9a5a59ab557fb11dbf05089b356e8116b138c498991c3c5580ec1"
+    },
+    "shaderixel/shaders/effects/cy_effect_gradient_map.slang": {
+      "source": "shaders/effects/cy_effect_gradient_map.slang",
+      "sha256": "d8c4d0372137632bab3b8791aa80c941086cfcb6d56dea6f5eaf0f97a3ba8c2f"
+    },
+    "shaderixel/shaders/effects/cy_effect_grayscale.slang": {
+      "source": "shaders/effects/cy_effect_grayscale.slang",
+      "sha256": "b56a85d9e56bac5890877f862c0d5f39d3332da75bfad9fe18ad194a014a2af6"
+    },
+    "shaderixel/shaders/effects/cy_effect_halftone.slang": {
+      "source": "shaders/effects/cy_effect_halftone.slang",
+      "sha256": "d0c20ef8d050d85fd3b7d2b6a8267c752093e88e7c92cfd3451ae1a0bf7f3b82"
+    },
+    "shaderixel/shaders/effects/cy_effect_hdr_toning.slang": {
+      "source": "shaders/effects/cy_effect_hdr_toning.slang",
+      "sha256": "85c8d6527d6b29cb52cf07d2d24ceb1f05f3f8bf0bf2eaa4a24569924a50697b"
+    },
+    "shaderixel/shaders/effects/cy_effect_heat_haze.slang": {
+      "source": "shaders/effects/cy_effect_heat_haze.slang",
+      "sha256": "2b9c4b3988d04363349745c91ac40502a2cb751b54c4f46c720f31033250f3a3"
+    },
+    "shaderixel/shaders/effects/cy_effect_height_erosion.slang": {
+      "source": "shaders/effects/cy_effect_height_erosion.slang",
+      "sha256": "25370db346b29e00eb97174fae6ed7b8a0cd830b09e27e4be64cf939a8cffc72"
+    },
+    "shaderixel/shaders/effects/cy_effect_high_pass.slang": {
+      "source": "shaders/effects/cy_effect_high_pass.slang",
+      "sha256": "511b51d4b8ae3b88d4d8b6ded0261ade4217dc6345f4620c904fb6ee297de53e"
+    },
+    "shaderixel/shaders/effects/cy_effect_hue_saturation.slang": {
+      "source": "shaders/effects/cy_effect_hue_saturation.slang",
+      "sha256": "425cacbf9caac9ad5e76c29c19341a5b60ace66b2b66a440e8a9e30ff775d6fa"
+    },
+    "shaderixel/shaders/effects/cy_effect_impulse_denoise.slang": {
+      "source": "shaders/effects/cy_effect_impulse_denoise.slang",
+      "sha256": "60947b2e59ee39d603935a4b6d788d6a7b4041664bde4106b82b05ebbe8e90aa"
+    },
+    "shaderixel/shaders/effects/cy_effect_invert.slang": {
+      "source": "shaders/effects/cy_effect_invert.slang",
+      "sha256": "03a97d4a768fd7a2b7d5b88f9a78d6695404902f84cfc89970aabdb0aefd4e0d"
+    },
+    "shaderixel/shaders/effects/cy_effect_kaleidoscope.slang": {
+      "source": "shaders/effects/cy_effect_kaleidoscope.slang",
+      "sha256": "c3220c146c001a666a65537f71c3ee7c87eab9f919d1f9680ec14e0fa7882087"
+    },
+    "shaderixel/shaders/effects/cy_effect_kuwahara.slang": {
+      "source": "shaders/effects/cy_effect_kuwahara.slang",
+      "sha256": "dcace8603c58bc969b1b5e652a0db7fa9e9a829c066175a2fd746e31deb12fc8"
+    },
+    "shaderixel/shaders/effects/cy_effect_lens_distortion.slang": {
+      "source": "shaders/effects/cy_effect_lens_distortion.slang",
+      "sha256": "541c53e1365cbe4427ca2b4985dcf2e1bc9b74c29b885067b6e0a26de497ac63"
+    },
+    "shaderixel/shaders/effects/cy_effect_lens_flare_ghosts.slang": {
+      "source": "shaders/effects/cy_effect_lens_flare_ghosts.slang",
+      "sha256": "5d29d3b663effab851ad7995a3792ce4f9504bde9c89a7de516d3f89c4e26b9d"
+    },
+    "shaderixel/shaders/effects/cy_effect_levels.slang": {
+      "source": "shaders/effects/cy_effect_levels.slang",
+      "sha256": "44c7fb44aa61086a2f5048f6402887984053c7efb4e366aea0794a69706b0184"
+    },
+    "shaderixel/shaders/effects/cy_effect_local_contrast.slang": {
+      "source": "shaders/effects/cy_effect_local_contrast.slang",
+      "sha256": "9be1751dd6bb477ff94a24a430555d61054f0019b8f227e929f93ce73a385878"
+    },
+    "shaderixel/shaders/effects/cy_effect_luminance_curve.slang": {
+      "source": "shaders/effects/cy_effect_luminance_curve.slang",
+      "sha256": "f031fe583108b4fc1a9eebc06a2a6abf86b86ae442494391e6a4631dce759e95"
+    },
+    "shaderixel/shaders/effects/cy_effect_lut.slang": {
+      "source": "shaders/effects/cy_effect_lut.slang",
+      "sha256": "8bcb6b642425ad1332566410a890600243e3fa04e2012e2925029d09f3f9c7f7"
+    },
+    "shaderixel/shaders/effects/cy_effect_match_color.slang": {
+      "source": "shaders/effects/cy_effect_match_color.slang",
+      "sha256": "7f562325078487dc7bd236aed67dd52b35e76b35c64f1773b44fba67ac1a980e"
+    },
+    "shaderixel/shaders/effects/cy_effect_morphology.slang": {
+      "source": "shaders/effects/cy_effect_morphology.slang",
+      "sha256": "bb1bb90d358ab1f3a99945898f7bffb51f3e59e469f55fcc614481912b4f06d1"
+    },
+    "shaderixel/shaders/effects/cy_effect_mosaic_glass.slang": {
+      "source": "shaders/effects/cy_effect_mosaic_glass.slang",
+      "sha256": "f68dd26402f501c105f84318e32d4a1f98d165ca4ce6fcf3397721b5f551319a"
+    },
+    "shaderixel/shaders/effects/cy_effect_motion_blur.slang": {
+      "source": "shaders/effects/cy_effect_motion_blur.slang",
+      "sha256": "8a74b976a1f4e84f1fc28e6a1d7094280025b112310af70061ed0d591217dfb7"
+    },
+    "shaderixel/shaders/effects/cy_effect_normal_detail.slang": {
+      "source": "shaders/effects/cy_effect_normal_detail.slang",
+      "sha256": "84b222c6a91a9aa65d661cfbc432ebd238ce22154e09cea9ad0a701a5e6604de"
+    },
+    "shaderixel/shaders/effects/cy_effect_normal_from_height.slang": {
+      "source": "shaders/effects/cy_effect_normal_from_height.slang",
+      "sha256": "ecb38ddd87bce56966ae9514da0e98d534c36ab0b9cf253c90bc5aadf0776817"
+    },
+    "shaderixel/shaders/effects/cy_effect_normal_strength.slang": {
+      "source": "shaders/effects/cy_effect_normal_strength.slang",
+      "sha256": "7dda7fab85ecb6df80400014081ef0325539a04154e692ba65606e1c93668eaf"
+    },
+    "shaderixel/shaders/effects/cy_effect_normalize_range.slang": {
+      "source": "shaders/effects/cy_effect_normalize_range.slang",
+      "sha256": "71bdb95f76a9f1f7dc8eb31a66d63601b7044e7e4ff63088ee7a1728d77f12a1"
+    },
+    "shaderixel/shaders/effects/cy_effect_orton_glow.slang": {
+      "source": "shaders/effects/cy_effect_orton_glow.slang",
+      "sha256": "350483cb3c4bc9a5f41b93ce2029719e6585b5d98e7eb7287a73aeb9625210f1"
+    },
+    "shaderixel/shaders/effects/cy_effect_outline.slang": {
+      "source": "shaders/effects/cy_effect_outline.slang",
+      "sha256": "53d7249881357fa765d0f5637deb8a03afc0e0a181c21fd3c1b44e4facb20827"
+    },
+    "shaderixel/shaders/effects/cy_effect_pbr_clamp.slang": {
+      "source": "shaders/effects/cy_effect_pbr_clamp.slang",
+      "sha256": "109c2d3dfe54d68762f83681f7c0400f53441fde84bd7291df04298416b03f5a"
+    },
+    "shaderixel/shaders/effects/cy_effect_pencil_sketch.slang": {
+      "source": "shaders/effects/cy_effect_pencil_sketch.slang",
+      "sha256": "6ae3f073bc8861950403736863335afbb0f0637e61b9d3993bfc0a4eed7755e7"
+    },
+    "shaderixel/shaders/effects/cy_effect_photo_filter.slang": {
+      "source": "shaders/effects/cy_effect_photo_filter.slang",
+      "sha256": "c325c78360fffd3fab7216ef4b503c017afa5dc7036800f9461240dcef2d0301"
+    },
+    "shaderixel/shaders/effects/cy_effect_pixelate.slang": {
+      "source": "shaders/effects/cy_effect_pixelate.slang",
+      "sha256": "a8bd9ddfa2ce61defe5fa820b0a8a6d81b6a6dbf1725ad7ddd91820de615b517"
+    },
+    "shaderixel/shaders/effects/cy_effect_polar_transform.slang": {
+      "source": "shaders/effects/cy_effect_polar_transform.slang",
+      "sha256": "ed6cc4ca66de0fe9fb5db866fdd089faeb4fc1c8bdd3d730ec684e202762ea33"
+    },
+    "shaderixel/shaders/effects/cy_effect_posterize.slang": {
+      "source": "shaders/effects/cy_effect_posterize.slang",
+      "sha256": "a3d36d0965ab8bf370c98d718e3a28c020d82eb9833ea4941627e4726dc1cd51"
+    },
+    "shaderixel/shaders/effects/cy_effect_premultiply_alpha.slang": {
+      "source": "shaders/effects/cy_effect_premultiply_alpha.slang",
+      "sha256": "91ad3edc38d91d46294cc470f7511f49651da00cac233bafeb42d70d64cb9e7e"
+    },
+    "shaderixel/shaders/effects/cy_effect_radial_blur.slang": {
+      "source": "shaders/effects/cy_effect_radial_blur.slang",
+      "sha256": "d402a00d06470204f4158a82c72cd78e913654e984e8c8c2d8c5c52233459944"
+    },
+    "shaderixel/shaders/effects/cy_effect_replace_color.slang": {
+      "source": "shaders/effects/cy_effect_replace_color.slang",
+      "sha256": "9a480547c66ac0d6dc797106bafea157bee436f75f6fd9e0f32299ab49ea53f5"
+    },
+    "shaderixel/shaders/effects/cy_effect_roughness_remap.slang": {
+      "source": "shaders/effects/cy_effect_roughness_remap.slang",
+      "sha256": "0f92f611be885f8b5c769739e12e1dc1a94c2a35bd075083cf088c8179e7c0a5"
+    },
+    "shaderixel/shaders/effects/cy_effect_scanlines.slang": {
+      "source": "shaders/effects/cy_effect_scanlines.slang",
+      "sha256": "92fe8b754c609928cee5023a42d0e82cd56e2c6d8c17229598398caf2a27cc08"
+    },
+    "shaderixel/shaders/effects/cy_effect_seamless_offset.slang": {
+      "source": "shaders/effects/cy_effect_seamless_offset.slang",
+      "sha256": "507cff235d1ed3ec911e64af482d955312e6b4a4438ea8230393d88eea98aca1"
+    },
+    "shaderixel/shaders/effects/cy_effect_selective_color.slang": {
+      "source": "shaders/effects/cy_effect_selective_color.slang",
+      "sha256": "76017d233087c453ed033b3120057d50dba947e0c1b0ac0e9d55741b468d1d08"
+    },
+    "shaderixel/shaders/effects/cy_effect_sepia.slang": {
+      "source": "shaders/effects/cy_effect_sepia.slang",
+      "sha256": "9ca4a3a3b677b0e728e7d09095067503a5c8e487eaccf0c5d9e747af4acbaf66"
+    },
+    "shaderixel/shaders/effects/cy_effect_shadows_highlights.slang": {
+      "source": "shaders/effects/cy_effect_shadows_highlights.slang",
+      "sha256": "f8ff439377f9ae8977d55060f82d0c9466e7e3347f74e7fec5af716c57a6c879"
+    },
+    "shaderixel/shaders/effects/cy_effect_sharpen.slang": {
+      "source": "shaders/effects/cy_effect_sharpen.slang",
+      "sha256": "f09d00ce079057543011bff7b8ea59c6c3c94247fba986f633361c3aa251efbc"
+    },
+    "shaderixel/shaders/effects/cy_effect_solarize.slang": {
+      "source": "shaders/effects/cy_effect_solarize.slang",
+      "sha256": "f3e505b6fc953689b7940f45dd8ee86b7bba32d6ee40126f68d2b960a75a045c"
+    },
+    "shaderixel/shaders/effects/cy_effect_spin_blur.slang": {
+      "source": "shaders/effects/cy_effect_spin_blur.slang",
+      "sha256": "6591e2907fd218313e96d2521cb4cd846c69b182c625b4f8e43ae81e58aea55c"
+    },
+    "shaderixel/shaders/effects/cy_effect_spiral_blur.slang": {
+      "source": "shaders/effects/cy_effect_spiral_blur.slang",
+      "sha256": "2d8e8cd68e17e43da51d3574e75f47687498bf49232c4c405ced094a432d6a54"
+    },
+    "shaderixel/shaders/effects/cy_effect_threshold.slang": {
+      "source": "shaders/effects/cy_effect_threshold.slang",
+      "sha256": "0d6572248278394d63d32bc7b0207a63f8a79ad74fa5f60db3950a44589cd804"
+    },
+    "shaderixel/shaders/effects/cy_effect_tilt_shift_blur.slang": {
+      "source": "shaders/effects/cy_effect_tilt_shift_blur.slang",
+      "sha256": "a87db50712588539dc0ce3e687a93ae193abd1c7068999c12a07b48920f0c8a2"
+    },
+    "shaderixel/shaders/effects/cy_effect_tint.slang": {
+      "source": "shaders/effects/cy_effect_tint.slang",
+      "sha256": "a359a18277bdada1ac0bae0b2ac43bdd58389d60016b52d4559b9ec53765de31"
+    },
+    "shaderixel/shaders/effects/cy_effect_unpremultiply_alpha.slang": {
+      "source": "shaders/effects/cy_effect_unpremultiply_alpha.slang",
+      "sha256": "580bbdcaf060008237aab23e3034cceef0a2c7bbb8851d428ded24ff07ecfe6f"
+    },
+    "shaderixel/shaders/effects/cy_effect_unsharp_mask.slang": {
+      "source": "shaders/effects/cy_effect_unsharp_mask.slang",
+      "sha256": "08795b1b56b228b160174dcbde1d0ce31079d989502de455faa4b1684124eb33"
+    },
+    "shaderixel/shaders/effects/cy_effect_uv_transform.slang": {
+      "source": "shaders/effects/cy_effect_uv_transform.slang",
+      "sha256": "84acefc5df262e51e595c6ca1303f6b0e497143c7886d1b2ad754175b05fd660"
+    },
+    "shaderixel/shaders/effects/cy_effect_vhs_glitch.slang": {
+      "source": "shaders/effects/cy_effect_vhs_glitch.slang",
+      "sha256": "c523a20e37f0cfc795a2f6f2f833d90e1a2e754e2648bad5887e8ad4a75d635a"
+    },
+    "shaderixel/shaders/effects/cy_effect_vibrance.slang": {
+      "source": "shaders/effects/cy_effect_vibrance.slang",
+      "sha256": "b7aab0120a55c6d98684106e35d9eb397befc2e5be0f7c3cf22702b949d2a657"
+    },
+    "shaderixel/shaders/effects/cy_effect_vignette.slang": {
+      "source": "shaders/effects/cy_effect_vignette.slang",
+      "sha256": "fa224bc905e1c4a57f04946f5f925daf48fcc895642d7f1d6f43b2cfe3af1f86"
+    },
+    "shaderixel/shaders/effects/cy_effect_wave_distortion.slang": {
+      "source": "shaders/effects/cy_effect_wave_distortion.slang",
+      "sha256": "d38cb6b8daf4f12f0436e01ab121e2f84ef1f216219cd0cb8564f5d70d78bae3"
+    },
+    "shaderixel/shaders/effects/cy_effect_white_balance.slang": {
+      "source": "shaders/effects/cy_effect_white_balance.slang",
+      "sha256": "5167acbf71fc362b445c4168e69eecbc53c574a9d862286ca8f6916b8b2d01ee"
+    },
+    "shaderixel/shaders/effects/cy_mask_alpha.slang": {
+      "source": "shaders/effects/cy_mask_alpha.slang",
+      "sha256": "f3f2e15fe49b4baa50b537809c3cff3bc187ccaf60346a2a1e572134e0d9c86d"
+    },
+    "shaderixel/shaders/effects/cy_mask_alpha_feather.slang": {
+      "source": "shaders/effects/cy_mask_alpha_feather.slang",
+      "sha256": "97f66ee9263529f233c0d47edb6a3d3005130b2ada4bd3fd51b1c98168ef07c9"
+    },
+    "shaderixel/shaders/effects/cy_mask_blue_channel.slang": {
+      "source": "shaders/effects/cy_mask_blue_channel.slang",
+      "sha256": "4f906618ab13ba7584a1078a4f89452b29fae036da3e372338bdcc22639428f2"
+    },
+    "shaderixel/shaders/effects/cy_mask_checker.slang": {
+      "source": "shaders/effects/cy_mask_checker.slang",
+      "sha256": "955995ad97d13cd381155d021fd34623a46c091f6e19cd00e1793403bd1a1d83"
+    },
+    "shaderixel/shaders/effects/cy_mask_edge.slang": {
+      "source": "shaders/effects/cy_mask_edge.slang",
+      "sha256": "07e562f6319c8367f51fc5ae59c29681e95809bf3fb31e36d15417d9024d340d"
+    },
+    "shaderixel/shaders/effects/cy_mask_green_channel.slang": {
+      "source": "shaders/effects/cy_mask_green_channel.slang",
+      "sha256": "d81e5a2ded6626dee676a5a7cac0b00a264199bdc90523db48472babc092b368"
+    },
+    "shaderixel/shaders/effects/cy_mask_luminance.slang": {
+      "source": "shaders/effects/cy_mask_luminance.slang",
+      "sha256": "f0d696c2d7859b7fab92617ba6f5edfe94f7ce4517102e6372e3abd7305ef442"
+    },
+    "shaderixel/shaders/effects/cy_mask_noise.slang": {
+      "source": "shaders/effects/cy_mask_noise.slang",
+      "sha256": "e53e4a68a3acd893626a379b6b70137ea7f8d2dd2e08a69c72f7d3443f3595ae"
+    },
+    "shaderixel/shaders/effects/cy_mask_radial.slang": {
+      "source": "shaders/effects/cy_mask_radial.slang",
+      "sha256": "68ba69c8d34e06933d39d60cceb767ec43faebca2c5331d6eb8c1f1f684d12ba"
+    },
+    "shaderixel/shaders/effects/cy_mask_range.slang": {
+      "source": "shaders/effects/cy_mask_range.slang",
+      "sha256": "0fa7c6334afa4e1bff8ae7389a7d42a0625bb45fc8c880e68bef0dec4466db51"
+    },
+    "shaderixel/shaders/effects/cy_mask_red_channel.slang": {
+      "source": "shaders/effects/cy_mask_red_channel.slang",
+      "sha256": "15592ccdf7b40c197b5fb0263d9fd4d96c07a085597e5d97799d4898e7829f90"
+    },
+    "shaderixel/shaders/effects/cy_mask_threshold.slang": {
+      "source": "shaders/effects/cy_mask_threshold.slang",
+      "sha256": "998ac10441241e27071f04007d7a91ce139cda57e37a2ca0aa202f0949bd465e"
+    },
+    "shaderixel/shaders/effects/edge_detect.slang": {
+      "source": "shaders/effects/edge_detect.slang",
+      "sha256": "cb5fcc443b70cec01b717ccff3400bd020471acc3ead5cd73d8886b077abd51a"
+    },
+    "shaderixel/shaders/effects/emboss.slang": {
+      "source": "shaders/effects/emboss.slang",
+      "sha256": "90162f9bb0b61b90e0817a917dc4f30f94f3034dbc7e91e51227a31fba144ccd"
+    },
+    "shaderixel/shaders/effects/exposure.slang": {
+      "source": "shaders/effects/exposure.slang",
+      "sha256": "d551a62c572e385d69b332af7a07e409564677645c4d274438a36f9e0ff77dc7"
+    },
+    "shaderixel/shaders/effects/gaussian_blur.slang": {
+      "source": "shaders/effects/gaussian_blur.slang",
+      "sha256": "e41093eb95cf11323dfe086d76e21c706d3b0ed501901a7a0857045ff98c5de5"
+    },
+    "shaderixel/shaders/effects/gradient_fill.slang": {
+      "source": "shaders/effects/gradient_fill.slang",
+      "sha256": "79768ea8e370e3d54f2de08e944b3cb36d7b4b5a83102f652555a23c4b264ff5"
+    },
+    "shaderixel/shaders/effects/gradient_map.slang": {
+      "source": "shaders/effects/gradient_map.slang",
+      "sha256": "0d573e9a43186a73f1b3c820569991922124c5eb99148df80dfc069794521ee8"
+    },
+    "shaderixel/shaders/effects/hue_saturation.slang": {
+      "source": "shaders/effects/hue_saturation.slang",
+      "sha256": "b0f3ef50acd6c8f7b85cd2c24cba5750ede308ac841b2eb91414fbdb89ccfe67"
+    },
+    "shaderixel/shaders/effects/invert.slang": {
+      "source": "shaders/effects/invert.slang",
+      "sha256": "6f80ea1625e51b8d20a8d4cdd3d320478e7412b8d2f75864a9895925bcced9e3"
+    },
+    "shaderixel/shaders/effects/lab_adjust.slang": {
+      "source": "shaders/effects/lab_adjust.slang",
+      "sha256": "8d12fb251068c0d93fc7eec737c9b96830583fd8597ac3e43cdccc6c6d74fa88"
+    },
+    "shaderixel/shaders/effects/lens_blur.slang": {
+      "source": "shaders/effects/lens_blur.slang",
+      "sha256": "01843e25383c687507daac96c4c75c45f4a135e34cfbf3971a55a7d91f69ddd5"
+    },
+    "shaderixel/shaders/effects/levels.slang": {
+      "source": "shaders/effects/levels.slang",
+      "sha256": "ddd199a1017196cf096335e2581d133b08048a0da66e5d0ff3484dfd62f2a80b"
+    },
+    "shaderixel/shaders/effects/luminance_mask.slang": {
+      "source": "shaders/effects/luminance_mask.slang",
+      "sha256": "8bd755706375492024adc7dbe65a2a7143f1d68c5db8e6ab5d207dcb313bb4e1"
+    },
+    "shaderixel/shaders/effects/mix.slang": {
+      "source": "shaders/effects/mix.slang",
+      "sha256": "7f522a93176fbe65d0dea8a59f91ea57a4fe5421fa46eee87ca472ca65879a5f"
+    },
+    "shaderixel/shaders/effects/motion_blur.slang": {
+      "source": "shaders/effects/motion_blur.slang",
+      "sha256": "18c9d0ca75ec2b8b5765b33fc03942c06202e3745db7f12afbaa09c523134c05"
+    },
+    "shaderixel/shaders/effects/noise.slang": {
+      "source": "shaders/effects/noise.slang",
+      "sha256": "3159d858842c3f8f651c53f76061b60b7eca51c27c0e39eb3731bae7189b0d24"
+    },
+    "shaderixel/shaders/effects/photo_filter.slang": {
+      "source": "shaders/effects/photo_filter.slang",
+      "sha256": "56404bbf737e62a76af71c4a07a9a5d9d8aac8ff0237de8342ab2e9c44e543b4"
+    },
+    "shaderixel/shaders/effects/pixelate.slang": {
+      "source": "shaders/effects/pixelate.slang",
+      "sha256": "5f683751d2cd8b54b6cf35d3e805c1b1661d9f7b51928efa9608f036a8471866"
+    },
+    "shaderixel/shaders/effects/posterize.slang": {
+      "source": "shaders/effects/posterize.slang",
+      "sha256": "495a031efb889f3ab4a9a4b782b6ac7827eabab185be9b5b9a4819d48d5102ce"
+    },
+    "shaderixel/shaders/effects/selective_color.slang": {
+      "source": "shaders/effects/selective_color.slang",
+      "sha256": "2a1f216e21ffeb9c83eeb95aba37c87d8aa3c38ec4afe584dbd24f562f593288"
+    },
+    "shaderixel/shaders/effects/sharpen.slang": {
+      "source": "shaders/effects/sharpen.slang",
+      "sha256": "64f5dacd4d69b53327be53f7cd449ddf3490c946d5caee725fbee37eec90acda"
+    },
+    "shaderixel/shaders/effects/solid_color.slang": {
+      "source": "shaders/effects/solid_color.slang",
+      "sha256": "6ed3fe427339011c5ccefe49f538d54f902f88a8f507dcfdb1910ff5a51461fa"
+    },
+    "shaderixel/shaders/effects/style_bevel.slang": {
+      "source": "shaders/effects/style_bevel.slang",
+      "sha256": "7a73732e2ab8ba0a00035c1181ee055ca841c87783d1390610f67c7ee95ab545"
+    },
+    "shaderixel/shaders/effects/style_color_overlay.slang": {
+      "source": "shaders/effects/style_color_overlay.slang",
+      "sha256": "5bdbaf18fbc4a41259db5883a1590a33625359a7c5d6a41aa347e0627fdcc3c4"
+    },
+    "shaderixel/shaders/effects/style_drop_shadow.slang": {
+      "source": "shaders/effects/style_drop_shadow.slang",
+      "sha256": "dd596991736655b4a04b94f6ce5664cd0308ac8392664b65ca589f999811e477"
+    },
+    "shaderixel/shaders/effects/style_gradient_overlay.slang": {
+      "source": "shaders/effects/style_gradient_overlay.slang",
+      "sha256": "c971850cc08341c26bbc72079a93ebbd04c83f181d2c407c0c5497e8d247a650"
+    },
+    "shaderixel/shaders/effects/style_inner_shadow.slang": {
+      "source": "shaders/effects/style_inner_shadow.slang",
+      "sha256": "c841d069e2d9ab18a2f6151b8e3e26b1bf63895d380745f370c62badb5f81714"
+    },
+    "shaderixel/shaders/effects/style_outer_glow.slang": {
+      "source": "shaders/effects/style_outer_glow.slang",
+      "sha256": "5aa7c975b080266378ef0cc9415fbf16ee804844b1c15b969db6ebf69e367117"
+    },
+    "shaderixel/shaders/effects/style_stroke.slang": {
+      "source": "shaders/effects/style_stroke.slang",
+      "sha256": "550a0bbf6a457046fd1b51539a090f8609351c0773210ce0e5baa95c7f3e2b14"
+    },
+    "shaderixel/shaders/effects/threshold.slang": {
+      "source": "shaders/effects/threshold.slang",
+      "sha256": "0598441cdc22ec027ad6f1209bf48173c56db1c7188ea4ef2b6090824f107fc1"
+    },
+    "shaderixel/shaders/effects/transform_2d.slang": {
+      "source": "shaders/effects/transform_2d.slang",
+      "sha256": "b148dc15ec5abdeb63db770d30fef2bd3d171e6029cc6032d5d095dd69b483ab"
+    },
+    "shaderixel/shaders/effects/twirl.slang": {
+      "source": "shaders/effects/twirl.slang",
+      "sha256": "3b5d67534e7df325a3618fb701cc34d9671e802f0339405682b9091f07bf9f82"
+    },
+    "shaderixel/shaders/effects/vibrance.slang": {
+      "source": "shaders/effects/vibrance.slang",
+      "sha256": "582bba13d22d3d2d5b102caebc91d5e0599a34253eb923caecb02dc8207ab2fb"
+    },
+    "shaderixel/shaders/effects/wave.slang": {
+      "source": "shaders/effects/wave.slang",
+      "sha256": "fc3dc09142c3d55a1f568e6620162b9d9a55938148b8228129d0020a20ac49f7"
+    }
+  }
+}

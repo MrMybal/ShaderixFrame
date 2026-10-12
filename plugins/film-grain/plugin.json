@@ -1,0 +1,1 @@
+{"apiVersion":1,"id":"sf.film-grain","name":"Film Grain","version":"1.0.0","effects":[{"id":"film-grain","name":"Grain de pellicule","category":"Texture","shader":"grain.hlsl"}]}

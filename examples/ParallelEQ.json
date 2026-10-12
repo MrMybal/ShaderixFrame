@@ -1,0 +1,45 @@
+{
+  "schema": 2,
+  "id": "shaderixframe.parallel-eq",
+  "name": "EQ parallèles",
+  "nodes": [
+    {
+      "id": 1,
+      "name": "EQ A",
+      "processor": "cydaw.eq-three",
+      "params": {
+        "low": -6,
+        "mid": 0,
+        "high": 0
+      }
+    },
+    {
+      "id": 2,
+      "name": "EQ B",
+      "processor": "cydaw.eq-three",
+      "params": {
+        "low": 0,
+        "mid": -6,
+        "high": 0
+      }
+    }
+  ],
+  "connections": [
+    {
+      "source": 0,
+      "destination": 1
+    },
+    {
+      "source": 0,
+      "destination": 2
+    },
+    {
+      "source": 1,
+      "destination": 0
+    },
+    {
+      "source": 2,
+      "destination": 0
+    }
+  ]
+}

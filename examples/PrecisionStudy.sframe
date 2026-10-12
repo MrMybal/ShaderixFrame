@@ -1,0 +1,493 @@
+{
+  "format": "shaderixframe",
+  "schema": 7,
+  "name": "Étude précision · HDR linéaire et exports 16 bits",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "duration": 12,
+  "master": 0,
+  "masterMix": {
+    "output": 0,
+    "sends": [],
+    "effects": [
+      {
+        "id": "cydaw.limiter",
+        "enabled": true,
+        "params": {
+          "gain": {
+            "value": 0,
+            "keys": []
+          },
+          "ceiling": {
+            "value": -1,
+            "keys": []
+          },
+          "release": {
+            "value": 80,
+            "keys": []
+          }
+        }
+      }
+    ],
+    "params": {}
+  },
+  "buses": [
+    {
+      "id": 30,
+      "name": "Bus musique · égalisation",
+      "gain": 0,
+      "pan": 0,
+      "muted": false,
+      "locked": false,
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "params": {},
+        "effects": [
+          {
+            "id": "cydaw.eq-three",
+            "enabled": true,
+            "params": {
+              "low": {
+                "value": -2,
+                "keys": []
+              },
+              "mid": {
+                "value": 1,
+                "keys": []
+              },
+              "high": {
+                "value": -3,
+                "keys": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 31,
+      "name": "Auxiliaire · échos",
+      "gain": -3,
+      "pan": 0,
+      "muted": false,
+      "locked": false,
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "params": {},
+        "effects": [
+          {
+            "id": "cydaw.ping-pong",
+            "enabled": true,
+            "params": {
+              "time": {
+                "value": 275,
+                "keys": []
+              },
+              "feedback": {
+                "value": 0.35,
+                "keys": []
+              },
+              "mix": {
+                "value": 1,
+                "keys": []
+              },
+              "width": {
+                "value": 1,
+                "keys": []
+              },
+              "sync": {
+                "value": 0,
+                "keys": []
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "nextId": 33,
+  "tracks": [
+    {
+      "id": 6,
+      "name": "01 / Titre",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 7,
+          "name": "Première lumière · titre",
+          "source": "",
+          "generator": false,
+          "start": 0,
+          "duration": 12,
+          "in": 0,
+          "speed": 1,
+          "link": 0,
+          "fadeIn": 1.8,
+          "fadeOut": 1.5,
+          "title": {
+            "enabled": true,
+            "text": "BUS  /  ENVOIS  /  DSP",
+            "font": "Segoe UI",
+            "alignment": 1,
+            "bold": true,
+            "italic": false
+          },
+          "mask": {
+            "shape": 0,
+            "inverted": false
+          },
+          "params": {
+            "font_size": {
+              "value": 44,
+              "keys": []
+            },
+            "text_r": {
+              "value": 1,
+              "keys": []
+            },
+            "text_g": {
+              "value": 0.93,
+              "keys": []
+            },
+            "text_b": {
+              "value": 0.84,
+              "keys": []
+            },
+            "text_a": {
+              "value": 1,
+              "keys": []
+            },
+            "y": {
+              "value": 0.3,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "opacity": {
+              "value": 1,
+              "keys": []
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 1,
+      "name": "02 / Lumière procédurale",
+      "kind": 0,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 2,
+          "name": "Aurora · lumière HLSL",
+          "source": "",
+          "generator": true,
+          "start": 0,
+          "duration": 12,
+          "in": 0,
+          "speed": 1,
+          "link": 5,
+          "fadeIn": 1.2,
+          "fadeOut": 1.5,
+          "params": {
+            "opacity": {
+              "value": 1,
+              "keys": [
+                {
+                  "time": 3,
+                  "value": 1,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 6,
+                  "value": 0.65,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 9,
+                  "value": 1,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            },
+            "scale": {
+              "value": 1,
+              "keys": []
+            },
+            "x": {
+              "value": 0,
+              "keys": []
+            },
+            "y": {
+              "value": 0,
+              "keys": []
+            },
+            "rotation": {
+              "value": 0,
+              "keys": []
+            }
+          },
+          "effects": [
+            {
+              "id": "custom",
+              "enabled": true,
+              "params": {},
+              "code": "float4 Effect(EffectContext ctx){return float4(4*ctx.uv.x,0.05,0.25+1.5*ctx.uv.y,0.85);}",
+              "graph": null
+            }
+          ]
+        }
+      ],
+      "mix": {
+        "output": 0,
+        "sends": [],
+        "effects": [],
+        "params": {}
+      }
+    },
+    {
+      "id": 3,
+      "name": "Pad original → Bus musique",
+      "kind": 1,
+      "muted": false,
+      "solo": false,
+      "locked": false,
+      "gain": 0,
+      "pan": 0,
+      "clips": [
+        {
+          "id": 4,
+          "name": "Première lumière · pad original",
+          "source": "firstlight.wav",
+          "generator": false,
+          "start": 0,
+          "duration": 12,
+          "in": 0,
+          "speed": 1,
+          "link": 5,
+          "fadeIn": 0.1,
+          "fadeOut": 0.2,
+          "params": {
+            "gain": {
+              "value": 0,
+              "keys": [
+                {
+                  "time": 0,
+                  "value": -12,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 2,
+                  "value": 0,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 10,
+                  "value": 0,
+                  "curve": 1,
+                  "shape": 0
+                },
+                {
+                  "time": 12,
+                  "value": -18,
+                  "curve": 1,
+                  "shape": 0
+                }
+              ]
+            }
+          },
+          "effects": []
+        }
+      ],
+      "mix": {
+        "output": 30,
+        "sends": [
+          {
+            "bus": 31,
+            "gain": -12,
+            "preFader": false,
+            "enabled": true
+          }
+        ],
+        "effects": [
+          {
+            "id": "cydaw.graph",
+            "enabled": true,
+            "graph": {
+              "schema": 2,
+              "id": "shaderixframe.parallel-eq",
+              "name": "EQ parallèles",
+              "nodes": [
+                {
+                  "id": 1,
+                  "name": "EQ A",
+                  "processor": "cydaw.eq-three",
+                  "params": {
+                    "low": -6,
+                    "mid": 0,
+                    "high": 0
+                  },
+                  "pos": [
+                    300,
+                    80
+                  ]
+                },
+                {
+                  "id": 2,
+                  "name": "EQ B",
+                  "processor": "cydaw.eq-three",
+                  "params": {
+                    "low": 0,
+                    "mid": -6,
+                    "high": 0
+                  },
+                  "pos": [
+                    300,
+                    320
+                  ]
+                },
+                {
+                  "id": 3,
+                  "name": "Somme stéréo",
+                  "processor": "sf.sum",
+                  "pos": [
+                    800,
+                    200
+                  ],
+                  "params": {}
+                }
+              ],
+              "connections": [
+                {
+                  "source": 0,
+                  "destination": 1
+                },
+                {
+                  "source": 0,
+                  "destination": 2
+                },
+                {
+                  "source": 1,
+                  "destination": 3
+                },
+                {
+                  "source": 2,
+                  "destination": 3
+                },
+                {
+                  "source": 3,
+                  "destination": 0
+                }
+              ],
+              "layout": {
+                "input": [
+                  20,
+                  200
+                ],
+                "output": [
+                  1100,
+                  200
+                ]
+              }
+            },
+            "code": "",
+            "params": {}
+          }
+        ],
+        "params": {
+          "gain": {
+            "value": -3,
+            "keys": [
+              {
+                "time": 0,
+                "value": -9,
+                "curve": 1,
+                "shape": 0
+              },
+              {
+                "time": 3,
+                "value": -3,
+                "curve": 1,
+                "shape": 0
+              },
+              {
+                "time": 10,
+                "value": -3,
+                "curve": 1,
+                "shape": 0
+              },
+              {
+                "time": 12,
+                "value": -18,
+                "curve": 1,
+                "shape": 0
+              }
+            ]
+          },
+          "send.31": {
+            "value": -12,
+            "keys": [
+              {
+                "time": 0,
+                "value": -30,
+                "curve": 1,
+                "shape": 0
+              },
+              {
+                "time": 3,
+                "value": -12,
+                "curve": 1,
+                "shape": 0
+              },
+              {
+                "time": 10,
+                "value": -6,
+                "curve": 1,
+                "shape": 0
+              },
+              {
+                "time": 12,
+                "value": -30,
+                "curve": 1,
+                "shape": 0
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "color": {
+    "space": "linear709",
+    "tone": "reinhard",
+    "exposure": 0,
+    "backgroundAlpha": 0
+  },
+  "imageFormat": "exr16"
+}

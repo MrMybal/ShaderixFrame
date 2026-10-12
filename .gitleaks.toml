@@ -1,0 +1,18 @@
+title = "ShaderixFrame"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Locked SHA-256 of the OpenFX key-symbol header"
+condition = "AND"
+paths = ['''(^|/)openfx\.lock\.json$''']
+regexTarget = "secret"
+regexes = ['''^06003fc0be9d1c07bb6d93994392eefd3be5abacf08a6adfec1ccf3e3f17cf05$''']
+
+[[allowlists]]
+description = "ImGui keyboard enum constants in its input lookup table"
+condition = "AND"
+paths = ['''(^|/)vendor/imgui/imgui\.cpp$''']
+regexTarget = "secret"
+regexes = ['''^ImGuiKey_(Tab|Space|Apostrophe|Comma|Minus|Period|Slash|Semicolon|Equal|LeftBracket|RightBracket|GraveAccent|KeypadDecimal|KeypadDivide|KeypadMultiply|KeypadSubtract|KeypadAdd|KeypadEqual)$''']

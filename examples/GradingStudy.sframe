@@ -1,0 +1,1160 @@
+{
+  "buses": [
+    {
+      "gain": 0,
+      "id": 30,
+      "locked": false,
+      "mix": {
+        "effects": [
+          {
+            "enabled": true,
+            "id": "cydaw.eq-three",
+            "params": {
+              "high": {
+                "keys": [],
+                "value": -3
+              },
+              "low": {
+                "keys": [],
+                "value": -2
+              },
+              "mid": {
+                "keys": [],
+                "value": 1
+              }
+            }
+          }
+        ],
+        "output": 0,
+        "params": {},
+        "sends": []
+      },
+      "muted": false,
+      "name": "Bus musique · égalisation",
+      "pan": 0
+    },
+    {
+      "gain": -3,
+      "id": 31,
+      "locked": false,
+      "mix": {
+        "effects": [
+          {
+            "enabled": true,
+            "id": "cydaw.ping-pong",
+            "params": {
+              "feedback": {
+                "keys": [],
+                "value": 0.349999994
+              },
+              "mix": {
+                "keys": [],
+                "value": 1
+              },
+              "sync": {
+                "keys": [],
+                "value": 0
+              },
+              "time": {
+                "keys": [],
+                "value": 275
+              },
+              "width": {
+                "keys": [],
+                "value": 1
+              }
+            }
+          }
+        ],
+        "output": 0,
+        "params": {},
+        "sends": []
+      },
+      "muted": false,
+      "name": "Auxiliaire · échos",
+      "pan": 0
+    }
+  ],
+  "color": {
+    "backgroundAlpha": 0,
+    "exposure": 0,
+    "space": "linear709",
+    "tone": "aces"
+  },
+  "duration": 12,
+  "format": "shaderixframe",
+  "fps": 30,
+  "height": 720,
+  "imageFormat": "exr16",
+  "master": 0,
+  "masterMix": {
+    "effects": [
+      {
+        "enabled": true,
+        "id": "cydaw.limiter",
+        "params": {
+          "ceiling": {
+            "keys": [],
+            "value": -1
+          },
+          "gain": {
+            "keys": [],
+            "value": 0
+          },
+          "release": {
+            "keys": [],
+            "value": 80
+          }
+        }
+      }
+    ],
+    "output": 0,
+    "params": {},
+    "sends": []
+  },
+  "name": "Étude étalonnage · corrections et lumières HDR",
+  "nextId": 33,
+  "schema": 8,
+  "tracks": [
+    {
+      "clips": [
+        {
+          "duration": 12,
+          "effects": [],
+          "fadeIn": 1.8,
+          "fadeOut": 1.5,
+          "generator": false,
+          "id": 7,
+          "in": 0,
+          "link": 0,
+          "mask": {
+            "inverted": false,
+            "points": [],
+            "shape": 0
+          },
+          "name": "Première lumière · titre",
+          "params": {
+            "font_size": {
+              "keys": [],
+              "value": 44
+            },
+            "opacity": {
+              "keys": [],
+              "value": 1
+            },
+            "text_a": {
+              "keys": [],
+              "value": 1
+            },
+            "text_b": {
+              "keys": [],
+              "value": 0.839999974
+            },
+            "text_g": {
+              "keys": [],
+              "value": 0.930000007
+            },
+            "text_r": {
+              "keys": [],
+              "value": 1
+            },
+            "x": {
+              "keys": [],
+              "value": 0
+            },
+            "y": {
+              "keys": [],
+              "value": 0.300000012
+            }
+          },
+          "source": "",
+          "sourceColor": "auto",
+          "sourcePremultiplied": false,
+          "speed": 1,
+          "start": 0,
+          "title": {
+            "alignment": 1,
+            "bold": true,
+            "enabled": true,
+            "font": "Segoe UI",
+            "italic": false,
+            "text": "ÉTALONNAGE\nPRIMAIRES · COURBES · LOOKS"
+          },
+          "transition": {
+            "code": "",
+            "duration": 1,
+            "enabled": false,
+            "id": "transition.crossfade"
+          }
+        }
+      ],
+      "gain": 0,
+      "id": 6,
+      "kind": 0,
+      "locked": false,
+      "mix": {
+        "effects": [],
+        "output": 0,
+        "params": {},
+        "sends": []
+      },
+      "muted": false,
+      "name": "01 / Titre",
+      "pan": 0,
+      "solo": false
+    },
+    {
+      "clips": [
+        {
+          "duration": 12,
+          "effects": [
+            {
+              "code": "\nfloat4 Effect(EffectContext ctx){\n    float2 p=(ctx.uv-0.5)*float2(ctx.size.x/ctx.size.y,1);float t=ctx.localTime;\n    float glow=0;float3 c=float3(0.015,0.02,0.045);\n    for(int i=0;i<6;++i){float fi=i;float y=p.y+0.2*sin(p.x*2.4+t*0.35+fi*0.7)+0.13*cos(p.x*5-t*0.2+fi);\n      float band=exp(-abs(y+0.13-fi*0.04)*(18+fi*5));float3 tone=lerp(float3(0.95,0.19,0.045),float3(0.16,0.42,0.72),fi/5);c+=tone*band*0.34;}\n    float moon=1-smoothstep(0.135,0.137,length(p-float2(0.48,-0.19)));c=lerp(c,float3(1,0.72,0.42),moon);\n    c*=1-0.6*length(ctx.uv-0.5);return float4(c*2,1);\n}",
+              "enabled": true,
+              "graph": null,
+              "id": "custom",
+              "params": {}
+            },
+            {
+              "code": "",
+              "enabled": true,
+              "grading": {
+                "curves": {},
+                "lutInput": "linear709",
+                "lutOutput": "linear709",
+                "name": "01 · Balance et primaires",
+                "schema": 1
+              },
+              "graph": null,
+              "id": "grading",
+              "params": {
+                "blacks": {
+                  "keys": [],
+                  "value": 0
+                },
+                "contrast": {
+                  "keys": [],
+                  "value": 1.07000005
+                },
+                "exposure": {
+                  "keys": [
+                    {
+                      "curve": 0,
+                      "shape": 0,
+                      "time": 0,
+                      "value": -0.200000003
+                    },
+                    {
+                      "curve": 0,
+                      "shape": 0,
+                      "time": 12,
+                      "value": 0.100000001
+                    }
+                  ],
+                  "value": 0
+                },
+                "high_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "high_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "high_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "hue": {
+                  "keys": [],
+                  "value": 0.0799999982
+                },
+                "hue_soft": {
+                  "keys": [],
+                  "value": 0.0299999993
+                },
+                "hue_width": {
+                  "keys": [],
+                  "value": 0.0799999982
+                },
+                "intensity": {
+                  "keys": [],
+                  "value": 1
+                },
+                "luma_max": {
+                  "keys": [],
+                  "value": 1
+                },
+                "luma_min": {
+                  "keys": [],
+                  "value": 0
+                },
+                "lut_intensity": {
+                  "keys": [],
+                  "value": 1
+                },
+                "mask_feather": {
+                  "keys": [],
+                  "value": 0.0500000007
+                },
+                "mask_height": {
+                  "keys": [],
+                  "value": 0.5
+                },
+                "mask_invert": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_mode": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_rotation": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_width": {
+                  "keys": [],
+                  "value": 0.5
+                },
+                "mask_x": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_y": {
+                  "keys": [],
+                  "value": 0
+                },
+                "matte": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "pivot": {
+                  "keys": [],
+                  "value": 0.180000007
+                },
+                "qual_invert": {
+                  "keys": [],
+                  "value": 0
+                },
+                "qual_soft": {
+                  "keys": [],
+                  "value": 0.0500000007
+                },
+                "qualifier": {
+                  "keys": [],
+                  "value": 0
+                },
+                "sat_max": {
+                  "keys": [],
+                  "value": 1
+                },
+                "sat_min": {
+                  "keys": [],
+                  "value": 0
+                },
+                "saturation": {
+                  "keys": [],
+                  "value": 1
+                },
+                "shadow_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "shadow_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "shadow_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "temperature": {
+                  "keys": [],
+                  "value": 450
+                },
+                "tint": {
+                  "keys": [],
+                  "value": 0
+                },
+                "vibrance": {
+                  "keys": [],
+                  "value": 0.119999997
+                },
+                "wb_b": {
+                  "keys": [],
+                  "value": 1
+                },
+                "wb_g": {
+                  "keys": [],
+                  "value": 1
+                },
+                "wb_r": {
+                  "keys": [],
+                  "value": 1
+                },
+                "whites": {
+                  "keys": [],
+                  "value": 0
+                }
+              }
+            },
+            {
+              "code": "",
+              "enabled": true,
+              "grading": {
+                "curves": {
+                  "master": [
+                    [
+                      0,
+                      0
+                    ],
+                    [
+                      0.18,
+                      0.17
+                    ],
+                    [
+                      0.5,
+                      0.55
+                    ],
+                    [
+                      1,
+                      1
+                    ]
+                  ]
+                },
+                "lutInput": "linear709",
+                "lutOutput": "linear709",
+                "name": "02 · Courbe et ombres cyan",
+                "schema": 1
+              },
+              "graph": null,
+              "id": "grading",
+              "params": {
+                "blacks": {
+                  "keys": [],
+                  "value": 0
+                },
+                "contrast": {
+                  "keys": [],
+                  "value": 1
+                },
+                "exposure": {
+                  "keys": [],
+                  "value": 0
+                },
+                "high_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "high_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "high_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "hue": {
+                  "keys": [],
+                  "value": 0.0799999982
+                },
+                "hue_soft": {
+                  "keys": [],
+                  "value": 0.0299999993
+                },
+                "hue_width": {
+                  "keys": [],
+                  "value": 0.0799999982
+                },
+                "intensity": {
+                  "keys": [],
+                  "value": 1
+                },
+                "luma_max": {
+                  "keys": [],
+                  "value": 1
+                },
+                "luma_min": {
+                  "keys": [],
+                  "value": 0
+                },
+                "lut_intensity": {
+                  "keys": [],
+                  "value": 1
+                },
+                "mask_feather": {
+                  "keys": [],
+                  "value": 0.0500000007
+                },
+                "mask_height": {
+                  "keys": [],
+                  "value": 0.5
+                },
+                "mask_invert": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_mode": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_rotation": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_width": {
+                  "keys": [],
+                  "value": 0.5
+                },
+                "mask_x": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_y": {
+                  "keys": [],
+                  "value": 0
+                },
+                "matte": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "pivot": {
+                  "keys": [],
+                  "value": 0.180000007
+                },
+                "qual_invert": {
+                  "keys": [],
+                  "value": 0
+                },
+                "qual_soft": {
+                  "keys": [],
+                  "value": 0.0500000007
+                },
+                "qualifier": {
+                  "keys": [],
+                  "value": 0
+                },
+                "sat_max": {
+                  "keys": [],
+                  "value": 1
+                },
+                "sat_min": {
+                  "keys": [],
+                  "value": 0
+                },
+                "saturation": {
+                  "keys": [],
+                  "value": 1
+                },
+                "shadow_b": {
+                  "keys": [],
+                  "value": 0.0120000001
+                },
+                "shadow_g": {
+                  "keys": [],
+                  "value": 0.00800000038
+                },
+                "shadow_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "temperature": {
+                  "keys": [],
+                  "value": 0
+                },
+                "tint": {
+                  "keys": [],
+                  "value": 0
+                },
+                "vibrance": {
+                  "keys": [],
+                  "value": 0
+                },
+                "wb_b": {
+                  "keys": [],
+                  "value": 1
+                },
+                "wb_g": {
+                  "keys": [],
+                  "value": 1
+                },
+                "wb_r": {
+                  "keys": [],
+                  "value": 1
+                },
+                "whites": {
+                  "keys": [],
+                  "value": 0
+                }
+              }
+            },
+            {
+              "code": "",
+              "enabled": true,
+              "grading": {
+                "curves": {},
+                "lutInput": "linear709",
+                "lutOutput": "linear709",
+                "name": "03 · Lumière locale",
+                "schema": 1
+              },
+              "graph": null,
+              "id": "grading",
+              "params": {
+                "blacks": {
+                  "keys": [],
+                  "value": 0
+                },
+                "contrast": {
+                  "keys": [],
+                  "value": 1
+                },
+                "exposure": {
+                  "keys": [],
+                  "value": 0.300000012
+                },
+                "high_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "high_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "high_r": {
+                  "keys": [],
+                  "value": 0.0350000001
+                },
+                "hue": {
+                  "keys": [],
+                  "value": 0.0799999982
+                },
+                "hue_soft": {
+                  "keys": [],
+                  "value": 0.0299999993
+                },
+                "hue_width": {
+                  "keys": [],
+                  "value": 0.0799999982
+                },
+                "intensity": {
+                  "keys": [],
+                  "value": 1
+                },
+                "luma_max": {
+                  "keys": [],
+                  "value": 1
+                },
+                "luma_min": {
+                  "keys": [],
+                  "value": 0
+                },
+                "lut_intensity": {
+                  "keys": [],
+                  "value": 1
+                },
+                "mask_feather": {
+                  "keys": [],
+                  "value": 0.100000001
+                },
+                "mask_height": {
+                  "keys": [],
+                  "value": 0.419999987
+                },
+                "mask_invert": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_mode": {
+                  "keys": [],
+                  "value": 2
+                },
+                "mask_rotation": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mask_width": {
+                  "keys": [],
+                  "value": 0.300000012
+                },
+                "mask_x": {
+                  "keys": [],
+                  "value": 0.270000011
+                },
+                "mask_y": {
+                  "keys": [],
+                  "value": -0.189999998
+                },
+                "matte": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "mid_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "offset_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "pivot": {
+                  "keys": [],
+                  "value": 0.180000007
+                },
+                "qual_invert": {
+                  "keys": [],
+                  "value": 0
+                },
+                "qual_soft": {
+                  "keys": [],
+                  "value": 0.0500000007
+                },
+                "qualifier": {
+                  "keys": [],
+                  "value": 0
+                },
+                "sat_max": {
+                  "keys": [],
+                  "value": 1
+                },
+                "sat_min": {
+                  "keys": [],
+                  "value": 0
+                },
+                "saturation": {
+                  "keys": [],
+                  "value": 1
+                },
+                "shadow_b": {
+                  "keys": [],
+                  "value": 0
+                },
+                "shadow_g": {
+                  "keys": [],
+                  "value": 0
+                },
+                "shadow_r": {
+                  "keys": [],
+                  "value": 0
+                },
+                "temperature": {
+                  "keys": [],
+                  "value": 0
+                },
+                "tint": {
+                  "keys": [],
+                  "value": 0
+                },
+                "vibrance": {
+                  "keys": [],
+                  "value": 0
+                },
+                "wb_b": {
+                  "keys": [],
+                  "value": 1
+                },
+                "wb_g": {
+                  "keys": [],
+                  "value": 1
+                },
+                "wb_r": {
+                  "keys": [],
+                  "value": 1
+                },
+                "whites": {
+                  "keys": [],
+                  "value": 0
+                }
+              }
+            }
+          ],
+          "fadeIn": 1.2,
+          "fadeOut": 1.5,
+          "generator": true,
+          "id": 2,
+          "in": 0,
+          "link": 5,
+          "mask": {
+            "inverted": false,
+            "points": [],
+            "shape": 0
+          },
+          "name": "Lumière HDR · corrections locales",
+          "params": {
+            "opacity": {
+              "keys": [
+                {
+                  "curve": 1,
+                  "shape": 0,
+                  "time": 3,
+                  "value": 1
+                },
+                {
+                  "curve": 1,
+                  "shape": 0,
+                  "time": 6,
+                  "value": 0.649999976
+                },
+                {
+                  "curve": 1,
+                  "shape": 0,
+                  "time": 9,
+                  "value": 1
+                }
+              ],
+              "value": 1
+            },
+            "rotation": {
+              "keys": [],
+              "value": 0
+            },
+            "scale": {
+              "keys": [],
+              "value": 1
+            },
+            "x": {
+              "keys": [],
+              "value": 0
+            },
+            "y": {
+              "keys": [],
+              "value": 0
+            }
+          },
+          "source": "",
+          "sourceColor": "auto",
+          "sourcePremultiplied": false,
+          "speed": 1,
+          "start": 0,
+          "title": {
+            "alignment": 1,
+            "bold": true,
+            "enabled": false,
+            "font": "Segoe UI",
+            "italic": false,
+            "text": "Votre titre"
+          },
+          "transition": {
+            "code": "",
+            "duration": 1,
+            "enabled": false,
+            "id": "transition.crossfade"
+          }
+        }
+      ],
+      "gain": 0,
+      "id": 1,
+      "kind": 0,
+      "locked": false,
+      "mix": {
+        "effects": [],
+        "output": 0,
+        "params": {},
+        "sends": []
+      },
+      "muted": false,
+      "name": "02 / Lumière procédurale",
+      "pan": 0,
+      "solo": false
+    },
+    {
+      "clips": [
+        {
+          "duration": 12,
+          "effects": [],
+          "fadeIn": 0.1,
+          "fadeOut": 0.2,
+          "generator": false,
+          "id": 4,
+          "in": 0,
+          "link": 5,
+          "mask": {
+            "inverted": false,
+            "points": [],
+            "shape": 0
+          },
+          "name": "Première lumière · pad original",
+          "params": {
+            "gain": {
+              "keys": [
+                {
+                  "curve": 1,
+                  "shape": 0,
+                  "time": 0,
+                  "value": -12
+                },
+                {
+                  "curve": 1,
+                  "shape": 0,
+                  "time": 2,
+                  "value": 0
+                },
+                {
+                  "curve": 1,
+                  "shape": 0,
+                  "time": 10,
+                  "value": 0
+                },
+                {
+                  "curve": 1,
+                  "shape": 0,
+                  "time": 12,
+                  "value": -18
+                }
+              ],
+              "value": 0
+            }
+          },
+          "source": "firstlight.wav",
+          "sourceColor": "auto",
+          "sourcePremultiplied": false,
+          "speed": 1,
+          "start": 0,
+          "title": {
+            "alignment": 1,
+            "bold": true,
+            "enabled": false,
+            "font": "Segoe UI",
+            "italic": false,
+            "text": "Votre titre"
+          },
+          "transition": {
+            "code": "",
+            "duration": 1,
+            "enabled": false,
+            "id": "transition.crossfade"
+          }
+        }
+      ],
+      "gain": 0,
+      "id": 3,
+      "kind": 1,
+      "locked": false,
+      "mix": {
+        "effects": [
+          {
+            "enabled": true,
+            "graph": {
+              "connections": [
+                {
+                  "destination": 1,
+                  "source": 0
+                },
+                {
+                  "destination": 2,
+                  "source": 0
+                },
+                {
+                  "destination": 3,
+                  "source": 1
+                },
+                {
+                  "destination": 3,
+                  "source": 2
+                },
+                {
+                  "destination": 0,
+                  "source": 3
+                }
+              ],
+              "id": "shaderixframe.parallel-eq",
+              "layout": {
+                "input": [
+                  20,
+                  200
+                ],
+                "output": [
+                  1100,
+                  200
+                ]
+              },
+              "name": "EQ parallèles",
+              "nodes": [
+                {
+                  "id": 1,
+                  "name": "EQ A",
+                  "params": {
+                    "high": 0,
+                    "low": -6,
+                    "mid": 0
+                  },
+                  "pos": [
+                    300,
+                    80
+                  ],
+                  "processor": "cydaw.eq-three"
+                },
+                {
+                  "id": 2,
+                  "name": "EQ B",
+                  "params": {
+                    "high": 0,
+                    "low": 0,
+                    "mid": -6
+                  },
+                  "pos": [
+                    300,
+                    320
+                  ],
+                  "processor": "cydaw.eq-three"
+                },
+                {
+                  "id": 3,
+                  "name": "Somme stéréo",
+                  "params": {},
+                  "pos": [
+                    800,
+                    200
+                  ],
+                  "processor": "sf.sum"
+                }
+              ],
+              "schema": 2
+            },
+            "id": "cydaw.graph",
+            "params": {}
+          }
+        ],
+        "output": 30,
+        "params": {
+          "gain": {
+            "keys": [
+              {
+                "curve": 1,
+                "shape": 0,
+                "time": 0,
+                "value": -9
+              },
+              {
+                "curve": 1,
+                "shape": 0,
+                "time": 3,
+                "value": -3
+              },
+              {
+                "curve": 1,
+                "shape": 0,
+                "time": 10,
+                "value": -3
+              },
+              {
+                "curve": 1,
+                "shape": 0,
+                "time": 12,
+                "value": -18
+              }
+            ],
+            "value": -3
+          },
+          "send.31": {
+            "keys": [
+              {
+                "curve": 1,
+                "shape": 0,
+                "time": 0,
+                "value": -30
+              },
+              {
+                "curve": 1,
+                "shape": 0,
+                "time": 3,
+                "value": -12
+              },
+              {
+                "curve": 1,
+                "shape": 0,
+                "time": 10,
+                "value": -6
+              },
+              {
+                "curve": 1,
+                "shape": 0,
+                "time": 12,
+                "value": -30
+              }
+            ],
+            "value": -12
+          }
+        },
+        "sends": [
+          {
+            "bus": 31,
+            "enabled": true,
+            "gain": -12,
+            "preFader": false
+          }
+        ]
+      },
+      "muted": false,
+      "name": "Pad original → Bus musique",
+      "pan": 0,
+      "solo": false
+    }
+  ],
+  "width": 1280
+}
