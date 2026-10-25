@@ -31,14 +31,14 @@ int NodeOutputCount(const Node& n) { return n.kind == NodeKind::Output ? 0 : n.k
 PinType NodeOutputType(const Node& n, int) { return n.kind == NodeKind::Split ? PinType::Channel : PinType::RGBA; }
 u8 NodeOutputChannel(const Node& n, int k) { return n.kind == NodeKind::Split ? (u8)(k + 1) : 0; }
 std::string NodeOutputName(const Node& n, int k) {
-    static const char* ch[] = {"R", "V", "B", "A"};
+    static const char* ch[] = {"R", "G", "B", "A"};
     return n.kind == NodeKind::Split ? ch[std::clamp(k, 0, 3)] : "RGBA";
 }
 
 std::string NodeInputName(const Node& n, int i) {
     switch (n.kind) {
         case NodeKind::Output: return "Image";
-        case NodeKind::Blend: return i == 0 ? "Background" : i == 1 ? "Calque" : "Mask";
+        case NodeKind::Blend: return i == 0 ? "Background" : i == 1 ? "Layer" : "Mask";
         case NodeKind::Split: return "RGBA";
         case NodeKind::Effect: {
             auto d = n.fx.Def();

@@ -15,7 +15,7 @@ class TimelineGraphInput final : public cydaw::engine::AudioProcessor {
 using namespace cydaw::engine;
 const EffectDescriptor *audioEffect(const std::string &id) {
     static const EffectDescriptor native{"native",       "native", NativeDspNodeKind::passthrough, "", "",
-                                         "Plugin natif", "",       EffectGroup::modulation};
+                                         "Native Plugin", "",       EffectGroup::modulation};
     static const EffectDescriptor vst{"vst3",        "vst3", NativeDspNodeKind::passthrough, "", "",
                                       "Plugin VST3", "",     EffectGroup::modulation};
     if (id == "native")
@@ -23,7 +23,7 @@ const EffectDescriptor *audioEffect(const std::string &id) {
     if (id == "vst3")
         return &vst;
     static const EffectDescriptor graph{
-        "graph", "cydaw.graph",          NativeDspNodeKind::passthrough, "", "", "Graphe DSP",
+        "graph", "cydaw.graph",          NativeDspNodeKind::passthrough, "", "", "DSP Graph",
         "",      EffectGroup::modulation};
     if (id == "cydaw.graph")
         return &graph;
@@ -35,7 +35,7 @@ const EffectDescriptor *audioEffect(const std::string &id) {
 Effect instantiateAudioEffect(const std::string &id) {
     auto *d = audioEffect(id);
     if (!d)
-        throw std::runtime_error("Effet audio introuvable");
+        throw std::runtime_error("Audio effect not found");
     Effect e;
     e.id = id;
     for (auto &p : d->parameters)
@@ -63,7 +63,7 @@ unsigned AudioEffects::latency(Id owner, const std::vector<Effect> &chain) {
         }
         total += entry.external->latency();
         if (total > 480000)
-            throw std::runtime_error("Latence cumulée du canal supérieure à 10 secondes");
+            throw std::runtime_error("Total channel latency exceeds 10 seconds");
     }
     return total;
 }
@@ -75,7 +75,7 @@ void AudioEffects::process(Id owner, const std::vector<Effect> &chain, double ti
             continue;
         auto *d = audioEffect(effect.id);
         if (!d)
-            throw std::runtime_error("Effet audio inconnu: " + effect.id);
+            throw std::runtime_error("Unknown audio effect: " + effect.id);
         used.insert({owner, index});
         auto &entry = instances[{owner, index}];
         if (effect.id == "cydaw.graph") {
@@ -87,7 +87,7 @@ void AudioEffects::process(Id owner, const std::vector<Effect> &chain, double ti
                 entry.graphProcessors.clear();
                 auto add = [&](uint64_t id, std::unique_ptr<AudioProcessor> processor, bool input = false) {
                     if (builder.addNode(id, std::move(processor), input) != RenderPlanError::none)
-                        throw std::runtime_error("CyDAW: impossible d'ajouter le processeur");
+                        throw std::runtime_error("CyDAW: cannot add processor");
                 };
                 add(inputId, std::make_unique<TimelineGraphInput>(), true);
                 add(outputId, std::make_unique<TimelineGraphInput>());
@@ -111,7 +111,7 @@ void AudioEffects::process(Id owner, const std::vector<Effect> &chain, double ti
                     if (builder.connect(wire.source.nodeId ? wire.source.nodeId : inputId,
                                         wire.destination.nodeId ? wire.destination.nodeId : outputId,
                                         wire.source.portId, wire.destination.portId) != RenderPlanError::none)
-                        throw std::runtime_error("CyDAW: connexion audio invalide");
+                        throw std::runtime_error("CyDAW: invalid audio connection");
                 auto compiled = builder.compile({48000, 1024, 2}, outputId);
                 if (!compiled)
                     throw std::runtime_error(compiled.message);
@@ -203,7 +203,7 @@ cydaw::graph::GraphDefinition audioGraph(const Project &p) {
     GraphDefinition g;
     g.reference = {"shaderixframe.audio-mix", {2, 0, 0}};
     g.schemaVersion = 2;
-    g.displayName = "Mixage vidéo";
+    g.displayName = "Video Mix";
     g.role = GraphRole::audioEffect;
     auto port = [](PortId id, std::string key, PortDirection direction, bool many = false) {
         GraphPort p;
@@ -231,9 +231,9 @@ cydaw::graph::GraphDefinition audioGraph(const Project &p) {
     auto wire = [&](GraphEndpoint from, NodeId to) { g.connections.push_back({from, {to, 1}}); };
     std::map<Id, NodeId> sums;
     std::map<Id, std::pair<GraphEndpoint, GraphEndpoint>> taps;
-    sums[0] = node("Somme master", "sf.stereo-mixer", true);
+    sums[0] = node("Master Sum", "sf.stereo-mixer", true);
     for (auto &bus : p.buses)
-        sums[bus.id] = node(bus.name + " / somme", "sf.stereo-mixer", true);
+        sums[bus.id] = node(bus.name + " / Sum", "sf.stereo-mixer", true);
     auto channel = [&](Id id, std::string name, const MixChannel &mix, GraphEndpoint source,
                        bool trackChannel = false) {
         for (auto &effect : mix.effects)
@@ -262,7 +262,7 @@ cydaw::graph::GraphDefinition audioGraph(const Project &p) {
         for (auto &send : mix.sends)
             if (send.enabled) {
                 auto gain =
-                    node("Envoi " + std::to_string(id) + " → " + std::to_string(send.bus), "sf.send-gain");
+                    node("Send " + std::to_string(id) + " → " + std::to_string(send.bus), "sf.send-gain");
                 wire(send.preFader ? taps.at(id).first : taps.at(id).second, gain);
                 g.nodes.back().parameters.push_back({"gain", -80, 12, send.gain});
                 wire({gain, 2}, sums.at(send.bus));
@@ -279,7 +279,7 @@ cydaw::graph::GraphDefinition audioGraph(const Project &p) {
     if (!validation.ok())
         throw std::runtime_error(validation.issues.front().message);
     if (!library.compile())
-        throw std::runtime_error("Compilation du graphe audio CyDAW échouée");
+        throw std::runtime_error("CyDAW audio graph compilation failed");
     return g;
 }
 } // namespace sf

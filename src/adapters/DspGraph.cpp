@@ -7,13 +7,13 @@ DspGraph decodeDspGraph(const Json &json) {
     using namespace cydaw::graph;
     if (!json.IsObject() || json["schema"].I() != 2 || json["nodes"].Size() > 128 ||
         json["connections"].Size() > 512)
-        throw std::runtime_error("Graphe DSP v2 invalide ou trop grand");
+        throw std::runtime_error("Invalid or oversized DSP v2 graph");
     DspGraph result;
     auto &g = result.definition;
     g.schemaVersion = 2;
     g.reference = {json["id"].S("shaderixframe.dsp"), {2, 0, 0}};
     g.role = GraphRole::audioEffect;
-    g.displayName = json["name"].S("Graphe DSP");
+    g.displayName = json["name"].S("DSP Graph");
     auto port = [](PortId id, PortDirection direction, bool many = false) {
         GraphPort p;
         p.id = id;
@@ -32,10 +32,10 @@ DspGraph decodeDspGraph(const Json &json) {
         if (point.IsNull())
             return;
         if (!point.IsArray() || point.Size() != 2)
-            throw std::runtime_error("Position DSP invalide");
+            throw std::runtime_error("Invalid DSP position");
         for (auto &v : point.Elements())
             if (v.GetType() != Json::Type::Number || !std::isfinite(v.Num()) || std::abs(v.Num()) > 1000000)
-                throw std::runtime_error("Position DSP hors limites");
+                throw std::runtime_error("DSP position out of bounds");
     };
     position(json["layout"]["input"]);
     position(json["layout"]["output"]);
@@ -46,17 +46,17 @@ DspGraph decodeDspGraph(const Json &json) {
         position(item["pos"]);
         if (item["id"].GetType() != Json::Type::Number || item["id"].Num() < 1 ||
             item["id"].Num() > 2147483647 || std::floor(item["id"].Num()) != item["id"].Num())
-            throw std::runtime_error("Identité de nœud DSP invalide");
+            throw std::runtime_error("Invalid DSP node identity");
         Id id = item["id"].U();
         if (!ids.insert(id).second)
-            throw std::runtime_error("Nœud DSP dupliqué");
+            throw std::runtime_error("Duplicate DSP node");
         auto processor = item["processor"].S();
         Effect effect;
         if (processor == "sf.sum")
             effect.id = "sf.sum";
         else {
             if (!processor.starts_with("cydaw.") || processor == "cydaw.graph")
-                throw std::runtime_error("Processeur DSP non supporté dans le graphe");
+                throw std::runtime_error("Unsupported DSP processor in graph");
             effect = instantiateAudioEffect(processor);
         }
         for (auto &[key, value] : item["params"].Items()) {
@@ -70,16 +70,16 @@ DspGraph decodeDspGraph(const Json &json) {
                             return v >= parameter.minimum && v <= parameter.maximum;
                         };
                         if (!valid(automation.value))
-                            throw std::runtime_error("Paramètre DSP hors limites");
+                            throw std::runtime_error("DSP parameter out of bounds");
                         for (auto &k : automation.keys)
                             if (!valid(k.value))
-                                throw std::runtime_error("Automation DSP hors limites");
+                                throw std::runtime_error("DSP automation out of bounds");
                         known = true;
                         effect.params[key] = automation;
                         break;
                     }
             if (!known)
-                throw std::runtime_error("Paramètre de nœud DSP invalide : " + key);
+                throw std::runtime_error("Invalid DSP node parameter: " + key);
         }
         GraphNode node;
         node.id = id;
@@ -95,10 +95,10 @@ DspGraph decodeDspGraph(const Json &json) {
         for (auto key : {"source", "destination"})
             if (item[key].GetType() != Json::Type::Number || item[key].Num() < 0 ||
                 item[key].Num() > 2147483647 || std::floor(item[key].Num()) != item[key].Num())
-                throw std::runtime_error("Connexion DSP invalide");
+                throw std::runtime_error("Invalid DSP connection");
         Id from = item["source"].U(), to = item["destination"].U();
         if ((from && !ids.contains(from)) || (to && !ids.contains(to)))
-            throw std::runtime_error("Nœud de connexion introuvable");
+            throw std::runtime_error("Connection node not found");
         g.connections.push_back({{from, 2}, {to, 1}});
         if (from && to) {
             ++pending[to];
@@ -108,13 +108,13 @@ DspGraph decodeDspGraph(const Json &json) {
             output = true;
     }
     if (!output)
-        throw std::runtime_error("La sortie du graphe doit être connectée");
+        throw std::runtime_error("The graph output must be connected");
     GraphLibrary library;
     auto validation = library.install(g);
     if (!validation.ok())
         throw std::runtime_error(validation.issues.front().message);
     if (!library.compile())
-        throw std::runtime_error("Graphe DSP non compilable");
+        throw std::runtime_error("Cannot compile DSP graph");
     for (auto [id, count] : pending)
         if (!count)
             result.order.push_back(id);
@@ -123,7 +123,7 @@ DspGraph decodeDspGraph(const Json &json) {
             if (--pending[next] == 0)
                 result.order.push_back(next);
     if (result.order.size() != ids.size())
-        throw std::runtime_error("Cycle de traitement DSP");
+        throw std::runtime_error("DSP processing cycle");
     return result;
 }
 } // namespace sf

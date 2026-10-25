@@ -22,18 +22,18 @@ Parameter graphParameter(const Json &j) {
     auto number = [](const Json &v) { return v.GetType() == Json::Type::Number && std::isfinite(v.Num()); };
     if (j.GetType() == Json::Type::Number) {
         if (!number(j))
-            throw std::runtime_error("Valeur non finie");
+            throw std::runtime_error("Non-finite value");
         p.value = j.F();
         return p;
     }
     if (!j.IsObject() || !number(j["value"]) || !j["keys"].IsArray() || j["keys"].Size() > 100000)
-        throw std::runtime_error("Automation de graphe invalide");
+        throw std::runtime_error("Invalid graph automation");
     p.value = j["value"].F();
     double previous = -1e100;
     for (auto &f : j["keys"].Elements()) {
         if (!number(f["time"]) || !number(f["value"]) || f["time"].Num() <= previous || f["curve"].I() < 0 ||
             f["curve"].I() > 3 || !std::isfinite(f["shape"].F()) || std::abs(f["shape"].F()) > 1)
-            throw std::runtime_error("Clé de graphe invalide");
+            throw std::runtime_error("Invalid graph key");
         previous = f["time"].Num();
         p.keys.push_back({previous, f["value"].F(), Curve(f["curve"].I()), f["shape"].F()});
     }
@@ -61,7 +61,7 @@ Json defaultLayerGraph(const Project &p) {
             Json blend = Json::Object();
             blend["id"] = id++;
             blend["kind"] = "blend";
-            blend["name"] = "Fusion / " + it->name;
+            blend["name"] = "Blend / " + it->name;
             blend["blend"] = 0;
             blend["opacity"] = 1;
             blend["pos"] = Json::Array();
@@ -78,7 +78,7 @@ Json defaultLayerGraph(const Project &p) {
     Json out = Json::Object();
     out["id"] = id;
     out["kind"] = "output";
-    out["name"] = "Sortie vidéo";
+    out["name"] = "Video Output";
     out["inputs"] = Json::Array();
     out["inputs"].Push(previous);
     out["pos"] = Json::Array();
@@ -99,7 +99,7 @@ void appendLayerSurface(Project &p, Id track, const std::string &name) {
     Json blend = Json::Object();
     blend["id"] = next + 1;
     blend["kind"] = "blend";
-    blend["name"] = "Fusion / " + name;
+    blend["name"] = "Blend / " + name;
     blend["opacity"] = 1;
     blend["pos"] = Json::Array();
     blend["pos"].Push(320);
@@ -131,20 +131,20 @@ void appendLayerSurface(Project &p, Id track, const std::string &name) {
 LayerComposition decodeLayerGraph(const Json &j, const Project &p) {
     if (!j.IsObject() || j["schema"].I() != 1 || j["engine"].S() != "shaderixel.composition" ||
         !j["nodes"].IsArray() || j["nodes"].Size() > 128)
-        throw std::runtime_error("Graphe de composition Shaderixel invalide");
+        throw std::runtime_error("Invalid Shaderixel composition graph");
     LayerComposition result;
     std::set<Id> ids;
     auto identity = [](const Json &v, bool zero = false) -> Id {
         if (v.GetType() != Json::Type::Number || !std::isfinite(v.Num()) || v.Num() < (zero ? 0 : 1) ||
             v.Num() > 2147483647 || std::floor(v.Num()) != v.Num())
-            throw std::runtime_error("Identité de graphe invalide");
+            throw std::runtime_error("Invalid graph identity");
         return v.U();
     };
     for (auto &item : j["nodes"].Elements()) {
         sx::Node n;
         n.id = identity(item["id"]);
         if (!ids.insert(n.id).second)
-            throw std::runtime_error("Nœud dupliqué");
+            throw std::runtime_error("Duplicate node");
         int kind = item["kind"].I(-1);
         if (item["kind"].GetType() == Json::Type::String) {
             for (int k = 0; k < 5; ++k)
@@ -153,32 +153,32 @@ LayerComposition decodeLayerGraph(const Json &j, const Project &p) {
         }
         if (kind < 0 || kind > 4 ||
             (item["kind"].GetType() == Json::Type::Number && item["kind"].Num() != kind))
-            throw std::runtime_error("Type Shaderixel inconnu");
+            throw std::runtime_error("Unknown Shaderixel type");
         n.kind = sx::NodeKind(kind);
         n.name = item["name"].S();
         if (!item["pos"].IsArray() || item["pos"].Size() != 2)
-            throw std::runtime_error("Position du graphe invalide");
+            throw std::runtime_error("Invalid graph position");
         n.pos = {item["pos"].At(0).F(), item["pos"].At(1).F()};
         if (!std::isfinite(n.pos.x) || !std::isfinite(n.pos.y) || std::abs(n.pos.x) > 1e6 ||
             std::abs(n.pos.y) > 1e6)
-            throw std::runtime_error("Position hors limites");
+            throw std::runtime_error("Position out of bounds");
         n.bypass = item["bypass"].B();
         n.opacity = item["opacity"].F(1);
         int blend = item["blend"].I();
         if (blend < 0 || blend >= int(sx::BlendMode::Count) || !std::isfinite(n.opacity) || n.opacity < 0 ||
             n.opacity > 1)
-            throw std::runtime_error("Fusion invalide");
+            throw std::runtime_error("Invalid blend");
         n.blend = sx::BlendMode(blend);
         n.clip = item["clip"].B();
         n.channelOff = item["channelOff"].U();
         if (item["channelOff"].U() > 15)
-            throw std::runtime_error("Masque canal invalide");
+            throw std::runtime_error("Invalid channel mask");
         auto ranges = [&](const char *key, int first, int count) {
             if (!item.Has(key))
                 return;
             const auto &values = item[key];
             if (!values.IsArray() || values.Size() != size_t(count * 8))
-                throw std::runtime_error("Plages Blend If invalides");
+                throw std::runtime_error("Invalid Blend If ranges");
             for (int c = 0; c < count; ++c)
                 for (int side = 0; side < 2; ++side) {
                     auto *range = side ? n.blendIf.under[first + c] : n.blendIf.self[first + c];
@@ -187,7 +187,7 @@ LayerComposition decodeLayerGraph(const Json &j, const Project &p) {
                         const auto &v = values.At(c * 8 + side * 4 + k);
                         if (v.GetType() != Json::Type::Number || !std::isfinite(v.Num()) ||
                             std::floor(v.Num()) != v.Num() || v.Num() < previous || v.Num() > 255)
-                            throw std::runtime_error("Poignées Blend If invalides");
+                            throw std::runtime_error("Invalid Blend If handles");
                         previous = v.I();
                         range[k] = sx::u8(previous);
                     }
@@ -200,19 +200,19 @@ LayerComposition decodeLayerGraph(const Json &j, const Project &p) {
             auto it = std::find_if(p.tracks.begin(), p.tracks.end(),
                                    [&](auto &t) { return t.id == n.surface && t.kind == TrackKind::Video; });
             if (it == p.tracks.end())
-                throw std::runtime_error("Timeline source introuvable");
+                throw std::runtime_error("Source timeline not found");
         }
         if (!item["inputs"].IsArray() || item["inputs"].Size() > 4)
-            throw std::runtime_error("Entrées invalides");
+            throw std::runtime_error("Invalid inputs");
         for (auto &v : item["inputs"].Elements())
             n.inputs.push_back(identity(v, true));
         for (auto &v : item["inputChannels"].Elements()) {
             if (v.Num() < 0 || v.Num() > 4 || std::floor(v.Num()) != v.Num())
-                throw std::runtime_error("Canal invalide");
+                throw std::runtime_error("Invalid channel");
             n.inputChannel.push_back(v.U());
         }
         if (n.inputChannel.size() > n.inputs.size())
-            throw std::runtime_error("Canaux surnuméraires");
+            throw std::runtime_error("Too many channels");
         for (auto &[key, value] : item["params"].Items())
             result.parameters[n.id][key] = graphParameter(value);
         if (n.kind == sx::NodeKind::Effect) {
@@ -229,12 +229,12 @@ LayerComposition decodeLayerGraph(const Json &j, const Project &p) {
             else {
                 auto code = effectCode(e);
                 if (code.empty())
-                    throw std::runtime_error("Un effet du graphe doit incorporer son shader");
+                    throw std::runtime_error("A graph effect must embed its shader");
                 if (code.size() > 1024 * 1024)
-                    throw std::runtime_error("Shader trop grand");
+                    throw std::runtime_error("Shader too large");
             }
             n.fx.definition = std::make_shared<sx::CompositionEffect::Definition>();
-            n.fx.definition->inputs = {"Image", "Image 2", "Masque", "Image 4"};
+            n.fx.definition->inputs = {"Image", "Image 2", "Mask", "Image 4"};
             n.fx.definition->inputs.resize(n.inputs.size());
             n.fx.customCode = e.code;
             result.effects[n.id] = e;
@@ -244,20 +244,20 @@ LayerComposition decodeLayerGraph(const Json &j, const Project &p) {
         for (auto &[key, param] : result.parameters[n.id])
             if (n.kind != sx::NodeKind::Effect) {
                 if (n.kind != sx::NodeKind::Blend || key != "opacity")
-                    throw std::runtime_error("Paramètre de fusion inconnu");
+                    throw std::runtime_error("Unknown blend parameter");
                 auto valid = [](float v) { return v >= 0 && v <= 1; };
                 if (!valid(param.value))
-                    throw std::runtime_error("Opacité invalide");
+                    throw std::runtime_error("Invalid opacity");
                 for (auto &k : param.keys)
                     if (!valid(k.value))
-                        throw std::runtime_error("Opacité animée invalide");
+                        throw std::runtime_error("Invalid animated opacity");
             }
         result.graph.nodes.push_back(std::move(n));
     }
     result.graph.output = identity(j["output"]);
     auto *out = result.graph.Find(result.graph.output);
     if (!out || out->kind != sx::NodeKind::Output)
-        throw std::runtime_error("Sortie vidéo manquante");
+        throw std::runtime_error("Missing video output");
     for (auto &n : result.graph.nodes)
         for (size_t pin = 0; pin < n.inputs.size(); ++pin)
             if (n.inputs[pin]) {
@@ -266,7 +266,7 @@ LayerComposition decodeLayerGraph(const Json &j, const Project &p) {
                     result.graph.WouldCycle(source->id, n.id))
                     throw std::runtime_error("Connexion manquante ou cycle Shaderixel");
                 if (sx::InputChannel(n, pin) && source->kind != sx::NodeKind::Split)
-                    throw std::runtime_error("Le canal doit venir d'un nœud Split");
+                    throw std::runtime_error("The channel must come from a Split node");
             }
     return result;
 }
@@ -285,7 +285,7 @@ void setLayerGraphKey(Json &j, Id node, const std::string &key, Keyframe frame) 
         nodes.Push(item);
     }
     if (!found)
-        throw std::runtime_error("Nœud introuvable");
+        throw std::runtime_error("Node not found");
     j["nodes"] = nodes;
 }
 } // namespace sf

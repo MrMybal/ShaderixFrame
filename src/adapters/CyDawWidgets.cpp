@@ -476,7 +476,7 @@ bool mixerStrip(const char *id,MixerStrip &strip,float width,float height,bool &
     if(ImGui::InvisibleButton("##select",ImVec2(width,ImGui::GetFontSize()+dp(4.f))))picked=true;
     list->PushClipRect(origin,ImVec2(origin.x+width,origin.y+dp(40.f)),true);
     list->AddText(ImVec2(origin.x+dp(6.f),origin.y+dp(7.f)),p.text,strip.name);
-    char count[40];std::snprintf(count,sizeof(count),"%d effets",strip.devices);
+    char count[40];std::snprintf(count,sizeof(count),"%d effects",strip.devices);
     list->AddText(ImVec2(origin.x+dp(6.f),origin.y+dp(24.f)),p.textDim,count);list->PopClipRect();
     ImGui::SetCursorScreenPos(ImVec2(origin.x+width-dp(28.f),origin.y+dp(7.f)));
     changed|=knob("##pan",&strip.pan,-1,1,0,{20.f,colour,nullptr,"%.2f",nullptr,knobBipolar|knobNoLabel});
