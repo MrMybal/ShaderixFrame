@@ -12,7 +12,8 @@ The release `v0.13.0-alpha.1` provides the portable ZIP, per-user installer,
 `ShaderixFrame-0.13.0-alpha.1-source.zip` and `SHA256SUMS.txt` from the same release.
 The source ZIP contains the complete ShaderixFrame source and the exact JUCE
 8.0.15 source used to build its VST3 worker, including bundled SDK/dependency
-notices. GitHub's automatic source ZIP contains the repository alone; use the
+notices. The source pack omits three unused Android demo `google-services.json`
+configurations; the worker source and all build dependencies are unchanged. GitHub's automatic source ZIP contains the repository alone; use the
 explicit **source.zip** asset when rebuilding the JUCE worker offline.
 
 The JUCE snapshot is upstream commit `91ad83ae34a81e0833b1a2b0866f54846370ae53`.

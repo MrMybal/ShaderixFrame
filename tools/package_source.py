@@ -29,7 +29,7 @@ def main():
         raise SystemExit('JUCE revision differs from the worker lock.')
     version = release_version()
     destination = ROOT / f'dist/ShaderixFrame-{version}-source.zip'
-    manifest = {'version': version, 'application_commit': revision, 'juce_commit': juce_revision, 'files': {}}
+    manifest = {'version': version, 'application_commit': revision, 'juce_commit': juce_revision, 'files': [], 'excluded_unused_demo_configs': []}
     (ROOT / 'build/qa').mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='source-package-', dir=ROOT / 'build/qa') as temporary:
         with zipfile.ZipFile(destination, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as output:
@@ -43,9 +43,12 @@ def main():
                         name = prefix + entry.filename
                         if Path(name).is_absolute() or '..' in Path(name).parts:
                             raise SystemExit('Invalid source archive path')
+                        if prefix and Path(entry.filename).name == 'google-services.json':
+                            manifest['excluded_unused_demo_configs'].append(name)
+                            continue
                         data = source.read(entry)
                         output.writestr('ShaderixFrame-source/' + name, data)
-                        manifest['files'][name] = hashlib.sha256(data).hexdigest()
+                        manifest['files'].append({'path': name, 'sha256': hashlib.sha256(data).hexdigest()})
             output.writestr('ShaderixFrame-source/SOURCE-MANIFEST.json', json.dumps(manifest, indent=2) + '\n')
     print(destination)
     print('Source files:', len(manifest['files']))

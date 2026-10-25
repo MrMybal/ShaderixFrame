@@ -18,8 +18,9 @@ Existing third-party copyright notices and licences remain applicable.
   development-only and is not distributed in the Windows package.
 - JUCE 8.0.15: used by the VST3 worker under its AGPL v3 option. Original notices
   are in `vendor/juce-license/LICENSE.md` and `JUCE-LICENSE.md` in the package.
-  The matching source release includes the complete, unmodified JUCE checkout,
-  including its dependencies and their notices. See `docs/LICENSING.md`.
+  The matching source release includes the JUCE source used by the worker,
+  including its dependencies and their notices. Unused Android Firebase demo
+  configurations are omitted. See `docs/LICENSING.md`.
 - `vendor/imgui/`: the Dear ImGui docking snapshot used by Shaderixel; MIT licence
   in `vendor/imgui/LICENSE.txt`, distributed as `IMGUI-LICENSE.txt`.
 - `vendor/openfx/`: ASWF OpenFX headers/examples at commit
