@@ -2,6 +2,7 @@
 from pathlib import Path
 import json, hashlib, tempfile, argparse, re
 from english_ui import translate_cpp
+from upstream_paths import acceptable_hashes
 root = Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--check',action='store_true')
@@ -10,7 +11,7 @@ locked=json.loads((root/'upstream.lock.json').read_text(encoding='utf-8'))
 for key,record in locked['files'].items():
     if record.get('externalArtifact') and not (root/'vendor'/key).exists():
         continue
-    if key.startswith(('shaderixel/','cydaw2/')) and hashlib.sha256((root/'vendor'/key).read_bytes()).hexdigest()!=record['sha256']:
+    if key.startswith(('shaderixel/','cydaw2/')) and hashlib.sha256((root/'vendor'/key).read_bytes()).hexdigest() not in acceptable_hashes(key,record):
         raise SystemExit('Modified snapshot: '+key)
 (root/'build').mkdir(exist_ok=True)
 staging=tempfile.TemporaryDirectory(prefix='shared-components-',dir=root/'build')

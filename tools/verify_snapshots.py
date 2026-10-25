@@ -3,7 +3,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from upstream_paths import resolve_source
+from upstream_paths import resolve_source, acceptable_hashes
 
 ROOT = Path(__file__).resolve().parents[1]
 digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
@@ -14,7 +14,7 @@ for key, item in upstream['files'].items():
     if item.get('externalArtifact') and not target.exists():
         missing_artifacts.append(key)
         continue
-    assert digest(target) == item['sha256'], f'Snapshot modified: {key}'
+    assert digest(target) in acceptable_hashes(key, item), f'Snapshot modified: {key}'
     source = resolve_source(key, item)
     if source.exists() and digest(source) != item['sha256']:
         available.append(key)

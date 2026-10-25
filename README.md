@@ -1,6 +1,9 @@
-# ShaderixFrame 0.13
+# ShaderixFrame 0.13.0-alpha.1
 
 Development and maintenance: Cyberalien.
+
+**Alpha preview for Windows x64.** Licensed under [GNU AGPL v3](LICENSE).
+See [alpha downloads and limitations](docs/RELEASE_ALPHA.md) and [licensing/source information](docs/LICENSING.md).
 
 ShaderixFrame is a native Windows video editor with layered compositing, HLSL effects,
 VFX graphs and audio editing. It reuses Shaderixel's theme, shader graph compiler and

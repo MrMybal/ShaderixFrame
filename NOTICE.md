@@ -1,36 +1,40 @@
-# Origine des composants
+# Component provenance and licences
 
-- `vendor/shaderixel/` : copies autorisées par le propriétaire du projet depuis
-  Shaderixel. Thème Dear ImGui, types communs, JSON, compilateur EffectGraph, Graph de Document, NodeEditor, shaders de fusion et 317 shaders d’effets/générateurs.
-  `tools/import_shaderixel.py` dérive le catalogue HLSL dans `plugins/shaderixel-library`,
-  avec helpers/paramètres d’origine et adaptations Slang/HLSL. Les copies originales restent intactes.
-  Des extractions déterministes dans `src/adapters` adaptent les frontières vidéo/D3D11.
-- `vendor/cydaw2/` : copies autorisées depuis CyDAW v2. Modèle de graphe
-  partagé par CyDAW 2, AudioGraph/AudioRenderPlan, buffers, analyse et catalogue/processeurs DSP.
-  Widgets/Theme, cartes GraphEditor, bandeaux MixerView et fonds de clips ArrangementView
-  alimentent les extractions portables, sans modifier les sources copiées.
-  Les libellés DSP reprennent les traductions françaises `resources/i18n/fr.json`. Les fichiers
-  `src/v2/ArrangementView.*` et `src/v2/Theme.h` sont conservés comme
-  références d'adaptation ; la coque JUCE et l'ancienne interface ne sont pas compilées.
-  Le worker VST3 précompilé, son source, l'en-tête IPC et le VST3 de test sont aussi
-  copiés avec empreintes. Le worker distribué utilise JUCE ; la licence originale
-  figure dans `vendor/juce-license/LICENSE.md` et `JUCE-LICENSE.md` dans le paquet.
-- `vendor/imgui/` : Dear ImGui, copie locale de la branche docking utilisée par Shaderixel,
-  licence MIT conservée dans `vendor/imgui/LICENSE.txt` et dans la distribution.
-- `vendor/openfx/` : en-têtes et exemples officiels ASWF OpenFX, commit
-  `e40728885390ec16276d11e00025de9b4282060c`, empreintes dans `openfx.lock.json`.
-  Licence conservée dans `vendor/openfx/LICENSE.md`, distribuée comme
-  `OPENFX-LICENSE.txt`. L'exemple Basic non modifié sert aux tests, le worker hôte
-  et l'exemple OfxGain sont locaux. Les références GraphEditor/GraphLayout/Widgets
-  et AudioTrackController de CyDAW v2 ont également été copiées avec empreintes.
-- Les logos présents à la racine ont été fournis dans le dossier de travail.
-- La lumière procédurale, les shaders inclus et la bande sonore de démonstration sont
-  créés pour ShaderixFrame. Les polices Segoe UI et Consolas sont lues depuis Windows,
-  avec la police ImGui comme repli ; elles ne sont pas redistribuées.
+ShaderixFrame is developed and maintained by Cyberalien. Original ShaderixFrame code
+is licensed under GNU Affero General Public License version 3 (AGPL-3.0-only); see LICENSE.
+Existing third-party copyright notices and licences remain applicable.
 
-Ce document indique la provenance technique. Aucune nouvelle licence n'est attribuée
-aux projets Shaderixel ou CyDAW ; leurs droits existants restent applicables.
+- `vendor/shaderixel/`: owner-authorized copies of Shaderixel's theme, common/JSON
+  types, EffectGraph compiler, document graph, NodeEditor, blending shaders and
+  **406** effect/generator shaders. Deterministic adapters in `src/adapters` and
+  `plugins/shaderixel-library` supply the video/D3D11 boundary and English labels.
+  The original snapshots and the upstream project remain unchanged.
+- `vendor/cydaw2/`: CyDAW v2 graph definitions, AudioGraph/AudioRenderPlan, buffers,
+  analysis, DSP catalogue/processors, widget/theme and graph/mixer/arrangement
+  references. CyDAW is licensed under AGPL v3; its licence is preserved in
+  `vendor/cydaw2/LICENSE` and included as `CYDAW-LICENSE.txt` in Windows packages.
+  The IPC-4 VST3 worker is rebuilt from the locked `PluginWorkerMain.cpp` and
+  `PluginIsolation.h`, with JUCE 8.0.15, for this alpha. The test VST3 fixture is
+  development-only and is not distributed in the Windows package.
+- JUCE 8.0.15: used by the VST3 worker under its AGPL v3 option. Original notices
+  are in `vendor/juce-license/LICENSE.md` and `JUCE-LICENSE.md` in the package.
+  The matching source release includes the complete, unmodified JUCE checkout,
+  including its dependencies and their notices. See `docs/LICENSING.md`.
+- `vendor/imgui/`: the Dear ImGui docking snapshot used by Shaderixel; MIT licence
+  in `vendor/imgui/LICENSE.txt`, distributed as `IMGUI-LICENSE.txt`.
+- `vendor/openfx/`: ASWF OpenFX headers/examples at commit
+  `e40728885390ec16276d11e00025de9b4282060c`, recorded in `openfx.lock.json`.
+  BSD 3-Clause licence in `vendor/openfx/LICENSE.md`, distributed as
+  `OPENFX-LICENSE.txt`. The unmodified Basic example is a test fixture; the host
+  worker and OfxGain example are ShaderixFrame code.
+- Root logos were supplied for this project. The procedural imagery, local shaders
+  and generated demonstration soundtrack were created for ShaderixFrame.
+  Windows Segoe UI and Consolas fonts are loaded from the operating system and
+  are not redistributed; Dear ImGui's font provides the fallback.
 
-Le SDK ABI 1, son worker natif, les exemples Gain/Latency et les adaptateurs
-vidéo/DSP/cache/export sont propres à ShaderixFrame. Le plugin VST3 de test reste
-dans les snapshots de développement ; il n'est pas inclus dans le ZIP utilisateur.
+The native plugin ABI, its worker and Gain/Latency examples, and the video, DSP,
+cache and export adapters are ShaderixFrame code. Third-party plugins loaded by
+users retain their own licences and are not included in the release.
+
+This licence grant concerns this distribution. It does not change the licensing
+or ownership of the separate Shaderixel or CyDAW projects.

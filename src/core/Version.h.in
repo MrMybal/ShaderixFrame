@@ -1,4 +1,4 @@
 #pragma once
 namespace sf {
-inline constexpr char applicationVersion[] = "@PROJECT_VERSION@";
+inline constexpr char applicationVersion[] = "@SF_APPLICATION_VERSION@";
 }

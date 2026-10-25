@@ -1,9 +1,10 @@
 """Build the per-user installer from the verified portable distribution."""
+from release_version import release_version
 from pathlib import Path
 import re
 import subprocess
 ROOT = Path(__file__).resolve().parents[1]
-version = re.search(r'project\(ShaderixFrame VERSION ([\d.]+)',(ROOT/'CMakeLists.txt').read_text('utf-8')).group(1)
+version = release_version()
 compiler = Path('C:/Windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe')
 archive = ROOT/f'dist/ShaderixFrame-{version}-windows-x64.zip'
 output = ROOT/f'dist/ShaderixFrame-{version}-Setup.exe'

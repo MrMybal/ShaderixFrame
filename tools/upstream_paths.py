@@ -22,3 +22,13 @@ def resolve_source(key, record):
         return source  # Read older local lock files without changing their fingerprints.
     component = key.split('/', 1)[0]
     return source_roots()[component] / source
+
+
+def acceptable_hashes(key, record):
+    """Accept the upstream artifact or the source-built worker for this release."""
+    import json
+    hashes = {record['sha256']}
+    current = ROOT / 'release-worker.lock.json'
+    if record.get('externalArtifact') and key.endswith('/CyDAWPluginWorker.exe') and current.is_file():
+        hashes.add(json.loads(current.read_text('utf-8'))['sha256'])
+    return hashes

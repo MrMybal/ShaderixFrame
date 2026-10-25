@@ -235,7 +235,7 @@ try:
     selected = call('select_clips', {'clips': [video_clips[1], video_clips[0], video_clips[1]]})['clips']
     state = call('status')
     assert set(selected) == set(video_clips) and state['selection'] == selected
-    assert state['selected'] == video_clips[1] and state['version'] == '0.13.0'
+    assert state['selected'] == video_clips[1] and state['version'] == '0.13.0-alpha.1'
     # The selection is shared UI state and never creates a document/history entry.
     assert call('select_clips', {'clips': []})['clips'] == []
     assert call('status')['selected'] == 0

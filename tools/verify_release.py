@@ -1,4 +1,5 @@
 """Verify the portable archive, native UI and per-user setup inside build/qa only."""
+from release_version import release_version
 import hashlib
 import json
 import re
@@ -11,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 QA = ROOT / 'build/qa'
 QA.mkdir(parents=True, exist_ok=True)
-version = re.search(r'project\(ShaderixFrame VERSION ([\d.]+)', (ROOT/'CMakeLists.txt').read_text('utf-8')).group(1)
+version = release_version()
 archive = ROOT / f'dist/ShaderixFrame-{version}-windows-x64.zip'
 setup = ROOT / f'dist/ShaderixFrame-{version}-Setup.exe'
 target = Path(tempfile.mkdtemp(prefix=f'portable-{version}-', dir=QA)).resolve()
@@ -20,7 +21,7 @@ with zipfile.ZipFile(archive) as zipped:
     names = zipped.namelist()
     assert all(name.startswith('ShaderixFrame/') and '..' not in Path(name).parts for name in names)
     assert not any(any(part in name for part in ('test-output', 'recovery/', 'cache/', 'workspace.ini', '.pending')) for name in names)
-    for required in ('ShaderixFramePluginWorker.exe', 'ShaderixFrameOfxWorker.exe', 'CyDAWPluginWorker.exe', 'native_gain.dll', 'ofx_gain.ofx', 'OPENFX-LICENSE.txt',
+    for required in ('LICENSE', 'CYDAW-LICENSE.txt', 'release-worker.lock.json', 'THIRD-PARTY-LICENSES.txt', 'docs/LICENSING.md', 'docs/RELEASE_ALPHA.md', 'ShaderixFramePluginWorker.exe', 'ShaderixFrameOfxWorker.exe', 'CyDAWPluginWorker.exe', 'native_gain.dll', 'ofx_gain.ofx', 'OPENFX-LICENSE.txt',
                      'JUCE-LICENSE.md', 'sdk/ShaderixFramePlugin.h', 'examples/VfxStudy.sframe',
                      'examples/ParallelEQ.json', 'examples/GradingStudy.sframe', 'examples/LayerGraphStudy.sframe',
                      'examples/MotionStudy.sframe', 'examples/ClipStudy.sframe', 'docs/BUILDING.md',
@@ -29,6 +30,9 @@ with zipfile.ZipFile(archive) as zipped:
     zipped.extractall(target)
 exe = target / 'ShaderixFrame/ShaderixFrame.exe'
 assert hashlib.sha256(exe.read_bytes()).digest() == hashlib.sha256((ROOT/'build/Release/ShaderixFrame.exe').read_bytes()).digest()
+worker_lock = json.loads((exe.parent/'release-worker.lock.json').read_text('utf-8'))
+assert hashlib.sha256((exe.parent/'CyDAWPluginWorker.exe').read_bytes()).hexdigest() == worker_lock['sha256']
+
 def check_media(project):
     for track in project['tracks']:
         for clip in track['clips']:

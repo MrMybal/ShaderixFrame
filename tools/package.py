@@ -1,4 +1,6 @@
 """Package an already tested Release build without touching the source applications."""
+from release_version import release_version
+from juce_notices import dependency_notices
 import argparse
 import shutil
 import re
@@ -10,7 +12,7 @@ parser.add_argument('--archive-only', action='store_true', help='Build the ZIP w
 args = parser.parse_args()
 
 ROOT = Path(__file__).resolve().parents[1]
-version = re.search(r'project\(ShaderixFrame VERSION ([\d.]+)', (ROOT / 'CMakeLists.txt').read_text('utf-8')).group(1)
+version = release_version()
 destination = ROOT / 'dist' / 'ShaderixFrame'
 destination.mkdir(parents=True, exist_ok=True)
 with tempfile.TemporaryDirectory(prefix='package-', dir=ROOT / 'dist') as temporary:
@@ -23,12 +25,14 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=ROOT / 'dist') as tempor
     for folder in ('shaders', 'plugins', 'examples', 'docs','sdk'):
         shutil.copytree(ROOT / folder, package / folder,
                         ignore=shutil.ignore_patterns('VALIDATION_*.md', '__pycache__', '*.pyc', '.env', '*.log'))
-    for name in ('README.md', 'NOTICE.md', 'upstream.lock.json', 'openfx.lock.json'):
+    for name in ('README.md', 'LICENSE', 'NOTICE.md', 'upstream.lock.json', 'openfx.lock.json', 'release-worker.lock.json'):
         shutil.copy2(ROOT / name, package)
+    shutil.copy2(ROOT / 'vendor/cydaw2/LICENSE', package / 'CYDAW-LICENSE.txt')
     shutil.copy2(ROOT / 'vendor/imgui/LICENSE.txt', package / 'IMGUI-LICENSE.txt')
     shutil.copy2(ROOT / 'vendor/juce-license/LICENSE.md', package / 'JUCE-LICENSE.md')
     shutil.copy2(ROOT / 'vendor/openfx/LICENSE.md', package / 'OPENFX-LICENSE.txt')
     shutil.copytree(ROOT / 'vendor/openfx/include', package / 'sdk/openfx')
+    (package / 'THIRD-PARTY-LICENSES.txt').write_text(dependency_notices(), encoding='utf-8')
     shutil.make_archive(str(ROOT / f'dist/ShaderixFrame-{version}-windows-x64'), 'zip', staging, 'ShaderixFrame')
     if not args.archive_only:
         # Update the launchable folder while preserving personal projects and recoveries.

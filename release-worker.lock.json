@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "artifact": "CyDAWPluginWorker.exe",
+  "sha256": "bf9f926f3ebf1a112888103d7299244d3944e98da38d90ed1e962cce522686e7",
+  "version": "0.13.0-alpha.1",
+  "juce": {
+    "version": "8.0.15",
+    "commit": "91ad83ae34a81e0833b1a2b0866f54846370ae53"
+  },
+  "sources": {
+    "vendor/cydaw2/src/plugin_worker/PluginWorkerMain.cpp": "7b0463c03bf5d1f1733914d70f56116f6f0e300d3dc6c52b4aee3096478ec1d5",
+    "vendor/cydaw2/include/cydaw/plugins/PluginIsolation.h": "42d723d0e4df7b185c7c3df14dbbc30c02aa6c3a2942726900b2e4126e3f4e8b",
+    "tools/vst3_worker/CMakeLists.txt": "4d3474df7a7970d6d52fba666cdf7acefed618d201c710ed11a89c1810443c3f"
+  }
+}

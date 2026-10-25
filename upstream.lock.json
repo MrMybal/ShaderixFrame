@@ -1911,6 +1911,10 @@
     "shaderixel/shaders/effects/trim_seamless.slang": {
       "source": "shaders/effects/trim_seamless.slang",
       "sha256": "7e2b780c29aa989178d9cbe87f7ce99e1bd00b34c11816fdc9f8e0257cda4b24"
+    },
+    "cydaw2/LICENSE": {
+      "source": "LICENSE",
+      "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
     }
   }
 }

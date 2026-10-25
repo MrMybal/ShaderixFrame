@@ -30,3 +30,8 @@ Build it with the ASWF headers (`vendor/openfx/include` in the source tree, `sdk
 in the portable ZIP), DLL linkage and an `.ofx` suffix; CMake target: `ofx_gain`.
 The gain processes float RGBA Source/Output clips in the Filter context.
 ShaderixFrame's OFX host uses its own worker and preserves alpha and HDR values.
+
+## Licence
+
+This SDK is covered by the project's [GNU AGPL v3 licence](../LICENSE).
+See [licensing and corresponding source](../docs/LICENSING.md) for the worker dependency notices.

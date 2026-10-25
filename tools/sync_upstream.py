@@ -9,7 +9,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-from upstream_paths import source_roots
+from upstream_paths import source_roots, acceptable_hashes
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = source_roots()
@@ -17,7 +17,7 @@ FILES = {
     'shaderixel': ['src/core/Common.h', 'src/core/Json.h', 'src/core/Json.cpp',
                   'src/doc/EffectGraph.h', 'src/doc/EffectGraph.cpp',
                   'src/ui/Theme.h', 'src/ui/Theme.cpp'],
-    'cydaw2': ['include/cydaw/plugins/PluginIsolation.h', 'src/plugin_worker/PluginWorkerMain.cpp', 'build/desktop-asio/CyDAWPluginWorker_artefacts/Release/CyDAWPluginWorker.exe', 'include/cydaw/graph/GraphDefinition.h', 'src/graph/GraphDefinition.cpp',
+    'cydaw2': ['LICENSE', 'include/cydaw/plugins/PluginIsolation.h', 'src/plugin_worker/PluginWorkerMain.cpp', 'build/desktop-asio/CyDAWPluginWorker_artefacts/Release/CyDAWPluginWorker.exe', 'include/cydaw/graph/GraphDefinition.h', 'src/graph/GraphDefinition.cpp',
                'include/cydaw/engine/AudioBuffer.h', 'src/engine/AudioBuffer.cpp',
                'include/cydaw/engine/AudioAnalysis.h', 'src/engine/AudioAnalysis.cpp',
                'include/cydaw/engine/EffectProcessors.h', 'src/engine/EffectProcessors.cpp',
@@ -76,7 +76,7 @@ def main():
             data = source.read_bytes()
             current = digest(data)
             previous = lock['files'].get(key, {}).get('sha256')
-            if target.exists() and previous and digest(target.read_bytes()) != previous:
+            if target.exists() and previous and digest(target.read_bytes()) not in acceptable_hashes(key, lock['files'][key]):
                 raise SystemExit(f'Local vendor edit refused: {key}. Move changes into an adapter first.')
             if previous != current or not target.exists():
                 changed = True

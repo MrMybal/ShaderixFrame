@@ -5,7 +5,7 @@ import json
 import zipfile
 from pathlib import Path
 from demo_audio import write_demo_audio
-from upstream_paths import ROOT, resolve_source
+from upstream_paths import ROOT, resolve_source, acceptable_hashes
 
 
 def main():
@@ -25,9 +25,9 @@ def main():
             if not args.tests and 'CyDAWPluginWorker' not in key:
                 continue
             target = ROOT / 'vendor' / key
-            expected = record['sha256']
+            expected = acceptable_hashes(key, record)
             if target.exists():
-                if hashlib.sha256(target.read_bytes()).hexdigest() != expected:
+                if hashlib.sha256(target.read_bytes()).hexdigest() not in expected:
                     raise SystemExit('Existing component differs from the lock: ' + key)
                 print('Installed:', target.name)
                 continue
@@ -47,7 +47,7 @@ def main():
                     data = source.read_bytes()
             if data is None:
                 raise SystemExit('Component not found: ' + name + '. Supply --bundle or SF_CYDAW_ROOT.')
-            if hashlib.sha256(data).hexdigest() != expected:
+            if hashlib.sha256(data).hexdigest() not in expected:
                 raise SystemExit('Component does not match the locked version: ' + name)
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
