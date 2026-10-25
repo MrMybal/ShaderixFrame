@@ -35,9 +35,9 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Seuil
+//@name Threshold
 //@category Adjustments
-//@param sx_level float 0.5 0 1 "Seuil"
+//@param sx_level float 0.5 0 1 "Threshold"
 //@param sx_softness float 0 0 0.5 "Softness"
 float4 Effect(EffectContext ctx)
 {

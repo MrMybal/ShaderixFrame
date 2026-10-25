@@ -164,7 +164,7 @@ void Editor::mediaBin() {
     }
     tooltip("Remove media unused by any clip from the bin (files stay on disk)");
     ImGui::SameLine();
-    ImGui::Checkbox("Proxys auto", &autoProxies);
+    ImGui::Checkbox("Automatic Proxies", &autoProxies);
     tooltip("Prepare a 720p proxy for videos over 1440 lines on import");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(-1);

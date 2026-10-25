@@ -341,7 +341,7 @@ void Editor::gradingPanel() {
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Wheels")) {
-            const char *labels[] = {"Ombres", "Midtones", "Highlights", "Offset global"};
+            const char *labels[] = {"Shadows", "Midtones", "Highlights", "Global Offset"};
             const char *keys[][3] = {{"shadow_r", "shadow_g", "shadow_b"},
                                      {"mid_r", "mid_g", "mid_b"},
                                      {"high_r", "high_g", "high_b"},

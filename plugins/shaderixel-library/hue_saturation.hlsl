@@ -35,7 +35,7 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Teinte / Saturation
+//@name Hue / Saturation
 //@category Adjustments
 //@param sx_hue float 0 -180 180 "Hue"
 //@param sx_saturation float 0 -100 100 "Saturation"

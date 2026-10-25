@@ -37,7 +37,7 @@ float2 Hash22(float2 p)
 }
 //@name Posterize
 //@category Adjustments
-//@param sx_levels int 4 2 64 "Niveaux"
+//@param sx_levels int 4 2 64 "Levels"
 float4 Effect(EffectContext ctx)
 {
     float4 c = Input(0, ctx.px);

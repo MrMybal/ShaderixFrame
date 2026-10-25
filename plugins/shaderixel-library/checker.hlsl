@@ -35,10 +35,10 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Damier
+//@name Checkerboard
 //@category Generators
 //@generator
-//@param sx_cells float 8 1 256 "Cases"
+//@param sx_cells float 8 1 256 "Tiles"
 //@param sx_colorA color 0.05 0.05 0.05 1 "Color A"
 //@param sx_colorB color 0.9 0.9 0.9 1 "Color B"
 float4 Effect(EffectContext ctx)

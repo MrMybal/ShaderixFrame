@@ -39,7 +39,7 @@ float2 Hash22(float2 p)
 //@category Flou
 //@halo radius 1 2
 //@premultiplied
-//@param sx_radius float 6 0 64 "Rayon (px)"
+//@param sx_radius float 6 0 64 "Radius (px)"
 //@param sx_samples int 48 8 256 "Samples"
 float4 Effect(EffectContext ctx)
 {

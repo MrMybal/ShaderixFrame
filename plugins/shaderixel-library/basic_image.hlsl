@@ -37,15 +37,15 @@ float2 Hash22(float2 p)
 }
 //@name Image Adjustments
 //@category Adjustments
-//@param sx_exposure float 0 -5 5 "Exposition (IL)"
+//@param sx_exposure float 0 -5 5 "Exposure (EV)"
 //@param sx_brightness float 0 -1 1 "Luminosity"
 //@param sx_contrast float 0 -1 1 "Contrast"
 //@param sx_gamma float 1 0.2 5 "Gamma"
 //@param sx_saturation float 0 -1 1 "Saturation"
 //@param sx_vibrance float 0 -1 1 "Vibrance"
-//@param sx_hue float 0 -180 180 "Teinte (°)"
+//@param sx_hue float 0 -180 180 "Hue (°)"
 //@param sx_temperature float 0 -1 1 "Temperature"
-//@param sx_tint float 0 -1 1 "Nuance"
+//@param sx_tint float 0 -1 1 "Tint"
 // Base image adjustments of an image layer (Propriétés > Réglages de l'image), in one pass.
 float4 Effect(EffectContext ctx)
 {

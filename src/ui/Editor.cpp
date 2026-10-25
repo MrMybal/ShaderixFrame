@@ -1898,7 +1898,7 @@ void Editor::inspector() {
                 auto status = s.tracking.status();
                 ImGui::Text("%s · %s", status["state"].S().c_str(), status["error"].S().c_str());
                 ImGui::ProgressBar(status["progress"].F());
-                if (ImGui::Button("Calculer")) {
+                if (ImGui::Button("Calculate")) {
                     auto args = clipArgs(c->id);
                     args["begin"] = trackingBegin;
                     args["end"] = trackingEnd;
@@ -1929,7 +1929,7 @@ void Editor::inspector() {
         }
     }
     if (track->kind == TrackKind::Video) {
-        ImGui::SeparatorText("Transformation");
+        ImGui::SeparatorText("Transform");
         parameter("Opacity", "opacity", 0, 1, 1);
         parameter("Position X", "x", -1, 1, 0);
         parameter("Position Y", "y", -1, 1, 0);
@@ -1937,7 +1937,7 @@ void Editor::inspector() {
         parameter("Rotation", "rotation", -180, 180, 0);
         int mode = int(c->param("blend", s.time, 0));
         auto blendBefore = s.project;
-        if (ImGui::Combo("Fusion", &mode, "Normal\0Add\0Multiply\0Screen\0")) {
+        if (ImGui::Combo("Blend", &mode, "Normal\0Add\0Multiply\0Screen\0")) {
             s.history.checkpoint(blendBefore);
             c->params["blend"].value = float(mode);
             s.dirty = true;
@@ -1945,7 +1945,7 @@ void Editor::inspector() {
     } else {
         ImGui::SeparatorText("Clip Mix");
         parameter("Gain dB", "gain", -60, 12, 0);
-        parameter("Panoramique", "pan", -1, 1, 0);
+        parameter("Pan", "pan", -1, 1, 0);
         animationKey = animationEffect < 0 && animationKey == "opacity" ? "gain" : animationKey;
     }
     if (track->kind == TrackKind::Video) {
@@ -2621,7 +2621,7 @@ void Editor::mixDetails() {
                              : "Sum -> DSP -> gain/pan -> stereo output");
     if (parameter("Gain dB", "gain", -80, 12, track ? track->gain : bus ? bus->gain : s.project.master))
         return;
-    if (parameter("Panoramique", "pan", -1, 1, track ? track->pan : bus ? bus->pan : 0))
+    if (parameter("Pan", "pan", -1, 1, track ? track->pan : bus ? bus->pan : 0))
         return;
     if (track || bus) {
         auto before = s.project;
@@ -3025,7 +3025,7 @@ void Editor::mixer() {
     if (!panels["Mixer & Audio Graph"] || !beginPanel("Mixer & Audio Graph"))
         return;
     if (ImGui::BeginTabBar("audioTabs")) {
-        if (ImGui::BeginTabItem("Bandeaux CyDAW")) {
+        if (ImGui::BeginTabItem("CyDAW Channel Strips")) {
             ImGui::BeginChild("CyDAWMixerStrips", {0, 0}, false, ImGuiWindowFlags_HorizontalScrollbar);
             bool first = true;
             auto strip = [&](const char *scope, Id id, const std::string &name, MixChannel &mix, float gain,
@@ -3191,7 +3191,7 @@ void Editor::mixer() {
                                  0, nullptr, -1, 1, {-1, 80});
                 float bins[128]{};
                 cydaw::engine::computeLogSpectrum(audio.analysis, 20, 20000, bins, 128);
-                ImGui::PlotHistogram("Spectre logarithmique", bins, 128, 0, nullptr, 0, 1, {-1, 95});
+                ImGui::PlotHistogram("Logarithmic Spectrum", bins, 128, 0, nullptr, 0, 1, {-1, 95});
             } else
                 ImGui::TextWrapped("Start playback to analyze the mix with CyDAW 2.");
             ImGui::EndTabItem();

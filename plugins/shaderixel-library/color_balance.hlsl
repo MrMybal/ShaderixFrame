@@ -38,8 +38,8 @@ float2 Hash22(float2 p)
 //@name Color Balance
 //@category Adjustments
 //@param sx_lift color 0 0 0 1 "Shadows (Lift)"
-//@param sx_gammaColor color 1 1 1 1 "Tons moyens (gamma)"
-//@param sx_gain color 1 1 1 1 "Tons clairs (gain)"
+//@param sx_gammaColor color 1 1 1 1 "Midtones (Gamma)"
+//@param sx_gain color 1 1 1 1 "Highlights (Gain)"
 //@param sx_saturation float 1 0 2 "Saturation"
 float4 Effect(EffectContext ctx)
 {

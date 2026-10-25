@@ -41,7 +41,7 @@ float2 Hash22(float2 p)
 //@input A
 //@input B
 //@input Masque
-//@param sx_factor float 0.5 0 1 "Facteur"
+//@param sx_factor float 0.5 0 1 "Factor"
 float4 Effect(EffectContext ctx)
 {
     float t = sx_factor;

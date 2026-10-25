@@ -39,8 +39,8 @@ float2 Hash22(float2 p)
 //@category Distortion
 //@halo full
 //@premultiplied
-//@param sx_vertical float 0 -100 100 "Perspective verticale"
-//@param sx_horizontal float 0 -100 100 "Perspective horizontale"
+//@param sx_vertical float 0 -100 100 "Vertical Perspective"
+//@param sx_horizontal float 0 -100 100 "Horizontal Perspective"
 //@param sx_rotate float 0 -45 45 "Rotation (°)"
 //@param sx_aspect float 0 -100 100 "Aspect"
 //@param sx_scale float 100 50 150 "Scale (%)"

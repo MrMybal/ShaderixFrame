@@ -41,7 +41,7 @@ float2 Hash22(float2 p)
 //@halo full
 //@param sx_Add_X float 0.0 0.0 1.0 "Add X"
 //@param sx_Add_Y float 0.0 0.0 1.0 "Add Y"
-//@param sx_Tiiling float 1.0 0.0 2.0 "Tiiling"
+//@param sx_Tiiling float 1.0 0.0 2.0 "Tiling"
 
 // Imported from Unreal material /CyTexture/Editor/LayerPresets/Effect/M_CyEffect_AdvancedTilingUV.M_CyEffect_AdvancedTilingUV: Native CyTexture advanced Effect preset with live GPU parameters.
 float4 CyTex(uint i, float2 uv) { return HasInput(i) ? InputUV(i, uv) : float4(1.0, 1.0, 1.0, 1.0); }  // unconnected = white, as Unreal

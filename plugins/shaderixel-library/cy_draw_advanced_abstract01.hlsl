@@ -40,7 +40,7 @@ float2 Hash22(float2 p)
 //@generator
 //@halo full
 //@param sx_RadialStep float 5.01 1.0 128.0 "Radial Step"
-//@param sx_Lenght float 0.001 0.0 1.0 "Lenght"
+//@param sx_Lenght float 0.001 0.0 1.0 "Length"
 //@param sx_If float 0.0001 0.0 1.0 "If"
 
 // Imported from Unreal material /CyTexture/Editor/LayerPresets/Draw/M_CyDraw_AdvancedAbstract01.M_CyDraw_AdvancedAbstract01: Native CyTexture advanced Draw preset with live GPU parameters.

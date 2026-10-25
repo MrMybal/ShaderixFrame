@@ -35,12 +35,12 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Flou gaussien
+//@name Gaussian Blur
 //@category Flou
 //@halo radius 3 2
 //@passes 2
 //@premultiplied
-//@param sx_radius float 4 0 250 "Rayon (px)"
+//@param sx_radius float 4 0 250 "Radius (px)"
 float4 Effect(EffectContext ctx)
 {
     float sigma = max(sx_radius, 0.01);

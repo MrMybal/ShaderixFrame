@@ -40,7 +40,7 @@ float2 Hash22(float2 p)
 //@generator
 //@halo full
 //@param sx_RadialStep float 3.692757 1.0 128.0 "Radial Step"
-//@param sx_Lenght float 0.250465 0.0 1.0 "Lenght"
+//@param sx_Lenght float 0.250465 0.0 1.0 "Length"
 
 // Imported from Unreal material /CyTexture/Editor/LayerPresets/Draw/M_CyDraw_AdvancedShapeLens.M_CyDraw_AdvancedShapeLens: Native CyTexture advanced Draw preset with live GPU parameters.
 float4 CyTex(uint i, float2 uv) { return HasInput(i) ? InputUV(i, uv) : float4(1.0, 1.0, 1.0, 1.0); }  // unconnected = white, as Unreal

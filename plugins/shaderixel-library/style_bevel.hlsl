@@ -43,7 +43,7 @@ float2 Hash22(float2 p)
 //@param sx_size float 6 1 40 "Size (px)"
 //@param sx_angle float 135 -180 180 "Light Angle"
 //@param sx_highlight color 1 1 1 1 "Lights"
-//@param sx_shadow color 0 0 0 1 "Ombres"
+//@param sx_shadow color 0 0 0 1 "Shadows"
 //@param sx_opacity float 0.75 0 1 "Opacity"
 float H(EffectContext ctx, float2 o)
 {

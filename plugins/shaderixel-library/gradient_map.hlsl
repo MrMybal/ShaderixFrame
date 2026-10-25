@@ -37,7 +37,7 @@ float2 Hash22(float2 p)
 }
 //@name Gradient Map
 //@category Adjustments
-//@param sx_shadows color 0.02 0.0 0.1 1 "Ombres"
+//@param sx_shadows color 0.02 0.0 0.1 1 "Shadows"
 //@param sx_highlights color 1 0.85 0.5 1 "Lights"
 //@param sx_reverse bool 0 "Invert"
 float4 Effect(EffectContext ctx)

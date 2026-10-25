@@ -180,7 +180,7 @@ void Editor::animations() {
             ImGui::TableSetupColumn("Time");
             ImGui::TableSetupColumn("Value");
             ImGui::TableSetupColumn("Interpolation");
-            ImGui::TableSetupColumn("Courbure");
+            ImGui::TableSetupColumn("Curvature");
             ImGui::TableSetupColumn("Action");
             ImGui::TableHeadersRow();
             auto &parameter = *active;
@@ -495,7 +495,7 @@ void Editor::animations() {
             key.shape = shape;
             s.dirty = true;
         }
-        ImGui::SetTooltip("Courbure %.2f", shape);
+        ImGui::SetTooltip("Curvature %.2f", shape);
     }
     if (curveGesture == 2) {
         ImVec2 low{std::min(curveAnchor.x, mouse.x), std::min(curveAnchor.y, mouse.y)};
@@ -679,7 +679,7 @@ void Editor::animations() {
             ImGui::BeginDisabled(k.curve != Curve::Shaped);
             before = p;
             ImGui::SetNextItemWidth(100);
-            ImGui::SliderFloat("Courbure", &k.shape, -1, 1, "%.2f");
+            ImGui::SliderFloat("Curvature", &k.shape, -1, 1, "%.2f");
             editCheckpoint(before);
             ImGui::EndDisabled();
             ImGui::EndDisabled();

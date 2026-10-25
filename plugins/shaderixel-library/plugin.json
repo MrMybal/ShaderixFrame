@@ -88,7 +88,7 @@
     },
     {
       "id": "shaderixel.checker",
-      "name": "Damier",
+      "name": "Checkerboard",
       "category": "Shaderixel / Generators",
       "shader": "checker.hlsl"
     },
@@ -106,7 +106,7 @@
     },
     {
       "id": "shaderixel.combine_rgba",
-      "name": "Combiner RGBA",
+      "name": "Combine RGBA",
       "category": "Shaderixel / Canaux",
       "shader": "combine_rgba.hlsl"
     },
@@ -1798,13 +1798,13 @@
     },
     {
       "id": "shaderixel.edge_detect",
-      "name": "Contours (Sobel)",
+      "name": "Sobel Edges",
       "category": "Shaderixel / Looks",
       "shader": "edge_detect.hlsl"
     },
     {
       "id": "shaderixel.emboss",
-      "name": "Estampage",
+      "name": "Emboss",
       "category": "Shaderixel / Looks",
       "shader": "emboss.hlsl"
     },
@@ -1816,7 +1816,7 @@
     },
     {
       "id": "shaderixel.gaussian_blur",
-      "name": "Flou gaussien",
+      "name": "Gaussian Blur",
       "category": "Shaderixel / Flou",
       "shader": "gaussian_blur.hlsl"
     },
@@ -1930,7 +1930,7 @@
     },
     {
       "id": "shaderixel.hue_saturation",
-      "name": "Teinte / Saturation",
+      "name": "Hue / Saturation",
       "category": "Shaderixel / Adjustments",
       "shader": "hue_saturation.hlsl"
     },
@@ -1954,13 +1954,13 @@
     },
     {
       "id": "shaderixel.lens_profile",
-      "name": "Correction d'objectif",
+      "name": "Lens Correction",
       "category": "Shaderixel / Distortion",
       "shader": "lens_profile.hlsl"
     },
     {
       "id": "shaderixel.levels",
-      "name": "Niveaux",
+      "name": "Levels",
       "category": "Shaderixel / Adjustments",
       "shader": "levels.hlsl"
     },
@@ -2056,13 +2056,13 @@
     },
     {
       "id": "shaderixel.motion_blur",
-      "name": "Flou directionnel",
+      "name": "Directional Blur",
       "category": "Shaderixel / Flou",
       "shader": "motion_blur.hlsl"
     },
     {
       "id": "shaderixel.noise",
-      "name": "Bruit fractal",
+      "name": "Fractal Noise",
       "category": "Shaderixel / Generators",
       "shader": "noise.hlsl"
     },
@@ -2074,7 +2074,7 @@
     },
     {
       "id": "shaderixel.photo_filter",
-      "name": "Filtre photo",
+      "name": "Photo Filter",
       "category": "Shaderixel / Adjustments",
       "shader": "photo_filter.hlsl"
     },
@@ -2098,7 +2098,7 @@
     },
     {
       "id": "shaderixel.photo_raw_local",
-      "name": "Retouche locale",
+      "name": "Local Retouch",
       "category": "Shaderixel / Adjustments",
       "shader": "photo_raw_local.hlsl"
     },
@@ -2272,13 +2272,13 @@
     },
     {
       "id": "shaderixel.style_inner_shadow",
-      "name": "Ombre interne",
+      "name": "Inner Shadow",
       "category": "Shaderixel / Layer Styles",
       "shader": "style_inner_shadow.hlsl"
     },
     {
       "id": "shaderixel.style_outer_glow",
-      "name": "Lueur externe",
+      "name": "Outer Glow",
       "category": "Shaderixel / Layer Styles",
       "shader": "style_outer_glow.hlsl"
     },
@@ -2404,13 +2404,13 @@
     },
     {
       "id": "shaderixel.threshold",
-      "name": "Seuil",
+      "name": "Threshold",
       "category": "Shaderixel / Adjustments",
       "shader": "threshold.hlsl"
     },
     {
       "id": "shaderixel.transform_2d",
-      "name": "Transformation",
+      "name": "Transform",
       "category": "Shaderixel / Traitements",
       "shader": "transform_2d.hlsl"
     },
@@ -2422,7 +2422,7 @@
     },
     {
       "id": "shaderixel.twirl",
-      "name": "Tourbillon",
+      "name": "Swirl",
       "category": "Shaderixel / Distortion",
       "shader": "twirl.hlsl"
     },
@@ -2434,7 +2434,7 @@
     },
     {
       "id": "shaderixel.wave",
-      "name": "Ondulation",
+      "name": "Ripple",
       "category": "Shaderixel / Distortion",
       "shader": "wave.hlsl"
     }

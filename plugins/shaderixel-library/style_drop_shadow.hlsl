@@ -45,7 +45,7 @@ float2 Hash22(float2 p)
 //@param sx_angle float 135 -180 180 "Light Angle"
 //@param sx_dist float 12 0 500 "Distance (px)"
 //@param sx_size float 14 0 250 "Size (px)"
-//@param sx_spread float 0 0 1 "Grossi"
+//@param sx_spread float 0 0 1 "Spread"
 float BlurAlpha(EffectContext ctx, int2 dir, int2 offset)
 {
     float sigma = max(sx_size * 0.5, 0.01);

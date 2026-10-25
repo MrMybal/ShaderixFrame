@@ -38,7 +38,7 @@ float2 Hash22(float2 p)
 //@name Black and White
 //@category Adjustments
 //@param sx_weights color 0.30 0.59 0.11 1 "RGB Weights"
-//@param sx_tint color 1 1 1 1 "Virage"
+//@param sx_tint color 1 1 1 1 "Toning"
 float4 Effect(EffectContext ctx)
 {
     float4 c = Input(0, ctx.px);

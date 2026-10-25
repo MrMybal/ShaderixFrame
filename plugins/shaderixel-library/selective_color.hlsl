@@ -37,11 +37,11 @@ float2 Hash22(float2 p)
 }
 //@name Selective Color
 //@category Adjustments
-//@param sx_target int 0 0 8 "Couleurs"
+//@param sx_target int 0 0 8 "Colors"
 //@param sx_cyan float 0 -1 1 "Cyan"
 //@param sx_magenta float 0 -1 1 "Magenta"
-//@param sx_yellow float 0 -1 1 "Jaune"
-//@param sx_black float 0 -1 1 "Noir"
+//@param sx_yellow float 0 -1 1 "Yellow"
+//@param sx_black float 0 -1 1 "Black"
 float4 Effect(EffectContext ctx)
 {
     float4 c = Input(0, ctx.px);

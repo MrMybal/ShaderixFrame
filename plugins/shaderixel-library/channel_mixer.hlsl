@@ -37,9 +37,9 @@ float2 Hash22(float2 p)
 }
 //@name Channel Mixer
 //@category Adjustments
-//@param sx_red color 1 0 0 1 "Rouge en sortie (R,V,B)"
-//@param sx_green color 0 1 0 1 "Vert en sortie (R,V,B)"
-//@param sx_blue color 0 0 1 1 "Bleu en sortie (R,V,B)"
+//@param sx_red color 1 0 0 1 "Red Output (R,G,B)"
+//@param sx_green color 0 1 0 1 "Green Output (R,G,B)"
+//@param sx_blue color 0 0 1 1 "Blue Output (R,G,B)"
 //@param sx_monochrome bool 0 "Monochrome"
 float4 Effect(EffectContext ctx)
 {

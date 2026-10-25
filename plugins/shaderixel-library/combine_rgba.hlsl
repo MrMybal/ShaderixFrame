@@ -35,7 +35,7 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Combiner RGBA
+//@name Combine RGBA
 //@category Canaux
 //@input R
 //@input V

@@ -39,7 +39,7 @@ float2 Hash22(float2 p)
 //@category Traitements
 //@input Image
 //@halo 0
-//@param sx_Desacturation float 0.0 0.0 1.0 "Desacturation"
+//@param sx_Desacturation float 0.0 0.0 1.0 "Desaturation"
 
 // Imported from Unreal material /CyTexture/Editor/LayerPresets/Effect/M_CyEffect_AdvancedDesaturationColor.M_CyEffect_AdvancedDesaturationColor: Native CyTexture advanced Effect preset with live GPU parameters.
 float4 CyTex(uint i, float2 uv) { return HasInput(i) ? InputUV(i, uv) : float4(1.0, 1.0, 1.0, 1.0); }  // unconnected = white, as Unreal

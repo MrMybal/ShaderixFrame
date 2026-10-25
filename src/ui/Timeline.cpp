@@ -113,7 +113,7 @@ void drawLink(ImDrawList *list, ImVec2 at, ImU32 colour) {
 std::string laneLabel(const std::string &key, const std::string &effect) {
     static const std::map<std::string, std::string> names{
         {"opacity", "Opacity"}, {"x", "Position X"}, {"y", "Position Y"}, {"scale", "Scale"},
-        {"rotation", "Rotation"}, {"gain", "Gain"},  {"pan", "Panoramique"}, {"speed_ramp", "Speed (ramp)"}};
+        {"rotation", "Rotation"}, {"gain", "Gain"},  {"pan", "Pan"}, {"speed_ramp", "Speed (ramp)"}};
     auto it = names.find(key);
     auto label = it == names.end() ? key : it->second;
     return effect.empty() ? label : effect + " · " + label;
@@ -594,7 +594,7 @@ void Editor::timelineToolbar() {
         ImGui::Checkbox("Waveforms", &showWaveforms);
         ImGui::Checkbox("Clip Keyframes", &showKeyframes);
         ImGui::SeparatorText("Tracks");
-        const std::pair<const char *, float> heights[] = {{"Compactes", .6f}, {"Normales", 1.f}, {"Large", 1.6f}};
+        const std::pair<const char *, float> heights[] = {{"Compact", .6f}, {"Normal", 1.f}, {"Large", 1.6f}};
         for (auto [label, value] : heights) {
             if (ImGui::RadioButton(label, std::abs(laneZoom - value) < 1e-3f))
                 laneZoom = value;
@@ -634,7 +634,7 @@ void Editor::timelineToolbar() {
         ImGui::InputFloat("Duration Change (s)", &trimDelta, .1f, 1.f);
         ImGui::Checkbox("Adjust Source In", &leftTrim);
         ImGui::BeginDisabled(!s.selected);
-        if (ImGui::Button("Trim ripple")) {
+        if (ImGui::Button("Ripple Trim")) {
             auto args = clipArgs(s.selected);
             args["delta"] = trimDelta;
             args["left"] = leftTrim;
@@ -727,7 +727,7 @@ void Editor::timelineToolbar() {
             {"J  ·  ← →", "Back One Second / Frame by Frame"},
             {"I  ·  O", "Media In / Out"},
             {",  ·  .", "Insert / Overwrite at Playhead (C Target Tracks)"},
-            {"VUE", nullptr},
+            {"VIEW", nullptr},
             {"Mouse wheel", "Tracks / Shift: Time / Ctrl: Zoom / Alt: Height"},
             {"+  ·  -  ·  \\", "Zoom In, Zoom Out, Fit All"},
             {"F1 … F6", "Edit through Deliver Workspaces"},
@@ -2997,7 +2997,7 @@ void Editor::timeline() {
         ImGui::EndDisabled();
         ImGui::Checkbox("Transforms (Position, Scale, Rotation)", &attributeChoice.transform);
         ImGui::Checkbox("Opacity", &attributeChoice.opacity);
-        ImGui::Checkbox("Audio (gain, panoramique)", &attributeChoice.audio);
+        ImGui::Checkbox("Audio (Gain, Pan)", &attributeChoice.audio);
         ImGui::Checkbox("Mask", &attributeChoice.mask);
         ImGui::TextDisabled("Animation follows each clip's start.");
         if (ImGui::Button("Paste")) {
@@ -3594,7 +3594,7 @@ void Editor::timeline() {
             }
             if (ImGui::BeginMenu("Height")) {
                 const std::pair<const char *, float> sizes[] = {
-                    {"Compacte", 34.f}, {"Normale", 0.f}, {"Large", 120.f}, {"Extra Large", 200.f}};
+                    {"Compact", 34.f}, {"Normal", 0.f}, {"Large", 120.f}, {"Extra Large", 200.f}};
                 for (auto [label, value] : sizes)
                     if (ImGui::MenuItem(label)) {
                         Json a = Json::Object();

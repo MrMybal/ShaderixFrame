@@ -38,7 +38,7 @@ float2 Hash22(float2 p)
 //@name Trim Seam
 //@category Trim sheet
 //@halo full
-//@param sx_rect float4 0 0 512 128 0 16384 "Bande (x, y, largeur, hauteur px)"
+//@param sx_rect float4 0 0 512 128 0 16384 "Band (x, y, width, height px)"
 //@param sx_blendX float 0.25 0 0.5 "Horizontal Fade (Width Fraction)"
 //@param sx_blendY float 0 0 0.5 "Vertical Fade (Height Fraction)"
 // Makes one trim (rectangle of the sheet) tileable: near its edges the content comes from the

@@ -35,7 +35,7 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Correction d'objectif
+//@name Lens Correction
 //@category Distortion
 //@halo full
 //@premultiplied
@@ -48,12 +48,12 @@ float2 Hash22(float2 p)
 //@param sx_dist_amount float 1 0 2 "Distortion Strength"
 //@group Aberrations chromatiques
 //@param sx_tca_model int 0 0 2 "Template"
-//@param sx_tca_vr float 1 0.99 1.01 "Rouge : kr / vr"
-//@param sx_tca_vb float 1 0.99 1.01 "Bleu : kb / vb"
-//@param sx_tca_cr float 0 -0.01 0.01 "Rouge : cr"
-//@param sx_tca_cb float 0 -0.01 0.01 "Bleu : cb"
-//@param sx_tca_br float 0 -0.01 0.01 "Rouge : br"
-//@param sx_tca_bb float 0 -0.01 0.01 "Bleu : bb"
+//@param sx_tca_vr float 1 0.99 1.01 "Red: kr / vr"
+//@param sx_tca_vb float 1 0.99 1.01 "Blue: kb / vb"
+//@param sx_tca_cr float 0 -0.01 0.01 "Red: cr"
+//@param sx_tca_cb float 0 -0.01 0.01 "Blue: cb"
+//@param sx_tca_br float 0 -0.01 0.01 "Red: br"
+//@param sx_tca_bb float 0 -0.01 0.01 "Blue: bb"
 //@param sx_tca_amount float 1 0 4 "Aberration Strength"
 //@group Vignetage
 //@param sx_vig bool 0 "Vignetting (pa Model)"

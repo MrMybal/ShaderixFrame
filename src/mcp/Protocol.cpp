@@ -129,7 +129,7 @@ static std::string actionLabel(const std::string &name) {
         {"enhance_voice", "Voice Enhancement"},
         {"set_title", "Title Text"},
         {"set_clip", "Clip Settings"},
-        {"ripple_trim", "Trim ripple"},
+        {"ripple_trim", "Ripple Trim"},
         {"roll_trim", "Trim roll"},
         {"trim_clip", "Split at Playhead"},
         {"normalize_audio", "Audio normalization"},
@@ -251,7 +251,7 @@ Json Protocol::tools() const {
     add("import_grade_lut",
         "Import and embed a 2D image LUT or 1D/3D .cube, with explicit domain and spaces; no "
         "reference "
-        "externe",
+        "external",
         schema({{"clip", "integer"},
                 {"effect", "integer"},
                 {"path", "string"},

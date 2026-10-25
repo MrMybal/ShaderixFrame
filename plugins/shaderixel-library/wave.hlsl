@@ -35,12 +35,12 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Ondulation
+//@name Ripple
 //@category Distortion
 //@halo amplitude 1 2
 //@premultiplied
 //@param sx_amplitude float 10 0 200 "Amplitude (px)"
-//@param sx_wavelength float 80 2 2000 "Longueur d'onde (px)"
+//@param sx_wavelength float 80 2 2000 "Wavelength (px)"
 //@param sx_angle float 0 -180 180 "Angle"
 float4 Effect(EffectContext ctx)
 {

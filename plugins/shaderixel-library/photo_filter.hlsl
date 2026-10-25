@@ -35,7 +35,7 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Filtre photo
+//@name Photo Filter
 //@category Adjustments
 //@param sx_tint color 0.93 0.54 0.1 1 "Color"
 //@param sx_density float 0.25 0 1 "Density"

@@ -38,9 +38,9 @@ float2 Hash22(float2 p)
 //@name Lab Adjustment
 //@category Adjustments
 //@param sx_lightness float 0 -100 100 "Luminance L (Offset)"
-//@param sx_contrast float 1 0 3 "Contraste L"
-//@param sx_a_shift float 0 -100 100 "a (vert <-> rouge)"
-//@param sx_b_shift float 0 -100 100 "b (bleu <-> jaune)"
+//@param sx_contrast float 1 0 3 "L Contrast"
+//@param sx_a_shift float 0 -100 100 "a (Green <-> Red)"
+//@param sx_b_shift float 0 -100 100 "b (Blue <-> Yellow)"
 //@param sx_chroma float 1 0 3 "Chroma (a, b)"
 // Edits in CIE Lab (D50, Bradford from sRGB D65): lightness / contrast on L without
 // touching the colors, color balance and chroma on a and b.

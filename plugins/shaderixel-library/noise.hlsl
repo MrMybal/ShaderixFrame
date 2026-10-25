@@ -35,13 +35,13 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Bruit fractal
+//@name Fractal Noise
 //@category Generators
 //@generator
 //@param sx_scale float 8 0.5 200 "Scale"
 //@param sx_octaves int 5 1 10 "Octaves"
 //@param sx_roughness float 0.5 0 1 "Roughness"
-//@param sx_seed float 1 0 1000 "Graine"
+//@param sx_seed float 1 0 1000 "Seed"
 //@param sx_colorA color 0 0 0 1 "Color A"
 //@param sx_colorB color 1 1 1 1 "Color B"
 float ValueNoise(float2 p)

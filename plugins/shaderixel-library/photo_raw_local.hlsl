@@ -35,26 +35,26 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Retouche locale
+//@name Local Retouch
 //@category Adjustments
 //@param sx_kind int 0 0 1 "Shape"
-//@param sx_p0 float2 0.5 0.25 0 1 "Point A / centre"
+//@param sx_p0 float2 0.5 0.25 0 1 "Point A / Center"
 //@param sx_invert bool 0 "Invert"
 //@param sx_amount float 100 0 100 "Intensity"
 //@param sx_show_mask bool 0 "Show Mask"
 //@group Gradient
 //@param sx_p1 float2 0.5 0.6 0 1 "Point B"
 //@group Radial
-//@param sx_radius float2 0.25 0.3 0.01 1.5 "Rayons"
+//@param sx_radius float2 0.25 0.3 0.01 1.5 "Radii"
 //@param sx_angle float 0 -180 180 "Angle"
 //@param sx_feather float 50 0 100 "Feather"
 //@group Adjustments
 //@param sx_temperature float 0 -100 100 "Temperature"
 //@param sx_tint float 0 -100 100 "Hue"
-//@param sx_exposure float 0 -4 4 "Exposition (IL)"
+//@param sx_exposure float 0 -4 4 "Exposure (EV)"
 //@param sx_contrast float 0 -100 100 "Contrast"
 //@param sx_highlights float 0 -100 100 "Highlights"
-//@param sx_shadows float 0 -100 100 "Ombres"
+//@param sx_shadows float 0 -100 100 "Shadows"
 //@param sx_whites float 0 -100 100 "Whites"
 //@param sx_blacks float 0 -100 100 "Blacks"
 //@param sx_saturation float 0 -100 100 "Saturation"

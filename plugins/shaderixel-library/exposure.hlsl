@@ -37,9 +37,9 @@ float2 Hash22(float2 p)
 }
 //@name Exposure
 //@category Adjustments
-//@param sx_exposure float 0 -5 5 "Exposition (IL)"
+//@param sx_exposure float 0 -5 5 "Exposure (EV)"
 //@param sx_offset float 0 -0.5 0.5 "Offset"
-//@param sx_gammaCorrection float 1 0.1 3 "Correction gamma"
+//@param sx_gammaCorrection float 1 0.1 3 "Gamma Correction"
 float4 Effect(EffectContext ctx)
 {
     float4 c = Input(0, ctx.px);

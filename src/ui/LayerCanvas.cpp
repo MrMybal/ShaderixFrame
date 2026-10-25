@@ -51,8 +51,8 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         document["nodes"].Push(n);
         selected = id;
     };
-    if (ImGui::Button("+ Fusion"))
-        add(NodeKind::Blend, "Fusion");
+    if (ImGui::Button("+ Blend"))
+        add(NodeKind::Blend, "Blend");
     ImGui::SameLine();
     if (ImGui::Button("+ Correction")) {
         auto e = makeGrade();
@@ -283,8 +283,8 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     shaderRequest = node->id;
             }
         } else {
-            if (ImGui::MenuItem("Fusion Shaderixel"))
-                add(NodeKind::Blend, "Fusion");
+            if (ImGui::MenuItem("Shaderixel Blend"))
+                add(NodeKind::Blend, "Blend");
             if (ImGui::MenuItem("Color Correction")) {
                 auto e = makeGrade();
                 add(NodeKind::Effect, "Correction", &e);
@@ -354,8 +354,8 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                                    "Screen",
                                    "Keying",
                                    "Add",
-                                   "Soustraction",
-                                   "Assombrir",
+                                   "Subtract",
+                                   "Darken",
                                    "Lighten",
                                    "Difference",
                                    "Color Dodge",
@@ -369,14 +369,14 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                                    "Pin Light",
                                    "Hard Mix",
                                    "Exclusion",
-                                   "Division",
+                                   "Divide",
                                    "Hue",
                                    "Saturation",
                                    "Color",
                                    "Luminosity",
                                    "Darker Color",
                                    "Lighter Color"};
-            if (ImGui::Combo("Fusion Shaderixel", &mode, names, 27))
+            if (ImGui::Combo("Shaderixel Blend", &mode, names, 27))
                 mutate(selected, [&](Json &v) { v["blend"] = mode; });
             bool clip = n->clip;
             if (ImGui::Checkbox("Clip to Background Alpha", &clip))
@@ -393,7 +393,7 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     });
                 ImGui::PopID();
             }
-            if (ImGui::TreeNode("Blend If / Fusion conditionnelle")) {
+            if (ImGui::TreeNode("Blend If / Conditional Blend")) {
                 ImGui::TextDisabled("Handles 0-255: soft in, soft out");
                 for (int c = 0; c < 4; ++c)
                     for (int side = 0; side < 2; ++side) {
@@ -533,7 +533,7 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     edit |= ImGui::Combo("Interpolation", &curve, "Linear\0Smooth\0Step\0Curved\0");
                     frame.curve = Curve(curve);
                     if (curve == 3)
-                        edit |= ImGui::SliderFloat("Courbure", &frame.shape, -1, 1);
+                        edit |= ImGui::SliderFloat("Curvature", &frame.shape, -1, 1);
                     bool remove = ImGui::SmallButton("Remove");
                     if (edit || remove) {
                         p.keys.erase(p.keys.begin() + k);

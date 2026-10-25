@@ -35,7 +35,7 @@ float2 Hash22(float2 p)
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Lueur externe
+//@name Outer Glow
 //@category Layer Styles
 //@halo size 1.5 4
 //@passes 2
@@ -43,7 +43,7 @@ float2 Hash22(float2 p)
 //@param sx_color color 1 0.9 0.45 1 "Color"
 //@param sx_opacity float 0.8 0 1 "Opacity"
 //@param sx_size float 20 0 250 "Size (px)"
-//@param sx_spread float 0.2 0 1 "Grossi"
+//@param sx_spread float 0.2 0 1 "Spread"
 float Blur1(EffectContext ctx, int2 dir)
 {
     float sigma = max(sx_size * 0.5, 0.01);

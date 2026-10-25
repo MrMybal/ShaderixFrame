@@ -40,8 +40,8 @@ float2 Hash22(float2 p)
 //@halo radius 2 2
 //@premultiplied
 //@param sx_amount float 1 0 5 "Gain"
-//@param sx_radius float 1.5 0.5 10 "Rayon (px)"
-//@param sx_threshold float 0 0 0.5 "Seuil"
+//@param sx_radius float 1.5 0.5 10 "Radius (px)"
+//@param sx_threshold float 0 0 0.5 "Threshold"
 float4 Effect(EffectContext ctx)
 {
     float4 c = Input(0, ctx.px);
