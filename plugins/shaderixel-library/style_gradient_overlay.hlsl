@@ -24,24 +24,24 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Incrustation en dégradé
-//@category Styles de calque
+//@name Gradient Overlay
+//@category Layer Styles
 //@premultiplied
-//@param sx_colorA color 1 0.3 0.1 1 "Couleur A"
-//@param sx_colorB color 0.2 0.6 1 1 "Couleur B"
+//@param sx_colorA color 1 0.3 0.1 1 "Color A"
+//@param sx_colorB color 0.2 0.6 1 1 "Color B"
 //@param sx_angle float 90 -180 180 "Angle"
-//@param sx_opacity float 1 0 1 "Opacité"
+//@param sx_opacity float 1 0 1 "Opacity"
 float4 Effect(EffectContext ctx)
 {
     float4 o = Input(0, ctx.px);

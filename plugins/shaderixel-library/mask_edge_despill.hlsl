@@ -1,0 +1,62 @@
+#define select(c,a,b) ((c)?(a):(b))
+float Luma(float3 c){return dot(c,float3(.2126,.7152,.0722));}
+float SrgbToLinear1(float c) { return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4); }
+float LinearToSrgb1(float c) { c = max(c, 0.0); return c <= 0.0031308 ? c * 12.92 : 1.055 * pow(c, 1.0 / 2.4) - 0.055; }
+float3 SrgbToLinear(float3 c) { return float3(SrgbToLinear1(c.r), SrgbToLinear1(c.g), SrgbToLinear1(c.b)); }
+float3 LinearToSrgb(float3 c) { return float3(LinearToSrgb1(c.r), LinearToSrgb1(c.g), LinearToSrgb1(c.b)); }
+
+float3 RGBToHSV(float3 c)
+{
+    float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+    float4 p = lerp(float4(c.bg, K.wz), float4(c.gb, K.xy), step(c.b, c.g));
+    float4 q = lerp(float4(p.xyw, c.r), float4(c.r, p.yzx), step(p.x, c.r));
+    float d = q.x - min(q.w, q.y);
+    float e = 1e-10;
+    return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+}
+
+float3 HSVToRGB(float3 c)
+{
+    float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    float3 p = abs(frac(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * lerp(K.xxx, saturate(p - K.xxx), c.y);
+}
+
+float Hash12(float2 p)
+{
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return frac((p3.x + p3.y) * p3.z);
+}
+
+float2 Hash22(float2 p)
+{
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
+    p3 += dot(p3, p3.yzx + 33.33);
+    return frac((p3.xx + p3.yz) * p3.zy);
+}
+//@name Edge Color Despill
+//@category Masks and Compositing
+//@input Image
+//@input Mask
+//@param sx_key_color color 0 1 0 1 "Spill Color"
+//@param sx_amount float 0.6 0 1 "Despill Strength"
+//@param sx_edge_only bool 1 "Only Semi-Transparent Edges"
+//@param sx_preserve_luminance bool 1 "Preserve Luminance"
+float4 Effect(EffectContext ctx)
+{
+    float4 c = Input(0, ctx.px);
+    float3 rgb = max(c.rgb, 0.0);
+    float3 key = max(sx_key_color.rgb, 0.0);
+    float biggest = max(key.r, max(key.g, key.b));
+    if (biggest < 0.0001) return c;
+    key /= biggest;
+    float coverage = HasInput(1) ? saturate(Input(1, ctx.px).r) : c.a;
+    float edge = sx_edge_only != 0 ? 1.0 - smoothstep(0.8, 1.0, coverage) : 1.0;
+    float dominant = key.r >= key.g && key.r >= key.b ? rgb.r - max(rgb.g, rgb.b)
+                   : key.g >= key.b ? rgb.g - max(rgb.r, rgb.b) : rgb.b - max(rgb.r, rgb.g);
+    float3 cleaned = max(rgb - key * max(dominant, 0.0) * saturate(sx_amount) * edge, 0.0);
+    if (sx_preserve_luminance != 0 && Luma(cleaned) > 0.000001)
+        cleaned *= min(4.0, Luma(rgb) / Luma(cleaned));
+    return float4(cleaned, c.a);
+}

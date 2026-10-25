@@ -1,11 +1,16 @@
-# Après la 0.12
+# Après la 0.13
 
-Les graphes DSP/calques, les fenêtres détachables, conteneurs de clip, vignettes,
-317 shaders Shaderixel, widgets motion, LUT images et transitions sont intégrés :
-[RELEASE_0.12.md](RELEASE_0.12.md).
+Les modes de travail et la timeline inspirés de CyDAW v2, l'éditeur de courbes, le zoom de la
+vue finale et les 406 shaders Shaderixel sont intégrés : [RELEASE_0.13.md](RELEASE_0.13.md).
+La 0.12 avait apporté les graphes DSP/calques, fenêtres détachables, conteneurs de clip,
+widgets motion, LUT images et transitions : [RELEASE_0.12.md](RELEASE_0.12.md).
 Shaderixel et CyDAW restent en lecture seule. Le schéma 10 charge 1–10.
 
 Les extensions suivantes restent distinctes de cette livraison :
+
+- Resynchronisation de `Document`/`NodeEditor` Shaderixel (nœuds « fonction » des graphes de
+  calques) avec adaptation de `tools/extract_composition.py`, d'ImGui et des sources CyDAW.
+- Éditeur de courbe par effet pour les paramètres `curve` de Shaderixel (Photo RAW).
 
 - Codecs vidéo HDR 10/12 bits, PQ/HLG, écran HDR, OCIO/chaîne ACES complète,
   EXR compressés/tuilés/multipart ; projets image/3D Shaderixel et polices embarquées.

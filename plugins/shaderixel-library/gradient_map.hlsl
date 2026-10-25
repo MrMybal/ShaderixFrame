@@ -24,22 +24,22 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Courbe de transfert de dégradé
-//@category Réglages
+//@name Gradient Map
+//@category Adjustments
 //@param sx_shadows color 0.02 0.0 0.1 1 "Ombres"
-//@param sx_highlights color 1 0.85 0.5 1 "Lumières"
-//@param sx_reverse bool 0 "Inverser"
+//@param sx_highlights color 1 0.85 0.5 1 "Lights"
+//@param sx_reverse bool 0 "Invert"
 float4 Effect(EffectContext ctx)
 {
     float4 c = Input(0, ctx.px);

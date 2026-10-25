@@ -75,7 +75,7 @@ struct MediaCache::Background {
             result.generation = request.generation;
             result.load = request.load;
             try {
-                check(mf, "Runtime média en arrière-plan");
+                check(mf, "Background media runtime");
                 auto decode = request.decodePath.empty() ? request.source : request.decodePath;
                 auto it = decoders.find(decode);
                 if (it == decoders.end()) {
@@ -223,7 +223,7 @@ void MediaCache::clear() {
 }
 std::filesystem::path MediaCache::proxyPath(const std::string &source) const {
     if (!background)
-        throw std::runtime_error("Chemin proxy requis hors de la prévisualisation interactive");
+        throw std::runtime_error("A proxy path is required outside interactive preview");
     auto file = sx::Utf8Path(source);
     auto signature = std::filesystem::weakly_canonical(file).wstring() + L"|" +
                      std::to_wstring(std::filesystem::file_size(file)) + L"|" +

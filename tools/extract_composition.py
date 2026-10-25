@@ -1,6 +1,7 @@
 """Regenerate the portable Shaderixel graph slice from locked, unmodified snapshots."""
 from pathlib import Path
-import json, hashlib, tempfile, argparse
+import json, hashlib, tempfile, argparse, re
+from english_ui import translate_cpp
 root = Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--check',action='store_true')
@@ -74,14 +75,16 @@ colour=section(tc,'const Palette& palette()', 'ImU32 fromArgb')
 helpers=section(wc,'constexpr float kPi','} // namespace')
 controls=section(wc,'bool knob(', 'bool iconButton(')
 (generated/'CyDawWidgets.cpp').write_text('// Generated from CyDAW v2 Widgets/Theme; parameter controls unchanged.\n#include "adapters/CyDawWidgets.h"\n#include <imgui_internal.h>\n#include <algorithm>\n#include <cmath>\n#include <cstdio>\n#include <string>\nnamespace cydaw::v2::theme {\n'+theme+constants+colour+'}\nnamespace cydaw::v2::ui {\nstatic float dp(float x){return x*ImGui::GetStyle().FontScaleDpi;}\nstatic float currentFontBase(){return ImGui::GetCurrentContext()->FontSizeBase;}\n'+helpers+'static void tooltip(const char *text){if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))ImGui::SetTooltip("%s",text); }\n'+controls+'}\n',encoding='utf-8')
-# Native catalogue labels use the same French translations as CyDAW.
+# Native parameter IDs provide English labels; upstream resources remain untouched.
 translations=json.loads((root/'vendor/cydaw2/resources/i18n/fr.json').read_text(encoding='utf-8'))
 with (generated/'CyDawWidgets.h').open('a',encoding='utf-8') as f:f.write('#include <string_view>\nnamespace cydaw::v2::ui { const char *parameterLabel(std::string_view key); }\n')
 with (generated/'CyDawWidgets.cpp').open('a',encoding='utf-8') as f:
  f.write('namespace cydaw::v2::ui { const char *parameterLabel(std::string_view key){\n')
- for key,label in translations.items():
-  if key.startswith('effect.parameter.'):f.write('if(key=='+json.dumps(key)+')return '+json.dumps(label)+';\n')
- f.write('return "Paramètre";} }\n')
+ for key in translations:
+  if key.startswith('effect.parameter.'):
+   label=key.removeprefix('effect.parameter.');label=re.sub(r'([a-z])([A-Z])',r'\1 \2',label).replace('_',' ').title()
+   f.write('if(key=='+json.dumps(key)+')return '+json.dumps(label)+';\n')
+ f.write('return "Parameter";} }\n')
 
 # Geometry and colours copied from Shaderixel's composition editor.
 u=(root/'vendor/shaderixel/src/ui/NodeEditor.cpp').read_text(encoding='utf-8')
@@ -164,6 +167,8 @@ with (generated/'CyDawWidgets.cpp').open('a',encoding='utf-8') as f:
  background=background.replace('hit.min','min').replace('hit.max','max').replace('darker(colour, hovered ? 0.62f : 0.70f)','theme::mix(colour,0xff000000u,hovered?.62f:.70f)').replace('darker(colour, 0.15f)','theme::mix(colour,0xff000000u,.15f)')
  f.write('void arrangerClipBackground(ImDrawList *list,ImVec2 min,ImVec2 max,ImU32 colour,bool hovered){\n'+background+'} }\n')
 
+for p in generated.iterdir():
+ p.write_text(translate_cpp(p.read_text(encoding='utf-8')),encoding='utf-8')
 outputs={p.name:p.read_bytes() for p in generated.iterdir()}
 if args.check:
     for name,data in outputs.items():

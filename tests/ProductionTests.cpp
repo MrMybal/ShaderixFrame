@@ -487,7 +487,7 @@ static void workspaceChecks(const std::filesystem::path &root) {
         }
     if (!failures.empty())
         throw std::runtime_error(failures);
-    require(count == 317, "All 317 Shaderixel library shaders compile with their native defaults");
+    require(count == 406, "All 406 Shaderixel library shaders compile with their native defaults");
     sf::Project p;
     p.width = p.height = 64;
     p.backgroundAlpha = 0;
@@ -576,17 +576,41 @@ static void workspaceChecks(const std::filesystem::path &root) {
         picture.id = 102;
         picture.title.enabled = false;
         picture.source = sx::Narrow(path.wstring());
-        bool shaderReady = false, titleReady = false, imageReady = false;
-        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-        while (std::chrono::steady_clock::now() < deadline && !(shaderReady && titleReady && imageReady)) {
+        bool shaderReady = false, titleReady = false, imageReady = false, sequenceReady = false;
+        // Generous: the worker shares the GPU with the other suites and any running instance.
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(15);
+        while (std::chrono::steady_clock::now() < deadline &&
+               !(shaderReady && titleReady && imageReady && sequenceReady)) {
             previews.beginFrame();
+            sequenceReady |= previews.getSequence(p, .4, r) != nullptr;
             shaderReady |= previews.get(p, source, .4, r) != nullptr;
             titleReady |= previews.get(p, title, .4, r) != nullptr;
             imageReady |= previews.get(p, picture, .4, r) != nullptr;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-        require(shaderReady && titleReady && imageReady,
-                "Background timeline thumbnails render HLSL clips, titles and image media");
+        require(shaderReady && titleReady && imageReady && sequenceReady,
+                "Background timeline thumbnails render HLSL clips, titles, image media and the final image");
+        // Cached clip documents: a parameter value change still reaches the thumbnail.
+        source.params["opacity"] = {1};
+        ID3D11ShaderResourceView *first = nullptr, *updated = nullptr;
+        deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (!first && std::chrono::steady_clock::now() < deadline) {
+            previews.beginFrame();
+            first = previews.get(p, source, .4, r);
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        source.params["opacity"] = {.25f};
+        deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while (std::chrono::steady_clock::now() < deadline) {
+            previews.beginFrame();
+            auto *view = previews.get(p, source, .4, r);
+            if (view && view != first) {
+                updated = view;
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        require(first && updated, "Clip thumbnails follow a parameter value change despite the document cache");
     }
     {
         sf::Project timed;

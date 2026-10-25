@@ -25,7 +25,7 @@ class AtomicFile {
             if (GetLastError() != ERROR_FILE_EXISTS)
                 break;
         }
-        throw std::runtime_error("Impossible de créer le fichier temporaire de sortie");
+        throw std::runtime_error("Unable to create the temporary output file");
     }
     AtomicFile(const AtomicFile &) = delete;
     AtomicFile &operator=(const AtomicFile &) = delete;
@@ -37,7 +37,7 @@ class AtomicFile {
     void commit() {
         if (!MoveFileExW(temporary.c_str(), destination.c_str(),
                          MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-            throw std::runtime_error("Impossible de finaliser le fichier de sortie");
+            throw std::runtime_error("Unable to finalize the output file");
     }
 };
 } // namespace sf

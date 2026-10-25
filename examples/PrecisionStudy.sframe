@@ -374,7 +374,7 @@
                 },
                 {
                   "id": 3,
-                  "name": "Somme stéréo",
+                  "name": "Stereo Sum",
                   "processor": "sf.sum",
                   "pos": [
                     800,

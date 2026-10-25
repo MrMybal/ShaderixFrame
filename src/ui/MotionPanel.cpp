@@ -3,12 +3,12 @@
 #include <imgui_stdlib.h>
 namespace sf {
 void Editor::motionPanel() {
-    if (!panels["Motion design"] || !beginPanel("Motion design"))
+    if (!panels["Motion Design"] || !beginPanel("Motion Design"))
         return;
     auto commit = [&](const Project &before) {
         try {
             s.project.validate();
-            s.history.checkpoint(before);
+            s.history.checkpoint(before, "Motion Design");
             s.dirty = true;
             s.renderer.clearHistory();
             error.clear();
@@ -23,7 +23,7 @@ void Editor::motionPanel() {
         Id parentId = parent && !parent->widget.IsNull() ? parent->id : 0;
         std::string image;
         if (type == "image") {
-            image = dialog(false, L"Image / vidéo\0*.png;*.jpg;*.tif;*.exr;*.mp4;*.mov\0\0", nullptr);
+            image = dialog(false, L"Image / Video\0*.png;*.jpg;*.tif;*.exr;*.mp4;*.mov\0\0", nullptr);
             if (image.empty())
                 return;
         }
@@ -45,7 +45,7 @@ void Editor::motionPanel() {
         c.params["widget_height"] = {type == "group" ? 360.f : 120.f};
         if (type == "text") {
             c.title.enabled = true;
-            c.title.text = "Votre texte";
+            c.title.text = "Your Text";
             c.params["font_size"] = {48};
         } else if (type == "image")
             c.source = image;
@@ -67,16 +67,16 @@ void Editor::motionPanel() {
         commit(before);
     };
     for (auto type : {"rectangle", "ellipse", "text", "image", "group"}) {
-        if (ImGui::Button(("+ " + std::string(std::string(type) == "text"    ? "texte"
-                                              : std::string(type) == "group" ? "groupe"
+        if (ImGui::Button(("+ " + std::string(std::string(type) == "text"    ? "text"
+                                              : std::string(type) == "group" ? "group"
                                                                              : type))
                               .c_str()))
             add(type);
         ImGui::SameLine();
     }
-    if (ImGui::Button("Ajuster"))
+    if (ImGui::Button("Fit"))
         motionView = {};
-    ImGui::TextDisabled("Hiérarchie · ancrages · pixels · K : clé au temps courant · molette / milieu : vue");
+    ImGui::TextDisabled("Hierarchy - anchors - pixels - K: key at current time - wheel / middle: view");
     ImGui::BeginChild("WidgetHierarchy", {230, 0}, true);
     auto tree = [&](auto &&self, Id parent, int depth) -> void {
         if (depth > 64)
@@ -98,7 +98,7 @@ void Editor::motionPanel() {
     if (auto *c = s.project.findClip(s.selected); c && !c->widget.IsNull()) {
         const Json layout = c->widget;
         auto before = s.project;
-        ImGui::InputText("Nom", &c->name);
+        ImGui::InputText("Name", &c->name);
         editCheckpoint(before);
         if (ImGui::BeginCombo("Parent", layout["parent"].U() ? "Widget" : "Canvas")) {
             if (ImGui::Selectable("Canvas")) {
@@ -122,7 +122,7 @@ void Editor::motionPanel() {
         }
         float anchor[2] = {layout["anchorX"].F(), layout["anchorY"].F()};
         before = s.project;
-        if (ImGui::SliderFloat2("Ancrage", anchor, 0, 1)) {
+        if (ImGui::SliderFloat2("Anchor", anchor, 0, 1)) {
             c->widget["anchorX"] = anchor[0];
             c->widget["anchorY"] = anchor[1];
         }
@@ -143,8 +143,8 @@ void Editor::motionPanel() {
             before = s.project;
             const char *label = std::string(key) == "widget_x"       ? "Position X"
                                 : std::string(key) == "widget_y"     ? "Position Y"
-                                : std::string(key) == "widget_width" ? "Largeur"
-                                                                     : "Hauteur";
+                                : std::string(key) == "widget_width" ? "Width"
+                                                                     : "Height";
             if (ImGui::DragFloat(label, &value, 1,
                                  std::string(key).find("width") != std::string::npos ||
                                          std::string(key).find("height") != std::string::npos
@@ -169,16 +169,16 @@ void Editor::motionPanel() {
         for (auto key : {"hidden", "clipChildren"}) {
             bool flag = layout[key].B();
             before = s.project;
-            if (ImGui::Checkbox(std::string(key) == "hidden" ? "Masquer" : "Découper les enfants", &flag)) {
+            if (ImGui::Checkbox(std::string(key) == "hidden" ? "Hide" : "Clip Children", &flag)) {
                 c->widget[key] = flag;
                 commit(before);
             }
         }
         if (c->title.enabled) {
             before = s.project;
-            ImGui::InputTextMultiline("Texte", &c->title.text, {200, 60});
+            ImGui::InputTextMultiline("Text", &c->title.text, {200, 60});
             editCheckpoint(before);
-            parameter("Taille texte", "font_size", 4, 1024, 48);
+            parameter("Text Size", "font_size", 4, 1024, 48);
         }
         if (c->generator && !c->effects.empty()) {
             float color[4];
@@ -187,7 +187,7 @@ void Editor::motionPanel() {
                 color[k] = it == c->effects[0].params.end() ? 1 : it->second.at(s.time);
             }
             before = s.project;
-            if (ImGui::ColorEdit4("Couleur", color)) {
+            if (ImGui::ColorEdit4("Color", color)) {
                 for (int k = 0; k < 4; ++k) {
                     auto &p = c->effects[0].params["fill." + std::to_string(k)];
                     if (p.keys.empty())
@@ -198,15 +198,15 @@ void Editor::motionPanel() {
             }
             editCheckpoint(before);
         }
-        if (ImGui::Button("Animations du widget")) {
-            panels["Animations"] = true;
+        if (ImGui::Button("Widget Animation")) {
+            panels["Animation"] = true;
             animationKey = "widget_x";
-            openPanel("Animations");
+            openPanel("Animation");
         }
-        if (ImGui::Button("Éditer le contenu / VFX"))
+        if (ImGui::Button("Edit Content / VFX"))
             openClipEditor(c->id);
     } else
-        ImGui::TextWrapped("Ajoutez un widget ou sélectionnez-le dans la hiérarchie.");
+        ImGui::TextWrapped("Add a widget or select one in the hierarchy.");
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("WidgetCanvas", {0, 0}, true,

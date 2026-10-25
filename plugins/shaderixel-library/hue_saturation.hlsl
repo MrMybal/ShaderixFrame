@@ -24,23 +24,23 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
 //@name Teinte / Saturation
-//@category Réglages
-//@param sx_hue float 0 -180 180 "Teinte"
+//@category Adjustments
+//@param sx_hue float 0 -180 180 "Hue"
 //@param sx_saturation float 0 -100 100 "Saturation"
-//@param sx_lightness float 0 -100 100 "Luminosité"
-//@param sx_colorize bool 0 "Redéfinir"
+//@param sx_lightness float 0 -100 100 "Luminosity"
+//@param sx_colorize bool 0 "Colorize"
 float4 Effect(EffectContext ctx)
 {
     float4 c = Input(0, ctx.px);

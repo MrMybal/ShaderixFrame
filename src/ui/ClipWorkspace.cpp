@@ -29,7 +29,7 @@ void Editor::openClipEditor(Id id, bool discard) {
         return;
     auto *clip = s.project.findClip(id);
     if (!clip || s.project.owner(id)->kind != TrackKind::Video) {
-        error = "L'éditeur de clip exige un clip vidéo";
+        error = "The clip editor requires a video clip";
         return;
     }
     Json args = Json::Object();
@@ -52,13 +52,13 @@ void Editor::openClipEditor(Id id, bool discard) {
     clipWorkspace = std::make_unique<Editor>(*clipSession, root);
     clipWorkspace->panelSuffix = panelSuffix + "##clip:" + std::to_string(id);
     for (auto &[name, open] : clipWorkspace->panels)
-        open = name == "Composition" || name == "Timeline" || name == "Graphe des calques" ||
-               name == "Graphe VFX" || name == "Propriétés" || name == "Médias & effets" ||
-               name == "Animations";
+        open = name == "Composition" || name == "Timeline" || name == "Layer Graph" ||
+               name == "Shader Graph" || name == "Properties" || name == "Media & Effects" ||
+               name == "Animation";
     s.playing = false;
     clipDetached = true;
     clipDetachRequested = true;
-    openPanel("Éditeur de clip");
+    openPanel("Clip Editor");
 }
 void Editor::drawEmbedded(ImGuiID dock, ImVec2 size) {
     bool first = !layoutReady;
@@ -71,13 +71,13 @@ void Editor::drawEmbedded(ImGuiID dock, ImVec2 size) {
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Left, .2f, &left, &centre);
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Right, .28f, &right, &centre);
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Down, .45f, &bottom, &centre);
-        for (auto name : {"Médias & effets", "Bibliothèque Shaderixel"})
+        for (auto name : {"Media & Effects", "Shaderixel Library"})
             ImGui::DockBuilderDockWindow(panelTitle(name).c_str(), left);
         ImGui::DockBuilderDockWindow(panelTitle("Composition").c_str(), centre);
-        for (auto name : {"Propriétés", "Calques", "Étalonnage", "Scopes vidéo"})
+        for (auto name : {"Properties", "Layers", "Color Grading", "Video Scopes"})
             ImGui::DockBuilderDockWindow(panelTitle(name).c_str(), right);
-        for (auto name : {"Timeline", "Graphe des calques", "Graphe VFX", "HLSL", "Animations", "Graphe DSP",
-                          "Motion design"})
+        for (auto name : {"Timeline", "Layer Graph", "Shader Graph", "HLSL", "Animation", "DSP Graph",
+                          "Motion Design"})
             ImGui::DockBuilderDockWindow(panelTitle(name).c_str(), bottom);
         ImGui::DockBuilderFinish(dock);
     }
@@ -99,8 +99,10 @@ void Editor::drawEmbedded(ImGuiID dock, ImVec2 size) {
         wasPlaying = false;
     }
     try {
-        s.renderer.render(s.project, s.media, s.time, std::min(1280, s.project.width),
-                          std::max(1, s.project.height * std::min(1280, s.project.width) / s.project.width));
+        float scale = std::min(1.f, std::min(1280.f / s.project.width, 720.f / s.project.height));
+        scale = std::clamp(std::max(scale, compositionDetail), .05f, 1.f);
+        s.renderer.render(s.project, s.media, s.time, std::max(1u, unsigned(s.project.width * scale)),
+                          std::max(1u, unsigned(s.project.height * scale)));
     } catch (const std::exception &e) {
         error = e.what();
     }
@@ -136,7 +138,7 @@ void Editor::drawEmbedded(ImGuiID dock, ImVec2 size) {
     }
 }
 void Editor::clipEditor() {
-    if (!panels["Éditeur de clip"])
+    if (!panels["Clip Editor"])
         return;
     auto *clip = s.project.findClip(editedContainer);
     if (clipWorkspace && (!clip || clip->composition.IsNull())) {
@@ -158,58 +160,58 @@ void Editor::clipEditor() {
         ImGui::SetNextWindowPos(viewport->WorkPos + ImVec2(30, 30), ImGuiCond_FirstUseEver);
         clipDetachRequested = false;
     }
-    bool visible = ImGui::Begin(panelTitle("Éditeur de clip").c_str(), &panels["Éditeur de clip"]);
+    bool visible = ImGui::Begin(panelTitle("Clip Editor").c_str(), &panels["Clip Editor"]);
     ImGuiID dock = ImGui::GetID("ClipDocumentDock");
     ImVec2 dockSize = ImGui::GetContentRegionAvail();
     if (visible) {
-        if (ImGui::Button("Ouvrir le clip sélectionné") && s.selected)
+        if (ImGui::Button("Open Selected Clip") && s.selected)
             openClipEditor(s.selected);
         if (clipWorkspace) {
             ImGui::SameLine();
-            if (ImGui::Button("Fenêtre séparée")) {
+            if (ImGui::Button("Separate Window")) {
                 clipDetached = true;
                 clipDetachRequested = true;
             }
             ImGui::SameLine();
-            if (ImGui::Button("Appliquer au conteneur")) {
+            if (ImGui::Button("Apply to Container")) {
                 applyClipDrafts();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Recharger"))
+            if (ImGui::Button("Reload"))
                 openClipEditor(editedContainer, true);
             ImGui::SameLine();
-            if (ImGui::BeginCombo("Fenêtres du clip", "Afficher…")) {
+            if (ImGui::BeginCombo("Clip Windows", "Show...")) {
                 for (auto &[name, open] : clipWorkspace->panels)
                     if (ImGui::Selectable(name.c_str(), open))
                         clipWorkspace->openPanel(name);
                 ImGui::EndCombo();
             }
-            if (ImGui::SmallButton("Temps shader local depuis zéro")) {
+            if (ImGui::SmallButton("Local Shader Time from Zero")) {
                 clipSession->history.checkpoint(clipSession->project);
                 clipSession->project.timeOrigin = 0;
                 clipSession->dirty = true;
             }
-            ImGui::Text("Clip %u · temps local · %s", editedContainer,
-                        clipSession->dirty ? "brouillon modifié, appliquer pour le rendu final"
-                                           : "contenu enregistré");
+            ImGui::Text("Clip %u - local time - %s", editedContainer,
+                        clipSession->dirty ? "modified draft; apply for final rendering"
+                                           : "saved content");
             if (clipWorkspace->hasError())
                 ImGui::TextWrapped("%s", clipWorkspace->error.c_str());
             dockSize = ImGui::GetContentRegionAvail();
             ImGui::DockSpace(dock, {0, 0});
         } else
             ImGui::TextWrapped(
-                "Un clip conteneur possède sa timeline vidéo/audio, ses effets et son graphe de calques. "
-                "Ouvrez un clip par double clic, puis appliquez ses modifications.");
+                "A container clip has its own video/audio timeline, effects and layer graph. "
+                "Double-click a clip to open it, then apply your changes.");
     } else if (clipWorkspace)
         ImGui::DockSpace(dock, {0, 0}, ImGuiDockNodeFlags_KeepAliveOnly);
     ImGui::End();
-    if (clipWorkspace && panels["Éditeur de clip"])
+    if (clipWorkspace && panels["Clip Editor"])
         clipWorkspace->drawEmbedded(dock, dockSize);
 }
 void Editor::dspPanel() {
-    if (!panels["Graphe DSP"] || !beginPanel("Graphe DSP"))
+    if (!panels["DSP Graph"] || !beginPanel("DSP Graph"))
         return;
-    if (ImGui::BeginCombo("Canal", mixScope == "master" ? "MASTER" : mixScope.c_str())) {
+    if (ImGui::BeginCombo("Channel", mixScope == "master" ? "MASTER" : mixScope.c_str())) {
         if (ImGui::Selectable("MASTER", mixScope == "master")) {
             mixScope = "master";
             mixTarget = 0;
@@ -272,7 +274,7 @@ void Editor::dspPanel() {
                 break;
             }
     if (ImGui::BeginCombo("Instance", channelDspIndex < 0
-                                          ? "Nouveau graphe"
+                                          ? "New Graph"
                                           : ("DSP #" + std::to_string(channelDspIndex + 1)).c_str())) {
         for (int i = 0; i < int(chain->size()); ++i)
             if ((*chain)[i].id == "cydaw.graph" &&
@@ -292,7 +294,7 @@ void Editor::dspPanel() {
         channelDspIdentity = identity;
         channelDspDirty = false;
     }
-    if (ImGui::Button(index < 0 ? "Ajouter ce graphe à la chaîne" : "Compiler et appliquer")) {
+    if (ImGui::Button(index < 0 ? "Add This Graph to the Chain" : "Compile and Apply")) {
         Json args = Json::Object();
         args["scope"] = mixScope;
         if (mixScope == "clip")
@@ -308,8 +310,8 @@ void Editor::dspPanel() {
         }
     }
     ImGui::SameLine();
-    ImGui::TextDisabled("CyDAW v2 · audio stéréo · %s",
-                        channelDspDirty ? "brouillon à appliquer" : "signal enregistré");
+    ImGui::TextDisabled("CyDAW v2 - stereo audio - %s",
+                        channelDspDirty ? "draft changes pending" : "saved signal");
     channelDspDirty |= channelDsp.draw(s.time);
     ImGui::End();
 }

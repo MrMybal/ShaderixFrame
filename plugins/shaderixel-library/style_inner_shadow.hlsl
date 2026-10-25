@@ -24,27 +24,27 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
 //@name Ombre interne
-//@category Styles de calque
+//@category Layer Styles
 //@halo size 1.5 dist 1 4
 //@passes 2
 //@premultiplied
-//@param sx_color color 0 0 0 1 "Couleur"
-//@param sx_opacity float 0.75 0 1 "Opacité"
-//@param sx_angle float 135 -180 180 "Angle de la lumière"
+//@param sx_color color 0 0 0 1 "Color"
+//@param sx_opacity float 0.75 0 1 "Opacity"
+//@param sx_angle float 135 -180 180 "Light Angle"
 //@param sx_dist float 8 0 500 "Distance (px)"
-//@param sx_size float 10 0 250 "Taille (px)"
+//@param sx_size float 10 0 250 "Size (px)"
 float BlurInv(EffectContext ctx, int2 dir, int2 offset)
 {
     float sigma = max(sx_size * 0.5, 0.01);
@@ -63,7 +63,7 @@ float BlurInv(EffectContext ctx, int2 dir, int2 offset)
 float4 Effect(EffectContext ctx)
 {
     float a = radians(sx_angle);
-    int2 offset = int2(round(float2(-cos(a), sin(a)) * sx_dist));
+    int2 offset = ((int2)(round(float2(-cos(a), sin(a)) * sx_dist)));
     if (ctx.pass == 0)
         return float4(0, 0, 0, BlurInv(ctx, int2(1, 0), offset));
     float4 o = Input(0, ctx.px);

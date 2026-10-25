@@ -24,14 +24,14 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
@@ -41,15 +41,15 @@ float2 Hash22(float2 p)
 //@halo full
 //@premultiplied
 //@param sx_position float2 0 0 -8192 8192 "Position (px)"
-//@param sx_scale float 1 0.01 16 "Échelle"
-//@param sx_scaleXY float2 1 1 0.01 16 "Échelle X / Y"
+//@param sx_scale float 1 0.01 16 "Scale"
+//@param sx_scaleXY float2 1 1 0.01 16 "Scale X / Y"
 //@param sx_rotation float 0 -180 180 "Rotation (°)"
 //@param sx_pivot float2 0.5 0.5 0 1 "Pivot"
 // Moves, scales and turns the input around a pivot (fraction of the document); outside: transparent.
 float4 Effect(EffectContext ctx)
 {
     float2 c = ctx.size * sx_pivot;
-    float2 p = (float2(ctx.px) + 0.5) - c - sx_position;
+    float2 p = (((float2)(ctx.px)) + 0.5) - c - sx_position;
     float a = -radians(sx_rotation);
     float s = sin(a), co = cos(a);
     p = float2(co * p.x - s * p.y, s * p.x + co * p.y) / max(sx_scale * sx_scaleXY, 1e-4);

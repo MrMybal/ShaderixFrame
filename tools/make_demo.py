@@ -41,7 +41,7 @@ title = dict(id=7, name='Première lumière · titre', source='', generator=Fals
              mask=dict(shape=0, inverted=False),
              params={'font_size': param(44), 'text_r': param(1), 'text_g': param(0.93), 'text_b': param(0.84),
                      'text_a': param(1), 'y': param(0.30), 'x': param(0), 'opacity': param(1)}, effects=[])
-project = dict(format='shaderixframe', schema=6, name='Première lumière', width=1280, height=720,
+project = dict(format='shaderixframe', schema=6, name='First Light', width=1280, height=720,
                fps=30, duration=12, master=0, masterMix=dict(output=0, sends=[], effects=[], params={}), buses=[], nextId=8,
                tracks=[track(6, '01 / Titre', 0, [title]),
                        track(1, '02 / Lumière procédurale', 0, [video]),
@@ -91,7 +91,7 @@ graph = dict(name='Désaturation Shaderixel', category='Études', inputs=1, prem
              nodes=[dict(id=1, op='input', pos=[-100, -80], **{'in': []}, value=[0, 0, 0, 0]),
                     dict(id=2, op='desaturate', pos=[140, -50], **{'in': [[1, 1], [3, 0]]}, value=[0, 0, 0, 0]),
                     dict(id=3, op='param', name='amount', pos=[-100, 95], **{'in': []}, value=[.45, 0, 0, 0]),
-                    dict(id=4, op='output', pos=[400, -50], **{'in': [[0, 0], [2, 0], [0, 0]]}, value=[0, 0, 0, 0])])
+                    dict(id=4, op='output', pos=[400, -50], **{'in': [[1, 0], [2, 0], [0, 0]]}, value=[0, 0, 0, 0])])
 graph_study['tracks'][0]['clips'][0]['effects'] = [dict(id='graph', enabled=True, code='', graph=graph,
                                                         params={'amount': param(.45, [(0, .1), (12, .85)])})]
 (EXAMPLES / 'GraphStudy.sframe').write_text(json.dumps(graph_study, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')

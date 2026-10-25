@@ -13,10 +13,10 @@ static Json readRecovery(const std::filesystem::path &file) {
     std::string text, error;
     Json json;
     if (!sx::ReadTextFile(sx::Narrow(file.wstring()), text) || !Json::Parse(text, json, &error))
-        throw std::runtime_error("Fichier de récupération illisible");
+        throw std::runtime_error("Unable to read the recovery file");
     Project::fromJson(json);
     if (!json["recovery"].IsObject())
-        throw std::runtime_error("Métadonnées de récupération manquantes");
+        throw std::runtime_error("Missing recovery metadata");
     return json;
 }
 void Recovery::rotate() {
@@ -48,7 +48,7 @@ void Recovery::capture(const Project &p, const std::string &originalPath, double
         file << json.Dump(2);
         file.flush();
         if (!file)
-            throw std::runtime_error("Écriture de la récupération échouée");
+            throw std::runtime_error("Recovery write failed");
     }
     output.commit();
 }
@@ -96,7 +96,7 @@ void Recovery::discard(const RecoveryEntry &entry) const {
     auto resolved = std::filesystem::weakly_canonical(entry.file);
     if (resolved.parent_path() != std::filesystem::weakly_canonical(directory) ||
         resolved.extension() != L".sframe")
-        throw std::runtime_error("Chemin de récupération invalide");
+        throw std::runtime_error("Invalid recovery path");
     std::filesystem::remove(resolved);
 }
 } // namespace sf

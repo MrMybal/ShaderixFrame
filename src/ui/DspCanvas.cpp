@@ -79,20 +79,20 @@ void DspCanvas::setPosition(Id node, sx::float2 p) {
 }
 Id DspCanvas::add(const std::string &processor, sx::float2 point) {
     if (graph["nodes"].Size() >= 128)
-        throw std::runtime_error("128 nœuds DSP maximum");
+        throw std::runtime_error("128 DSP nodes maximum");
     Id id = 1;
     for (const auto &n : graph["nodes"].Elements())
         id = std::max(id, n["id"].U() + 1);
     if (id > 2147483647)
-        throw std::runtime_error("Identités DSP épuisées");
+        throw std::runtime_error("DSP IDs exhausted");
     auto effect = processor == "sf.sum" ? Effect{} : instantiateAudioEffect(processor);
     if (processor != "sf.sum" && (processor == "cydaw.graph" || externalAudio(processor)))
-        throw std::runtime_error("DSP de catalogue requis");
+        throw std::runtime_error("A library DSP is required");
     checkpoint();
     Json node = Json::Object();
     node["id"] = id;
     node["processor"] = processor;
-    node["name"] = processor == "sf.sum" ? "Somme stéréo" : std::string(audioEffect(processor)->displayName);
+    node["name"] = processor == "sf.sum" ? "Stereo Sum" : std::string(audioEffect(processor)->displayName);
     node["pos"] = pointJson(point);
     node["params"] = Json::Object();
     for (auto &[key, parameter] : effect.params)
@@ -103,7 +103,7 @@ Id DspCanvas::add(const std::string &processor, sx::float2 point) {
 }
 void DspCanvas::connect(Id from, Id to) {
     if (from == outputBoundary || to == 0 || from == to)
-        throw std::runtime_error("Connecter une sortie à une entrée distincte");
+        throw std::runtime_error("Connect an output to a different input");
     to = to == outputBoundary ? 0 : to;
     bool existsFrom = from == 0, existsTo = to == 0, many = false;
     for (auto &node : graph["nodes"].Elements()) {
@@ -113,7 +113,7 @@ void DspCanvas::connect(Id from, Id to) {
             many = node["processor"].S() == "sf.sum";
     }
     if (!existsFrom || !existsTo)
-        throw std::runtime_error("Port DSP absent");
+        throw std::runtime_error("Missing DSP port");
     auto next = graph;
     auto wires = Json::Array();
     for (auto item : graph["connections"].Elements()) {
@@ -233,10 +233,10 @@ void DspCanvas::select(Id node, bool extend) {
         selection.insert(node);
 }
 void DspCanvas::nodeSearch() {
-    if (ImGui::BeginPopup("Ajouter DSP")) {
+    if (ImGui::BeginPopup("Add DSP")) {
         if (ImGui::IsWindowAppearing())
             ImGui::SetKeyboardFocusHere();
-        ImGui::InputText("Rechercher", &search);
+        ImGui::InputText("Search", &search);
         auto entry = [&](const std::string &id, const std::string &label) {
             if (!search.empty() && label.find(search) == std::string::npos &&
                 id.find(search) == std::string::npos)
@@ -257,7 +257,7 @@ void DspCanvas::nodeSearch() {
                 }
             }
         };
-        entry("sf.sum", "Somme stéréo");
+        entry("sf.sum", "Stereo Sum");
         for (auto &d : cydaw::engine::effectCatalogue)
             if (!d.convertsChannels())
                 entry("cydaw." + std::string(d.typeKey), std::string(d.displayName));
@@ -266,29 +266,29 @@ void DspCanvas::nodeSearch() {
 }
 bool DspCanvas::draw(double time) {
     auto before = graph.Dump(0);
-    if (ImGui::Button("Ajouter DSP…")) {
+    if (ImGui::Button("Add DSP...")) {
         newPosition = view.world({300, 120});
         search.clear();
-        ImGui::OpenPopup("Ajouter DSP");
+        ImGui::OpenPopup("Add DSP");
     }
     ImGui::SameLine();
-    if (ImGui::Button("Tout voir [F]"))
+    if (ImGui::Button("Fit All [F]"))
         fitPending = true;
     ImGui::SameLine();
-    if (ImGui::Button("Organiser [A]"))
+    if (ImGui::Button("Arrange [A]"))
         try {
             arrange();
         } catch (const std::exception &e) {
             error = e.what();
         }
     ImGui::SameLine();
-    if (ImGui::Button("Annuler"))
+    if (ImGui::Button("Undo"))
         undo();
     ImGui::SameLine();
-    if (ImGui::Button("Rétablir"))
+    if (ImGui::Button("Redo"))
         redo();
     ImGui::TextDisabled(
-        "Tab/double-clic : DSP · molette : zoom · bouton central : déplacement · Suppr : retirer");
+        "Tab/double-click: DSP - wheel: zoom - middle button: pan - Delete: remove");
     ImGui::BeginChild("dspCanvas",
                       {0, std::max(160.f, ImGui::GetContentRegionAvail().y * (automationNode ? .62f : 1.f))},
                       true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
@@ -368,13 +368,13 @@ bool DspCanvas::draw(double time) {
                 if (std::hypot(p.x - io.MousePos.x, p.y - io.MousePos.y) < 7) {
                     disconnectFrom = w["source"].U();
                     disconnectTo = w["destination"].U();
-                    ImGui::OpenPopup("Câble DSP");
+                    ImGui::OpenPopup("DSP Cable");
                     break;
                 }
             }
     }
-    if (ImGui::BeginPopup("Câble DSP")) {
-        if (ImGui::MenuItem("Déconnecter"))
+    if (ImGui::BeginPopup("DSP Cable")) {
+        if (ImGui::MenuItem("Disconnect"))
             disconnect(disconnectFrom, disconnectTo);
         ImGui::EndPopup();
     }
@@ -382,7 +382,7 @@ bool DspCanvas::draw(double time) {
     auto updated = Json::Array();
     for (const auto &c : cards) {
         ImGui::PushID(int(c.id));
-        std::string label = c.id == 0 ? "ENTRÉE STÉRÉO" : c.id == outputBoundary ? "SORTIE STÉRÉO" : "";
+        std::string label = c.id == 0 ? "STEREO INPUT" : c.id == outputBoundary ? "STEREO OUTPUT" : "";
         Json node;
         for (const auto &n : graph["nodes"].Elements())
             if (n["id"].U() == c.id) {
@@ -411,7 +411,7 @@ bool DspCanvas::draw(double time) {
         if (ImGui::BeginPopupContextItem("nodeMenu")) {
             if (c.id && c.id != outputBoundary) {
                 std::string name = node["name"].S();
-                if (ImGui::InputText("Nom", &name)) {
+                if (ImGui::InputText("Name", &name)) {
                     checkpoint();
                     auto nodes = Json::Array();
                     for (auto n : graph["nodes"].Elements()) {
@@ -421,20 +421,20 @@ bool DspCanvas::draw(double time) {
                     }
                     graph["nodes"] = nodes;
                 }
-                if (ImGui::MenuItem("Dupliquer")) {
+                if (ImGui::MenuItem("Duplicate")) {
                     auto added = add(node["processor"].S(), c.world + sx::float2{40, 40});
                     auto nodes = Json::Array();
                     for (auto n : graph["nodes"].Elements()) {
                         if (n["id"].U() == added) {
                             n["params"] = node["params"];
-                            n["name"] = name + " copie";
+                            n["name"] = name + " copy";
                         }
                         nodes.Push(n);
                     }
                     graph["nodes"] = nodes;
                 }
             }
-            if (c.id && c.id != outputBoundary && ImGui::MenuItem("Retirer ce nœud")) {
+            if (c.id && c.id != outputBoundary && ImGui::MenuItem("Remove This Node")) {
                 remove({c.id});
             }
             ImGui::EndPopup();
@@ -508,7 +508,7 @@ bool DspCanvas::draw(double time) {
                         node["params"][key] = parameterJson(automation);
                     }
                     if (ImGui::IsItemHovered())
-                        ImGui::SetTooltip("Automation à %.3f s / %s", time, key.c_str());
+                        ImGui::SetTooltip("Automation at %.3f s / %s", time, key.c_str());
                     ImGui::PopID();
                     ++row;
                 }
@@ -549,7 +549,7 @@ bool DspCanvas::draw(double time) {
         if (ImGui::IsMouseReleased(0) && !hit) {
             newPosition = world(io.MousePos);
             search.clear();
-            ImGui::OpenPopup("Ajouter DSP");
+            ImGui::OpenPopup("Add DSP");
         }
     }
     if (hovered && !hit && !ImGui::IsAnyItemHovered() && ImGui::IsMouseClicked(0) && !hasWire) {
@@ -572,7 +572,7 @@ bool DspCanvas::draw(double time) {
     if (hovered && (ImGui::IsKeyPressed(ImGuiKey_Tab) || ImGui::IsMouseDoubleClicked(0))) {
         newPosition = world(io.MousePos);
         search.clear();
-        ImGui::OpenPopup("Ajouter DSP");
+        ImGui::OpenPopup("Add DSP");
     }
     if (hovered && !io.WantTextInput) {
         if (ImGui::IsKeyPressed(ImGuiKey_F))
@@ -624,16 +624,16 @@ bool DspCanvas::draw(double time) {
                                                      ImGuiInputTextFlags_EnterReturnsTrue);
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(95);
-                    edited |= ImGui::InputFloat("Valeur", &key.value, 0, 0, "%.4f",
+                    edited |= ImGui::InputFloat("Value", &key.value, 0, 0, "%.4f",
                                                 ImGuiInputTextFlags_EnterReturnsTrue);
                     ImGui::SameLine();
                     int curve = int(key.curve);
                     ImGui::SetNextItemWidth(110);
-                    edited |= ImGui::Combo("Courbe", &curve, "Linéaire\0Douce\0Palier\0Courbée\0");
+                    edited |= ImGui::Combo("Curve", &curve, "Linear\0Smooth\0Step\0Curved\0");
                     key.curve = Curve(curve);
                     if (curve == 3)
-                        edited |= ImGui::SliderFloat("Forme", &key.shape, -1, 1);
-                    bool removeKey = ImGui::SmallButton("Retirer la clé");
+                        edited |= ImGui::SliderFloat("Shape", &key.shape, -1, 1);
+                    bool removeKey = ImGui::SmallButton("Remove Keyframe");
                     if (edited || removeKey) {
                         try {
                             key.time = std::clamp(key.time, 0., 86400.);

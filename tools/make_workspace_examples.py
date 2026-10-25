@@ -38,7 +38,7 @@ group=clip('Groupe / carte');group['generator']=True;group['effects']=[dict(id='
 widget(group,'group',840,360);group['params']['widget_y']=animation([(0,120),(2,0),(6,0),(8,-120)])
 parent=track(p,group['name'],group)
 card=clip('Carte arrondie');card['generator']=True;card['effects']=[shape('rectangle','.025,.055,.11')];widget(card,'rectangle',800,320,parent);track(p,card['name'],card)
-title=clip('Titre');title['title']=dict(enabled=True,text='SHADERIXFRAME',font='Segoe UI',alignment=1,bold=True)
+title=clip('Title');title['title']=dict(enabled=True,text='SHADERIXFRAME',font='Segoe UI',alignment=1,bold=True)
 widget(title,'text',700,100,parent,(.5,.35));title['params']['font_size']=parameter(48);track(p,title['name'],title)
 caption=clip('Sous-titre');caption['title']=dict(enabled=True,text='TIMELINE  ·  SHADERS  ·  MOTION DESIGN',font='Segoe UI',alignment=1,bold=False)
 widget(caption,'text',690,70,parent,(.5,.62));caption['params']['font_size']=parameter(24);track(p,caption['name'],caption)

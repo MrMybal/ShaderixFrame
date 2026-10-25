@@ -1065,7 +1065,7 @@
                 },
                 {
                   "id": 3,
-                  "name": "Somme stéréo",
+                  "name": "Stereo Sum",
                   "params": {},
                   "pos": [
                     800,

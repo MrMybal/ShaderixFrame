@@ -46,17 +46,17 @@ bool readFrameAviAudio(const std::string &path, const std::function<void(const f
         file.read(kind, 4);
         file.read(reinterpret_cast<char *>(&length), 4);
         if (!file || length > moviEnd - uint64_t(file.tellg()))
-            throw std::runtime_error("Bloc AVI tronqué");
+            throw std::runtime_error("Truncated AVI chunk");
         if (memcmp(kind, "01wb", 4) == 0) {
             if (length % 4)
-                throw std::runtime_error("Bloc PCM AVI invalide");
+                throw std::runtime_error("Invalid AVI PCM block");
             std::array<int16_t, 2048> pcm;
             std::array<float, 2048> converted;
             for (uint32_t at = 0; at < length;) {
                 uint32_t bytes = std::min(uint32_t(pcm.size() * 2), length - at);
                 file.read(reinterpret_cast<char *>(pcm.data()), bytes);
                 if (!file)
-                    throw std::runtime_error("Audio AVI tronqué");
+                    throw std::runtime_error("Truncated AVI audio");
                 for (unsigned n = 0; n < bytes / 2; ++n)
                     converted[n] = pcm[n] / 32768.f;
                 write(converted.data(), bytes / 2);
@@ -70,19 +70,20 @@ bool readFrameAviAudio(const std::string &path, const std::function<void(const f
     return true;
 }
 void exportAvi(const Project &p, MediaCache &media, Renderer &renderer, const std::string &path,
-               const std::function<bool(float)> &progress) {
+               const std::function<bool(float)> &progress, ExportRange range) {
     p.validate();
-    int total = int(std::ceil(p.duration * p.fps));
+    const double from = range.from(p);
+    int total = std::max(1, int(std::ceil((range.to(p) - from) * p.fps - 1e-6)));
     uint32_t bytes = uint32_t(p.width) * p.height * 4;
     if (double(total) * (bytes + 192000. / p.fps + 64) + 4096 > 2147483647)
         throw std::runtime_error(
-            "AVI RGB sans compression : limite de 2 Gio ; choisir MP4 ou une séquence PNG");
+            "Uncompressed RGB AVI: 2 GiB limit; choose MP4 or a PNG sequence");
     if (progress && !progress(0))
         throw ExportCancelled();
     AtomicFile destination(path);
     std::ofstream file(destination.path(), std::ios::binary);
     if (!file)
-        throw std::runtime_error("Création AVI échouée");
+        throw std::runtime_error("AVI creation failed");
     auto u32 = [&](uint32_t value) { file.write(reinterpret_cast<const char *>(&value), 4); };
     auto u16 = [&](uint16_t value) { file.write(reinterpret_cast<const char *>(&value), 2); };
     auto four = [&](const char *value) { file.write(value, 4); };
@@ -193,19 +194,19 @@ void exportAvi(const Project &p, MediaCache &media, Renderer &renderer, const st
     for (int frame = 0; frame < total; ++frame) {
         if (progress && !progress(float(frame) / total))
             throw ExportCancelled();
-        renderer.render(p, media, double(frame) / p.fps, p.width, p.height);
+        renderer.render(p, media, from + double(frame) / p.fps, p.width, p.height);
         auto image = renderer.readback();
         chunk("00db", image.pixels.data(), bytes);
         uint64_t next = uint64_t(frame + 1) * 48000 / p.fps;
         std::vector<float> mix;
-        media.mix(p, previous / 48000., unsigned(next - previous), mix);
+        media.mix(p, from + previous / 48000., unsigned(next - previous), mix);
         std::vector<int16_t> pcm(mix.size());
         for (size_t n = 0; n < mix.size(); ++n)
             pcm[n] = int16_t(mix[n] * 32767);
         chunk("01wb", pcm.data(), uint32_t(pcm.size() * 2));
         previous = next;
         if (!file)
-            throw std::runtime_error("Écriture AVI échouée");
+            throw std::runtime_error("AVI write failed");
     }
     end(movi);
     four("idx1");
@@ -214,7 +215,7 @@ void exportAvi(const Project &p, MediaCache &media, Renderer &renderer, const st
     end(riff);
     file.close();
     if (!file)
-        throw std::runtime_error("Finalisation AVI échouée");
+        throw std::runtime_error("AVI finalization failed");
     if (progress && !progress(1))
         throw ExportCancelled();
     destination.commit();

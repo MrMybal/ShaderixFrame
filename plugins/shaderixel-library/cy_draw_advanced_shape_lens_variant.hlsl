@@ -24,14 +24,14 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
@@ -70,8 +70,8 @@ float4 Custom_n0(float2 UV, float Step, float Length)
 float2 Center = float2(0.5, 0.5);
 float2 ShapePoint = (float2 )0;
 const float PI = 3.14159265;
-float sx_RadialStep = Step ;
-float RadialStepAngle = ( 2 * PI ) / sx_RadialStep ;
+float sx_local_RadialStep = Step ;
+float RadialStepAngle = ( 2 * PI ) / sx_local_RadialStep ;
 float Result = 0 ;
 float2 Points[12] ;
 float2 CurPoint = (float2 )0;
@@ -79,16 +79,16 @@ int v = (int )0;
 float DotP = (float )0;
 
 
-for (int i = 0; i < sx_RadialStep; i++)
+for (int i = 0; i < sx_local_RadialStep; i++)
 {
     float Angle = i * RadialStepAngle ;
     ShapePoint = float2(cos(Angle),sin(Angle)) ;
 	Points[i] = Center + ShapePoint * Length ;
 }
-for ( int u = 0; u < sx_RadialStep; u++ )
+for ( int u = 0; u < sx_local_RadialStep; u++ )
 {
 	v = u + 1 ;
-	if ( v > sx_RadialStep ) {
+	if ( v > sx_local_RadialStep ) {
 		v = 0 ;
 	}
 	CurPoint = normalize( Points[v] - Points[u] ) ;
@@ -100,7 +100,7 @@ for ( int u = 0; u < sx_RadialStep; u++ )
 			Result += 0 ;
 		}
 }
-float OutDiv = sx_RadialStep - frac(sx_RadialStep);
+float OutDiv = sx_local_RadialStep - frac(sx_local_RadialStep);
 Result /= OutDiv;
 if ( Result >= 1.01000 )
 {

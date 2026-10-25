@@ -24,27 +24,27 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Biseautage et estampage
-//@category Styles de calque
+//@name Bevel and Emboss
+//@category Layer Styles
 //@halo size 1.5 4
 //@premultiplied
-//@param sx_depth float 3 0 20 "Profondeur"
-//@param sx_size float 6 1 40 "Taille (px)"
-//@param sx_angle float 135 -180 180 "Angle de la lumière"
-//@param sx_highlight color 1 1 1 1 "Lumières"
+//@param sx_depth float 3 0 20 "Depth"
+//@param sx_size float 6 1 40 "Size (px)"
+//@param sx_angle float 135 -180 180 "Light Angle"
+//@param sx_highlight color 1 1 1 1 "Lights"
 //@param sx_shadow color 0 0 0 1 "Ombres"
-//@param sx_opacity float 0.75 0 1 "Opacité"
+//@param sx_opacity float 0.75 0 1 "Opacity"
 float H(EffectContext ctx, float2 o)
 {
     // Height = blurred alpha (cheap 3x3 at the bevel size).

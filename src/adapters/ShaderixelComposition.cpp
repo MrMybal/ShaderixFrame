@@ -38,12 +38,12 @@ std::string NodeOutputName(const Node& n, int k) {
 std::string NodeInputName(const Node& n, int i) {
     switch (n.kind) {
         case NodeKind::Output: return "Image";
-        case NodeKind::Blend: return i == 0 ? "Fond" : i == 1 ? "Calque" : "Masque";
+        case NodeKind::Blend: return i == 0 ? "Background" : i == 1 ? "Calque" : "Mask";
         case NodeKind::Split: return "RGBA";
         case NodeKind::Effect: {
             auto d = n.fx.Def();
             if (d && i < (int)d->inputs.size()) return d->inputs[i];
-            return "Entrée";
+            return "Input";
         }
         default: return "";
     }

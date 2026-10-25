@@ -41,13 +41,13 @@ int wmain(int argc, wchar_t **argv) {
     int result = 0;
     try {
         if (shared->magic != workerProtocolMagic || shared->protocolVersion != workerProtocolVersion)
-            throw "Protocole IPC incompatible";
+            throw "Incompatible IPC protocol";
         module = LoadLibraryExW(plugin, nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
         if (!module)
-            throw "DLL plugin illisible";
+            throw "Cannot read plugin DLL";
         auto entry = reinterpret_cast<SfPluginEntry>(GetProcAddress(module, "shaderixframe_plugin_v1"));
         if (!entry)
-            throw "Entrée SDK native absente";
+            throw "Native SDK entry point is missing";
         api = entry();
         if (!api || api->version != 1 || api->size != sizeof(SfPluginV1) || api->parameter_count > 64 ||
             api->latency_samples > 480000 || !api->create || !api->destroy || !api->process ||
@@ -55,7 +55,7 @@ int wmain(int argc, wchar_t **argv) {
             throw "ABI native incompatible";
         instance = api->create(48000, 2048);
         if (!instance)
-            throw "Création du plugin échouée";
+            throw "Plugin creation failed";
         shared->latencySamples = api->latency_samples;
         shared->parameterCount = api->parameter_count;
         for (uint32_t i = 0; i < api->parameter_count; ++i) {
@@ -78,17 +78,17 @@ int wmain(int argc, wchar_t **argv) {
                     for (uint32_t i = 0; i < std::min(shared->automationCount, 64u); ++i) {
                         auto &p = shared->automation[i];
                         if (p.index >= api->parameter_count)
-                            throw "Paramètre plugin inconnu";
+                            throw "Unknown plugin parameter";
                         api->set_parameter(instance, p.index, std::clamp(p.value, 0.f, 1.f));
                         shared->parameters[p.index].value = p.value;
                     }
                     automation = current;
                 }
                 if (!shared->frameCount || shared->frameCount > 2048)
-                    throw "Bloc audio invalide";
+                    throw "Invalid audio block";
                 if (!api->process(instance, shared->input, shared->input + 2048, shared->output,
                                   shared->output + 2048, shared->frameCount))
-                    throw "Traitement plugin échoué";
+                    throw "Plugin processing failed";
                 shared->outputFrameCount = shared->frameCount;
                 std::atomic_ref(shared->responseSequence).store(request, std::memory_order_release);
             }
@@ -108,7 +108,7 @@ int wmain(int argc, wchar_t **argv) {
                 }
                 if (shared->commandResult)
                     snprintf(shared->commandStatus, sizeof(shared->commandStatus),
-                             "Commande native non supportée");
+                             "Unsupported native command");
                 std::atomic_ref(shared->commandResponseSequence).store(command, std::memory_order_release);
             }
             std::atomic_ref(shared->heartbeat).fetch_add(1, std::memory_order_relaxed);
@@ -118,7 +118,7 @@ int wmain(int argc, wchar_t **argv) {
         error(message);
         result = 5;
     } catch (...) {
-        error("Exception dans le plugin natif");
+        error("Exception in native plugin");
         result = 6;
     }
     if (api && instance)

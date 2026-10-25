@@ -24,25 +24,25 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
 //@name Lueur externe
-//@category Styles de calque
+//@category Layer Styles
 //@halo size 1.5 4
 //@passes 2
 //@premultiplied
-//@param sx_color color 1 0.9 0.45 1 "Couleur"
-//@param sx_opacity float 0.8 0 1 "Opacité"
-//@param sx_size float 20 0 250 "Taille (px)"
+//@param sx_color color 1 0.9 0.45 1 "Color"
+//@param sx_opacity float 0.8 0 1 "Opacity"
+//@param sx_size float 20 0 250 "Size (px)"
 //@param sx_spread float 0.2 0 1 "Grossi"
 float Blur1(EffectContext ctx, int2 dir)
 {

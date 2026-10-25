@@ -5,6 +5,8 @@
 #include "plugins/PluginEditors.h"
 #include "render/Renderer.h"
 namespace sf {
+// Saved versions of a project, newest first: date stamp and file.
+std::vector<std::pair<std::string, std::filesystem::path>> projectVersions(const std::string &projectPath);
 struct Session {
     Project project = Project::demo();
     History history;

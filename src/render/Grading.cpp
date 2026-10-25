@@ -5,50 +5,50 @@
 namespace sf {
 const std::vector<GradeControl> &gradeControls() {
     static const std::vector<GradeControl> controls = {
-        {"intensity", "Intensité", 1, 0, 1},
-        {"temperature", "Température relative (K)", 0, -6000, 6000},
-        {"tint", "Teinte vert / magenta", 0, -1, 1},
+        {"intensity", "Strength", 1, 0, 1},
+        {"temperature", "Relative Temperature (K)", 0, -6000, 6000},
+        {"tint", "Green / magenta tint", 0, -1, 1},
         {"wb_r", "Balance R", 1, .125f, 8},
         {"wb_g", "Balance V", 1, .125f, 8},
         {"wb_b", "Balance B", 1, .125f, 8},
-        {"exposure", "Exposition (EV)", 0, -12, 12},
-        {"contrast", "Contraste", 1, 0, 4},
-        {"pivot", "Pivot linéaire", .18f, .001f, 1},
-        {"blacks", "Noirs", 0, -1, 1},
-        {"whites", "Blancs", 0, -1, 2},
+        {"exposure", "Exposure (EV)", 0, -12, 12},
+        {"contrast", "Contrast", 1, 0, 4},
+        {"pivot", "Linear Pivot", .18f, .001f, 1},
+        {"blacks", "Blacks", 0, -1, 1},
+        {"whites", "Whites", 0, -1, 2},
         {"saturation", "Saturation", 1, 0, 3},
         {"vibrance", "Vibrance", 0, -1, 1},
-        {"shadow_r", "Ombres R", 0, -1, 1},
-        {"shadow_g", "Ombres V", 0, -1, 1},
-        {"shadow_b", "Ombres B", 0, -1, 1},
-        {"mid_r", "Moyens R", 0, -1, 1},
-        {"mid_g", "Moyens V", 0, -1, 1},
-        {"mid_b", "Moyens B", 0, -1, 1},
-        {"high_r", "Hautes R", 0, -1, 1},
-        {"high_g", "Hautes V", 0, -1, 1},
-        {"high_b", "Hautes B", 0, -1, 1},
+        {"shadow_r", "Shadows R", 0, -1, 1},
+        {"shadow_g", "Shadows G", 0, -1, 1},
+        {"shadow_b", "Shadows B", 0, -1, 1},
+        {"mid_r", "Midtones R", 0, -1, 1},
+        {"mid_g", "Midtones G", 0, -1, 1},
+        {"mid_b", "Midtones B", 0, -1, 1},
+        {"high_r", "Highlights R", 0, -1, 1},
+        {"high_g", "Highlights G", 0, -1, 1},
+        {"high_b", "Highlights B", 0, -1, 1},
         {"offset_r", "Offset R", 0, -1, 1},
         {"offset_g", "Offset V", 0, -1, 1},
         {"offset_b", "Offset B", 0, -1, 1},
-        {"qualifier", "Sélection HSL", 0, 0, 1},
-        {"hue", "Teinte sélectionnée", .08f, 0, 1},
-        {"hue_width", "Largeur teinte", .08f, 0, .5f},
-        {"hue_soft", "Douceur teinte", .03f, .001f, .5f},
+        {"qualifier", "HSL Selection", 0, 0, 1},
+        {"hue", "Selected Hue", .08f, 0, 1},
+        {"hue_width", "Hue width", .08f, 0, .5f},
+        {"hue_soft", "Hue softness", .03f, .001f, .5f},
         {"sat_min", "Saturation min", 0, 0, 1},
         {"sat_max", "Saturation max", 1, 0, 1},
         {"luma_min", "Luminance min", 0, 0, 1},
         {"luma_max", "Luminance max", 1, 0, 1},
-        {"qual_soft", "Douceur sélection", .05f, .001f, .5f},
-        {"qual_invert", "Inverser sélection", 0, 0, 1},
-        {"mask_mode", "Masque", 0, 0, 3},
-        {"mask_x", "Centre X", 0, -.5f, .5f},
-        {"mask_y", "Centre Y", 0, -.5f, .5f},
-        {"mask_width", "Largeur", .5f, .001f, 2},
-        {"mask_height", "Hauteur", .5f, .001f, 2},
-        {"mask_feather", "Contour progressif", .05f, 0, .5f},
+        {"qual_soft", "Selection Softness", .05f, .001f, .5f},
+        {"qual_invert", "Invert Selection", 0, 0, 1},
+        {"mask_mode", "Mask", 0, 0, 3},
+        {"mask_x", "Center X", 0, -.5f, .5f},
+        {"mask_y", "Center Y", 0, -.5f, .5f},
+        {"mask_width", "Width", .5f, .001f, 2},
+        {"mask_height", "Height", .5f, .001f, 2},
+        {"mask_feather", "Feather", .05f, 0, .5f},
         {"mask_rotation", "Rotation", 0, -360, 360},
-        {"mask_invert", "Inverser masque", 0, 0, 1},
-        {"lut_intensity", "Intensité LUT", 1, 0, 1},
+        {"mask_invert", "Invert mask", 0, 0, 1},
+        {"lut_intensity", "LUT Strength", 1, 0, 1},
         {"matte", "Matte", 0, 0, 1}};
     return controls;
 }
@@ -80,98 +80,98 @@ static bool space(const std::string &s) {
 void validateGrade(const Effect &e) {
     if (e.id != "grading" || e.grading["schema"].I() != 1 || !e.grading.IsObject() ||
         e.grading["name"].S().size() > 256 || !e.code.empty() || !e.graph.IsNull())
-        throw std::runtime_error("Correction d'étalonnage invalide");
+        throw std::runtime_error("Invalid color grading correction");
     for (auto &[key, p] : e.params) {
         auto it = std::find_if(gradeControls().begin(), gradeControls().end(),
                                [&](auto &c) { return key == c.key; });
         if (it == gradeControls().end())
-            throw std::runtime_error("Paramètre d'étalonnage inconnu : " + key);
+            throw std::runtime_error("Unknown grading parameter: " + key);
         auto check = [&](float x) {
             if (!std::isfinite(x) || x < it->minimum || x > it->maximum)
-                throw std::runtime_error("Paramètre d'étalonnage hors limites : " + key);
+                throw std::runtime_error("Grading parameter out of range: " + key);
         };
         check(p.value);
         if (p.keys.size() > 10000)
-            throw std::runtime_error("Trop de clés d'étalonnage");
+            throw std::runtime_error("Too many grading keys");
         double last = -1;
         for (auto &k : p.keys) {
             check(k.value);
             if (!std::isfinite(k.time) || k.time < 0 || k.time <= last || !std::isfinite(k.shape) ||
                 k.shape < -1 || k.shape > 1 || int(k.curve) < 0 || int(k.curve) > 3)
-                throw std::runtime_error("Clé d'étalonnage invalide");
+                throw std::runtime_error("Invalid grading key");
             last = k.time;
         }
     }
     if (param(e, "sat_min", 0) > param(e, "sat_max", 0) || param(e, "luma_min", 0) > param(e, "luma_max", 0))
-        throw std::runtime_error("Bornes de sélection inversées");
+        throw std::runtime_error("Selection bounds are reversed");
     for (auto &[name, curve] : e.grading["curves"].Items()) {
         bool hue = name == "hue_hue", scalar = name == "hue_sat" || name == "hue_luma" || name == "luma_sat";
         if (!hue && !scalar && name != "master" && name != "r" && name != "g" && name != "b")
-            throw std::runtime_error("Courbe d'étalonnage inconnue");
+            throw std::runtime_error("Unknown grading curve");
         if (!curve.IsArray() || curve.Size() < 2 || curve.Size() > 32)
-            throw std::runtime_error("Une courbe exige 2 à 32 points");
+            throw std::runtime_error("A curve requires 2 to 32 points");
         float previous = -1;
         for (auto &pt : curve.Elements()) {
             if (!pt.IsArray() || pt.Size() != 2)
-                throw std::runtime_error("Point de courbe invalide");
+                throw std::runtime_error("Invalid curve point");
             if (pt.At(0).GetType() != Json::Type::Number || pt.At(1).GetType() != Json::Type::Number)
-                throw std::runtime_error("Coordonnées de courbe numériques requises");
+                throw std::runtime_error("Numeric curve coordinates required");
             float x = pt.At(0).F(), y = pt.At(1).F();
             if (!std::isfinite(x) || !std::isfinite(y) || x < 0 || x > 1 || x <= previous ||
                 y < (hue ? -.5f : 0) ||
                 y > (hue      ? .5f
                      : scalar ? 3.f
                               : 1.f))
-                throw std::runtime_error("Points de courbe non ordonnés ou hors limites");
+                throw std::runtime_error("Curve points are unordered or out of range");
             previous = x;
         }
         if (curve.At(0).At(0).F() != 0 || curve.At(curve.Size() - 1).At(0).F() != 1)
-            throw std::runtime_error("Les extrémités de courbe doivent être 0 et 1");
+            throw std::runtime_error("Curve endpoints must be 0 and 1");
         if (name.starts_with("hue_") && curve.At(0).At(1).F() != curve.At(curve.Size() - 1).At(1).F())
-            throw std::runtime_error("Les courbes de teinte doivent boucler sans couture");
+            throw std::runtime_error("Hue curves must wrap seamlessly");
     }
     auto &points = e.grading["maskPoints"];
     if (!points.IsNull()) {
         if (!points.IsArray() || points.Size() < 3 || points.Size() > 16)
-            throw std::runtime_error("Masque polygonal : 3 à 16 sommets");
+            throw std::runtime_error("Polygon mask: 3 to 16 vertices");
         for (auto &p : points.Elements()) {
             if (!p.IsArray() || p.Size() != 2)
-                throw std::runtime_error("Sommet de masque invalide");
+                throw std::runtime_error("Invalid mask vertex");
             for (auto &v : p.Elements())
                 if (v.GetType() != Json::Type::Number || !std::isfinite(v.F()) || std::abs(v.F()) > 2)
-                    throw std::runtime_error("Sommet hors limites");
+                    throw std::runtime_error("Vertex out of bounds");
         }
     }
     if (param(e, "mask_mode", 0) >= 2.5f && points.IsNull())
-        throw std::runtime_error("Le masque polygonal exige des sommets");
+        throw std::runtime_error("A polygon mask requires vertices");
     if (!space(e.grading["lutInput"].S("linear709")) || !space(e.grading["lutOutput"].S("linear709")))
-        throw std::runtime_error("Espace LUT inconnu");
+        throw std::runtime_error("Unknown LUT color space");
     auto &lut = e.grading["lut"];
     if (!lut.IsNull()) {
         int n = lut["size"].I(), dim = lut["dimension"].I();
         if ((dim != 1 && dim != 3) || n < 2 || n > (dim == 1 ? 16384 : 65) ||
             lut["data"].Size() != size_t(dim == 1 ? n : n * n * n) * 3)
-            throw std::runtime_error("Dimensions LUT invalides (3D max 65, 1D max 16384)");
+            throw std::runtime_error("Invalid LUT dimensions (3D max 65, 1D max 16384)");
         if (!lut["data"].IsArray() || lut["size"].Num() != n || lut["dimension"].Num() != dim)
-            throw std::runtime_error("Entête LUT invalide");
+            throw std::runtime_error("Invalid LUT header");
         for (auto &x : lut["data"].Elements())
             if (x.GetType() != Json::Type::Number || !std::isfinite(x.F()) || std::abs(x.F()) > 65504)
-                throw std::runtime_error("Valeur LUT invalide");
+                throw std::runtime_error("Invalid LUT value");
         if (lut["min"].Size() != 3 || lut["max"].Size() != 3)
-            throw std::runtime_error("Domaine LUT invalide");
+            throw std::runtime_error("Invalid LUT domain");
         for (int i = 0; i < 3; ++i)
             if (lut["min"].At(i).GetType() != Json::Type::Number ||
                 lut["max"].At(i).GetType() != Json::Type::Number || !std::isfinite(lut["min"].At(i).F()) ||
                 !std::isfinite(lut["max"].At(i).F()) || lut["max"].At(i).F() <= lut["min"].At(i).F())
-                throw std::runtime_error("Domaine LUT vide");
+                throw std::runtime_error("Empty LUT domain");
     }
 }
 Json loadCube(const std::filesystem::path &path) {
     if (std::filesystem::file_size(path) > 32 * 1024 * 1024)
-        throw std::runtime_error("LUT trop volumineuse");
+        throw std::runtime_error("LUT too large");
     std::ifstream in(path);
     if (!in)
-        throw std::runtime_error("Ouverture LUT impossible");
+        throw std::runtime_error("Cannot open LUT");
     Json lut = Json::Object();
     lut["dimension"] = 0;
     lut["size"] = 0;
@@ -193,7 +193,7 @@ Json loadCube(const std::filesystem::path &path) {
             continue;
         if (token == "TITLE") {
             if (data)
-                throw std::runtime_error("Entête LUT après données");
+                throw std::runtime_error("LUT header appears after data");
             std::string title;
             std::getline(row, title);
             lut["title"] = title;
@@ -203,10 +203,10 @@ Json loadCube(const std::filesystem::path &path) {
             int n;
             std::string extra;
             if (data || lut["dimension"].I() || !(row >> n) || (row >> extra))
-                throw std::runtime_error("Une LUT .cube doit avoir une seule taille 1D ou 3D");
+                throw std::runtime_error("A .cube LUT must have a single 1D or 3D size");
             int dim = token == "LUT_1D_SIZE" ? 1 : 3;
             if (n < 2 || n > (dim == 1 ? 16384 : 65))
-                throw std::runtime_error("Taille LUT non prise en charge");
+                throw std::runtime_error("Unsupported LUT size");
             lut["dimension"] = dim;
             lut["size"] = n;
             continue;
@@ -215,7 +215,7 @@ Json loadCube(const std::filesystem::path &path) {
             float a, b, c;
             std::string extra;
             if (data || !(row >> a >> b >> c) || (row >> extra))
-                throw std::runtime_error("Domaine .cube invalide");
+                throw std::runtime_error("Invalid .cube domain");
             auto key = token == "DOMAIN_MIN" ? "min" : "max";
             lut[key] = Json::Array();
             for (float f : {a, b, c})
@@ -223,17 +223,17 @@ Json loadCube(const std::filesystem::path &path) {
             continue;
         }
         if (!lut["dimension"].I())
-            throw std::runtime_error("Entête ou directive .cube non prise en charge : " + token);
+            throw std::runtime_error("Unsupported .cube header or directive: " + token);
         std::istringstream values(line);
         float a, b, c;
         std::string extra;
         if (!(values >> a >> b >> c) || (values >> extra))
-            throw std::runtime_error("Ligne LUT invalide");
+            throw std::runtime_error("Invalid LUT line");
         data = true;
         for (float f : {a, b, c})
             lut["data"].Push(f);
         if (lut["data"].Size() > 65u * 65 * 65 * 3)
-            throw std::runtime_error("Trop de données LUT");
+            throw std::runtime_error("Too much LUT data");
     }
     auto e = makeGrade();
     e.grading["lut"] = lut;
@@ -421,7 +421,7 @@ ColorRGB gradeColor(const Effect &e, ColorRGB original, const std::string &space
 void neutralGrade(Effect &e, ColorRGB c) {
     if (!std::isfinite(c.x) || !std::isfinite(c.y) || !std::isfinite(c.z) ||
         std::min({c.x, c.y, c.z}) <= 1e-5f)
-        throw std::runtime_error("La pipette exige une zone neutre éclairée, sans valeur négative");
+        throw std::runtime_error("The eyedropper requires a lit neutral area with no negative values");
     float l = c.x * .2126f + c.y * .7152f + c.z * .0722f;
     e.params["temperature"] = {0};
     e.params["tint"] = {0};
@@ -429,29 +429,38 @@ void neutralGrade(Effect &e, ColorRGB c) {
     e.params["wb_g"] = {std::clamp(l / c.y, .125f, 8.f)};
     e.params["wb_b"] = {std::clamp(l / c.z, .125f, 8.f)};
 }
-Effect gradePreset(const std::string &name) {
+Effect gradePreset(const std::string &requested) {
+    // Accept preset names used by existing MCP clients while presenting English names.
+    std::string name = requested;
+    for (auto [legacy, english] : {std::pair{"Neutre", "Neutral"}, {"Chaud", "Warm"}, {"Froid", "Cool"},
+                                   {"Noir et blanc", "Black and White"},
+                                   {"Ombres cyan / hautes chaudes", "Cyan shadows / warm highlights"}})
+        if (name == legacy) {
+            name = english;
+            break;
+        }
     auto e = makeGrade(name);
-    if (name == "Neutre")
+    if (name == "Neutral")
         return e;
-    if (name == "Chaud") {
+    if (name == "Warm") {
         e.params["temperature"].value = 900;
         e.params["vibrance"].value = .15f;
-    } else if (name == "Froid") {
+    } else if (name == "Cool") {
         e.params["temperature"].value = -900;
         e.params["contrast"].value = 1.08f;
-    } else if (name == "Noir et blanc")
+    } else if (name == "Black and White")
         e.params["saturation"].value = 0;
-    else if (name == "Ombres cyan / hautes chaudes") {
+    else if (name == "Cyan shadows / warm highlights") {
         e.params["shadow_b"].value = .03f;
         e.params["shadow_g"].value = .02f;
         e.params["high_r"].value = .05f;
     } else
-        throw std::runtime_error("Préréglage inconnu");
+        throw std::runtime_error("Unknown preset");
     return e;
 }
 VideoScopes videoScopes(const FloatImage &im, const std::string &tone, float exposure) {
     if (im.rgba.size() != size_t(im.width) * im.height * 4 || !im.width || !im.height)
-        throw std::runtime_error("Image scopes invalide");
+        throw std::runtime_error("Invalid scopes image");
     VideoScopes s;
     s.waveform.resize(256 * 128);
     s.parade.resize(3 * 128 * 128);

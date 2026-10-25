@@ -11,7 +11,7 @@ using DirectX::PackedVector::XMConvertFloatToHalf;
 using DirectX::PackedVector::XMConvertHalfToFloat;
 static void dimensions(unsigned w, unsigned h, size_t count) {
     if (!w || !h || uint64_t(w) * h > 67108864 || count != uint64_t(w) * h * 4)
-        throw std::runtime_error("Pixels haute précision invalides");
+        throw std::runtime_error("Invalid high-precision pixels");
 }
 void writePng16(const FloatImage &i, const std::string &path) {
     dimensions(i.width, i.height, i.rgba.size());
@@ -21,34 +21,34 @@ void writePng16(const FloatImage &i, const std::string &path) {
         for (int k = 0; k < 4; ++k) {
             float v = k == 3 ? i.rgba[n + 3] : c[k];
             if (!std::isfinite(v))
-                throw std::runtime_error("PNG : valeur non finie");
+                throw std::runtime_error("PNG: non-finite value");
             pixels[n + k] = uint16_t(std::lround(std::clamp(v, 0.f, 1.f) * 65535));
         }
     }
     AtomicFile output(path);
     Com<IWICImagingFactory> factory;
     check(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&factory)),
-          "WIC 16 bits");
+          "16-bit WIC");
     Com<IWICStream> stream;
     check(factory->CreateStream(&stream), "Flux PNG");
-    check(stream->InitializeFromFilename(output.path().c_str(), GENERIC_WRITE), "Fichier PNG16");
+    check(stream->InitializeFromFilename(output.path().c_str(), GENERIC_WRITE), "PNG16 file");
     Com<IWICBitmapEncoder> encoder;
-    check(factory->CreateEncoder(GUID_ContainerFormatPng, nullptr, &encoder), "Encodeur PNG16");
-    check(encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache), "Initialisation PNG16");
+    check(factory->CreateEncoder(GUID_ContainerFormatPng, nullptr, &encoder), "PNG16 encoder");
+    check(encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache), "PNG16 initialization");
     Com<IWICBitmapFrameEncode> frame;
     Com<IPropertyBag2> options;
     check(encoder->CreateNewFrame(&frame, &options), "Image PNG16");
     check(frame->Initialize(options.Get()), "Frame PNG16");
-    check(frame->SetSize(i.width, i.height), "Taille PNG16");
+    check(frame->SetSize(i.width, i.height), "PNG16 size");
     auto format = GUID_WICPixelFormat64bppRGBA;
     check(frame->SetPixelFormat(&format), "Format PNG16");
     if (format != GUID_WICPixelFormat64bppRGBA)
-        throw std::runtime_error("Encodeur PNG sans RGBA16");
+        throw std::runtime_error("PNG encoder has no RGBA16 support");
     check(frame->WritePixels(i.height, i.width * 8, UINT(pixels.size() * 2),
                              reinterpret_cast<BYTE *>(pixels.data())),
           "Pixels PNG16");
     check(frame->Commit(), "Commit PNG16");
-    check(encoder->Commit(), "Finalisation PNG16");
+    check(encoder->Commit(), "PNG16 finalization");
     frame.Reset();
     encoder.Reset();
     stream.Reset();
@@ -75,7 +75,7 @@ void writeExr(const FloatImage &i, const std::string &path) {
     AtomicFile output(path);
     std::ofstream file(output.path(), std::ios::binary);
     if (!file)
-        throw std::runtime_error("Création EXR échouée");
+        throw std::runtime_error("EXR creation failed");
     put(file, uint32_t(20000630));
     put(file, uint32_t(2));
     std::ostringstream channels(std::ios::binary);
@@ -119,7 +119,7 @@ void writeExr(const FloatImage &i, const std::string &path) {
             float values[] = {alpha, rgb.z * alpha, rgb.y * alpha, rgb.x * alpha};
             for (unsigned k = 0; k < 4; ++k) {
                 if (!std::isfinite(values[k]) || std::abs(values[k]) > 65504)
-                    throw std::runtime_error("EXR half : valeur hors limites");
+                    throw std::runtime_error("EXR half: value out of range");
                 row[k * i.width + x] = XMConvertFloatToHalf(values[k]);
             }
         }
@@ -129,13 +129,13 @@ void writeExr(const FloatImage &i, const std::string &path) {
     }
     file.close();
     if (!file)
-        throw std::runtime_error("Écriture EXR échouée");
+        throw std::runtime_error("EXR write failed");
     output.commit();
 }
 template <class T> static T get(std::istream &s) {
     T value{};
     if (!s.read(reinterpret_cast<char *>(&value), sizeof(value)))
-        throw std::runtime_error("EXR tronqué");
+        throw std::runtime_error("Truncated EXR");
     return value;
 }
 static std::string word(std::istream &s) {
@@ -143,17 +143,17 @@ static std::string word(std::istream &s) {
     for (int i = 0; i < 256; ++i) {
         int c = s.get();
         if (c == EOF)
-            throw std::runtime_error("En-tête EXR tronqué");
+            throw std::runtime_error("Truncated EXR header");
         if (!c)
             return r;
         r += char(c);
     }
-    throw std::runtime_error("Attribut EXR trop long");
+    throw std::runtime_error("EXR attribute too long");
 }
 Image readExr(const std::string &path) {
     std::ifstream file(sx::Utf8Path(path), std::ios::binary);
     if (get<uint32_t>(file) != 20000630 || get<uint32_t>(file) != 2)
-        throw std::runtime_error("EXR : scanline simple requis");
+        throw std::runtime_error("EXR: simple scanline required");
     std::vector<std::pair<std::string, int>> channels;
     int32_t box[4] = {};
     bool window = false, compression = false;
@@ -165,19 +165,19 @@ Image readExr(const std::string &path) {
         auto type = word(file);
         auto size = get<uint32_t>(file);
         if (size > 65536)
-            throw std::runtime_error("En-tête EXR trop grand");
+            throw std::runtime_error("EXR header is too large");
         std::string data(size, 0);
         if (!file.read(data.data(), size))
-            throw std::runtime_error("EXR tronqué");
+            throw std::runtime_error("Truncated EXR");
         std::istringstream value(data, std::ios::binary);
         if (name == "compression") {
             compression = size == 1 && data[0] == 0;
             if (!compression)
-                throw std::runtime_error("EXR compressé : décompression non disponible");
+                throw std::runtime_error("Compressed EXR: decompression is unavailable");
         }
         if (name == "dataWindow") {
             if (size != 16 || type != "box2i")
-                throw std::runtime_error("Fenêtre EXR invalide");
+                throw std::runtime_error("Invalid EXR window");
             memcpy(box, data.data(), 16);
             window = true;
         }
@@ -190,12 +190,12 @@ Image readExr(const std::string &path) {
                 get<uint32_t>(value);
                 if (get<int32_t>(value) != 1 || get<int32_t>(value) != 1 || (pixel != 1 && pixel != 2) ||
                     channels.size() >= 4)
-                    throw std::runtime_error("EXR : RGB/RGBA half ou float sans sous-échantillonnage requis");
+                    throw std::runtime_error("EXR requires RGB/RGBA half or float without subsampling");
                 if (channel != "R" && channel != "G" && channel != "B" && channel != "A")
-                    throw std::runtime_error("Canal EXR non pris en charge");
+                    throw std::runtime_error("Unsupported EXR channel");
                 for (auto &c : channels)
                     if (c.first == channel)
-                        throw std::runtime_error("Canal EXR dupliqué");
+                        throw std::runtime_error("Duplicate EXR channel");
                 channels.emplace_back(channel, pixel);
             }
         }
@@ -208,7 +208,7 @@ Image readExr(const std::string &path) {
                 space = "linear2020";
         }
         if (attrs == 127)
-            throw std::runtime_error("Trop d'attributs EXR");
+            throw std::runtime_error("Too many EXR attributes");
     }
     if (!window || !compression || box[2] < box[0] || box[3] < box[1] || channels.size() < 3 ||
         std::none_of(
@@ -216,10 +216,10 @@ Image readExr(const std::string &path) {
         std::none_of(
             channels.begin(), channels.end(), [](auto &c) { return c.first == "G"; }) ||
         std::none_of(channels.begin(), channels.end(), [](auto &c) { return c.first == "B"; }))
-        throw std::runtime_error("EXR RGB invalide");
+        throw std::runtime_error("Invalid RGB EXR");
     uint64_t w = int64_t(box[2]) - box[0] + 1, h = int64_t(box[3]) - box[1] + 1;
     if (w * h > 67108864 || w > 65536 || h > 65536)
-        throw std::runtime_error("Dimensions EXR hors limites");
+        throw std::runtime_error("EXR dimensions out of bounds");
     Image image;
     image.width = unsigned(w);
     image.height = unsigned(h);
@@ -240,11 +240,11 @@ Image readExr(const std::string &path) {
     std::set<int32_t> rows;
     for (auto offset : offsets) {
         if (offset < headerEnd || offset > fileSize || w * bytesPerPixel + 8 > fileSize - offset)
-            throw std::runtime_error("Offset EXR invalide");
+            throw std::runtime_error("Invalid EXR offset");
         file.seekg(offset);
         int32_t y = get<int32_t>(file);
         if (y < box[1] || y > box[3] || !rows.insert(y).second || get<uint32_t>(file) != w * bytesPerPixel)
-            throw std::runtime_error("Scanline EXR invalide");
+            throw std::runtime_error("Invalid EXR scanline");
         for (auto &[channel, pixel] : channels) {
             int k = channel == "R" ? 0 : channel == "G" ? 1 : channel == "B" ? 2 : 3;
             for (unsigned x = 0; x < w; ++x) {
@@ -258,7 +258,7 @@ Image readExr(const std::string &path) {
     for (size_t n = 0; n < image.rgba.size(); n += 4) {
         float a = image.rgba[n + 3];
         if (a < 0 || a > 1)
-            throw std::runtime_error("Alpha EXR hors limites");
+            throw std::runtime_error("EXR alpha out of bounds");
         for (int k = 0; k < 3; ++k)
             image.rgba[n + k] = a > 0 ? image.rgba[n + k] / a : 0;
         auto rgb = convertColor({image.rgba[n], image.rgba[n + 1], image.rgba[n + 2]}, space, "srgb");

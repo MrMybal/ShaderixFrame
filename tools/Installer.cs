@@ -9,22 +9,22 @@ using System.Windows.Forms;
 class Installer {
     static string Hash(string path) {using(var sha=SHA256.Create())using(var file=File.OpenRead(path))return BitConverter.ToString(sha.ComputeHash(file)).Replace("-","");}
     static string Within(string root,string relative) {
-        if(Path.IsPathRooted(relative))throw new Exception("Chemin absolu interdit dans l'archive");
+        if(Path.IsPathRooted(relative))throw new Exception("Absolute paths are not allowed in the archive");
         var path=Path.GetFullPath(Path.Combine(root,relative));
-        if(!path.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new Exception("Chemin hors du dossier d'installation");
+        if(!path.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new Exception("Path outside the installation folder");
         for(var parent=Path.GetDirectoryName(path);parent!=null && parent.StartsWith(root,StringComparison.OrdinalIgnoreCase);parent=Path.GetDirectoryName(parent))
-            if(Directory.Exists(parent) && (File.GetAttributes(parent)&FileAttributes.ReparsePoint)!=0)throw new Exception("Dossier de redirection non accepté");
+            if(Directory.Exists(parent) && (File.GetAttributes(parent)&FileAttributes.ReparsePoint)!=0)throw new Exception("Reparse-point folders are not supported");
         return path;
     }
     static void Install(string directory,bool shortcuts) {
         var root=Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar);
-        if(root==Path.GetPathRoot(root).TrimEnd(Path.DirectorySeparatorChar))throw new Exception("Choisir un dossier dédié à ShaderixFrame");
+        if(root==Path.GetPathRoot(root).TrimEnd(Path.DirectorySeparatorChar))throw new Exception("Choose a dedicated ShaderixFrame folder");
         Directory.CreateDirectory(root);
         var manifest=new List<string>();
         using(var stream=Assembly.GetExecutingAssembly().GetManifestResourceStream("portable.zip"))
         using(var archive=new ZipArchive(stream,ZipArchiveMode.Read)) {
             foreach(var entry in archive.Entries) {
-                if(!entry.FullName.StartsWith("ShaderixFrame/",StringComparison.Ordinal))throw new Exception("Racine d'archive incorrecte");
+                if(!entry.FullName.StartsWith("ShaderixFrame/",StringComparison.Ordinal))throw new Exception("Invalid archive root");
                 var relative=entry.FullName.Substring("ShaderixFrame/".Length).Replace('/',Path.DirectorySeparatorChar);
                 if(relative.Length==0 || entry.Name.Length==0)continue;
                 var target=Within(root,relative);
@@ -48,7 +48,7 @@ class Installer {
     static void Uninstall(string directory) {
         var root=Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar);
         var manifest=Path.Combine(root,"installed-files.txt");
-        if(!File.Exists(manifest))throw new Exception("Manifeste d'installation introuvable");
+        if(!File.Exists(manifest))throw new Exception("Installation manifest not found");
         var shortcutPath=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),"ShaderixFrame.lnk");
         if(File.Exists(shortcutPath)) {
             var type=Type.GetTypeFromProgID("WScript.Shell");dynamic shell=Activator.CreateInstance(type);
@@ -59,7 +59,7 @@ class Installer {
         }
         var directories=new HashSet<string>();
         foreach(var line in File.ReadAllLines(manifest)) {
-            var parts=line.Split('\t');if(parts.Length!=2)throw new Exception("Manifeste invalide");
+            var parts=line.Split('\t');if(parts.Length!=2)throw new Exception("Invalid manifest");
             var file=Within(root,parts[1]);
             // Edited files, projects, recoveries, caches and files outside the manifest are retained.
             if(File.Exists(file) && Hash(file)==parts[0])File.Delete(file);
@@ -78,15 +78,15 @@ class Installer {
         try {
             if(!silent) {
                 Application.EnableVisualStyles();
-                using(var form=new Form()){form.Text=uninstall?"Désinstaller ShaderixFrame":"Installer ShaderixFrame";form.Width=600;form.Height=180;form.FormBorderStyle=FormBorderStyle.FixedDialog;form.MaximizeBox=false;
-                    var label=new Label{Left=16,Top=15,Width=550,Height=25,Text=uninstall?"Les projets et fichiers modifiés seront conservés.":"Installation pour votre compte Windows :"};
+                using(var form=new Form()){form.Text=uninstall?"Uninstall ShaderixFrame":"Install ShaderixFrame";form.Width=600;form.Height=180;form.FormBorderStyle=FormBorderStyle.FixedDialog;form.MaximizeBox=false;
+                    var label=new Label{Left=16,Top=15,Width=550,Height=25,Text=uninstall?"Your projects and modified files will be kept.":"Install for your Windows account:"};
                     var path=new TextBox{Left=16,Top=45,Width=550,Text=directory};
-                    var accept=new Button{Left=420,Top=85,Width=145,Text=uninstall?"Désinstaller":"Installer",DialogResult=DialogResult.OK};
+                    var accept=new Button{Left=420,Top=85,Width=145,Text=uninstall?"Uninstall":"Install",DialogResult=DialogResult.OK};
                     form.Controls.AddRange(new Control[]{label,path,accept});form.AcceptButton=accept;
                     if(form.ShowDialog()!=DialogResult.OK)return 0;directory=path.Text;}
             }
             if(uninstall)Uninstall(directory);else Install(directory,shortcuts);
-            if(!silent)MessageBox.Show(uninstall?"Désinstallation terminée.":"Installation terminée.","ShaderixFrame");return 0;
+            if(!silent)MessageBox.Show(uninstall?"Uninstallation complete.":"Installation complete.","ShaderixFrame");return 0;
         }catch(Exception error){if(silent)Console.Error.WriteLine(error.Message);else MessageBox.Show(error.Message,"ShaderixFrame",MessageBoxButtons.OK,MessageBoxIcon.Error);return 1;}
     }
 }

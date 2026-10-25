@@ -1,3 +1,4 @@
+#include "ui/EnglishPanels.h"
 #include "ui/Editor.h"
 #include <atomic>
 #include <deque>
@@ -22,7 +23,7 @@ bool closing = false;
 void target() {
     sf::Com<ID3D11Texture2D> t;
     sf::check(swapChain->GetBuffer(0, IID_PPV_ARGS(&t)), "Swapchain");
-    sf::check(device->CreateRenderTargetView(t.Get(), nullptr, &backTarget), "Fenêtre GPU");
+    sf::check(device->CreateRenderTargetView(t.Get(), nullptr, &backTarget), "GPU window");
 }
 LRESULT CALLBACK proc(HWND w, UINT msg, WPARAM a, LPARAM b) {
     if (ImGui::GetCurrentContext() && ImGui_ImplWin32_WndProcHandler(w, msg, a, b))
@@ -101,6 +102,18 @@ void capture(const std::string &path) {
 int main() {
     bool mcp = false, hidden = false;
     std::string snapshot, projectPath, view, recoveryDir, viewportReport;
+    int snapshotFrames = 10, startMode = -1;
+    std::string modeReport, modeIni;
+    sf::Json modeResults = sf::Json::Array();
+    bool modeFailure = false;
+    float timelineZoom = 0, viewZoom = 0;
+    double timelineStart = 0, startTime = -1;
+    std::string sourceMedia;
+    bool prerender = false, compare = false;
+    int selectClip = -1, clipMenu = -1;
+    std::string paletteQuery;
+    bool palette = false;
+    int guides = 0;
     bool viewportRendered = false, viewportClosed = false;
     int argc = 0;
     auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
@@ -116,6 +129,35 @@ int main() {
             snapshot = sx::Narrow(a.substr(14));
         else if (a.starts_with(L"--viewport-smoke="))
             viewportReport = sx::Narrow(a.substr(17));
+        else if (a.starts_with(L"--mode-smoke="))
+            modeReport = sx::Narrow(a.substr(13));
+        else if (a.starts_with(L"--snapshot-frames="))
+            snapshotFrames = std::clamp(_wtoi(a.substr(18).c_str()), 2, 2000);
+        else if (a.starts_with(L"--mode="))
+            startMode = std::clamp(_wtoi(a.substr(7).c_str()), 0, sf::Editor::modeCount - 1);
+        else if (a.starts_with(L"--timeline-zoom="))
+            timelineZoom = float(_wtof(a.substr(16).c_str()));
+        else if (a.starts_with(L"--timeline-start="))
+            timelineStart = _wtof(a.substr(17).c_str());
+        else if (a.starts_with(L"--palette=")) {
+            palette = true;
+            paletteQuery = sx::Narrow(a.substr(10));
+        } else if (a.starts_with(L"--clip-menu="))
+            clipMenu = _wtoi(a.substr(12).c_str());
+        else if (a.starts_with(L"--select-clip="))
+            selectClip = _wtoi(a.substr(14).c_str());
+        else if (a == L"--compare")
+            compare = true;
+        else if (a.starts_with(L"--guides="))
+            guides = _wtoi(a.substr(9).c_str());
+        else if (a == L"--prerender")
+            prerender = true;
+        else if (a.starts_with(L"--source="))
+            sourceMedia = sx::Narrow(a.substr(9));
+        else if (a.starts_with(L"--time="))
+            startTime = _wtof(a.substr(7).c_str());
+        else if (a.starts_with(L"--view-zoom="))
+            viewZoom = float(_wtof(a.substr(12).c_str()));
         else if (a.starts_with(L"--view="))
             view = sx::Narrow(a.substr(7));
         else if (a.starts_with(L"--recovery-dir="))
@@ -150,10 +192,10 @@ int main() {
                         nullptr};
         RegisterClassExW(&cls);
         ImGui_ImplWin32_EnableDpiAwareness();
-        window = CreateWindowW(cls.lpszClassName, L"ShaderixFrame — Montage vidéo & VFX", WS_OVERLAPPEDWINDOW,
+        window = CreateWindowW(cls.lpszClassName, L"ShaderixFrame - Video Editing & VFX", WS_OVERLAPPEDWINDOW,
                                100, 70, 1600, 980, nullptr, nullptr, cls.hInstance, nullptr);
         if (!window)
-            throw std::runtime_error("Création fenêtre échouée");
+            throw std::runtime_error("Window creation failed");
         DXGI_SWAP_CHAIN_DESC desc{};
         desc.BufferCount = 2;
         desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -172,19 +214,26 @@ int main() {
             sf::check(D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, 0, nullptr, 0,
                                                     D3D11_SDK_VERSION, &desc, &swapChain, &device, &level,
                                                     &context),
-                      "Direct3D fenêtre");
+                      "Window Direct3D");
         target();
         ImGui::CreateContext();
         auto &io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        if (!hidden || !viewportReport.empty())
+        if (!hidden || !viewportReport.empty() || !modeReport.empty())
             io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
         std::string ini = sx::Narrow((root / L"workspace.ini").wstring());
+        if (!hidden && snapshot.empty())
+            sf::migrateEnglishWorkspace(ini);
         io.IniFilename = !hidden && snapshot.empty() ? ini.c_str() : nullptr;
+        // The workspace smoke keeps its own settings next to its report.
+        if (!modeReport.empty()) {
+            modeIni = modeReport + ".ini";
+            io.IniFilename = modeIni.c_str();
+        }
         sf::applyFrameTheme();
         ImGui_ImplWin32_Init(window);
         ImGui_ImplDX11_Init(device.Get(), context.Get());
-        if (hidden && !viewportReport.empty())
+        if (hidden && (!viewportReport.empty() || !modeReport.empty()))
             ImGui::GetPlatformIO().Platform_ShowWindow = [](ImGuiViewport *vp) {
                 ShowWindow(static_cast<HWND>(vp->PlatformHandle), SW_HIDE);
             };
@@ -206,6 +255,8 @@ int main() {
                                 : sx::Narrow(std::filesystem::absolute(sx::Utf8Path(projectPath)).wstring());
         if (projectPath.empty())
             session.time = 2;
+        if (startTime >= 0)
+            session.time = std::min(startTime, session.project.duration);
         if (!session.project.tracks.empty() && !session.project.tracks.front().clips.empty())
             session.selectClip(session.project.tracks.front().clips.front().id);
         for (auto &t : session.project.tracks)
@@ -216,6 +267,15 @@ int main() {
                             e.code = d->code;
         sf::Editor ui(session, root);
         editor = &ui;
+        if (!modeReport.empty())
+            ui.setPanelSettingsFile(sx::Utf8Path(modeReport + ".panels.json"));
+        if (startMode >= 0)
+            ui.setMode(sf::Editor::Mode(startMode));
+        if (timelineZoom > 0)
+            ui.setTimelineView(timelineZoom, timelineStart);
+        if (viewZoom > 0)
+            ui.setCompositionPixelZoom(viewZoom / 100);
+
         sf::Protocol protocol(session);
         if (mcp) {
             input = std::thread([&] {
@@ -295,29 +355,92 @@ int main() {
             ImGui_ImplWin32_NewFrame();
             ImGui::NewFrame();
             ui.draw();
-            if (++ticks == 3 && !view.empty()) {
+            ++ticks;
+            // After the first frames, when the workspace mode has set its panels.
+            if (ticks == 2 && selectClip >= 0)
+                ui.selectClipAt(selectClip);
+            if (ticks == 10 && clipMenu >= 0)
+                ui.openClipMenuAt(clipMenu);
+            if (ticks == 10 && palette)
+                ui.openPalette(paletteQuery);
+            if (ticks == 3 && guides)
+                ui.setGuides(guides & 7, guides >> 3);
+            if (ticks == 20 && compare) {
+                ui.takeSnapshot();
+                ui.setWipe(.42f);
+            }
+            if (ticks == 3 && prerender)
+                ui.startRenderCache();
+            if (ticks == 3 && !sourceMedia.empty())
+                ui.openSource(sx::Narrow(std::filesystem::absolute(sx::Utf8Path(sourceMedia)).wstring()));
+            if (ticks == 3 && !view.empty()) {
                 if (view == "clip")
                     ui.showClipEditor();
                 if (view == "grading")
                     ui.showGrading();
-                const char *panel = view == "layers"       ? "Graphe des calques"
-                                    : view == "graph"      ? "Graphe VFX"
-                                    : view == "grading"    ? "Étalonnage"
-                                    : view == "scopes"     ? "Scopes vidéo"
+                const char *panel = view == "layers"       ? "Layer Graph"
+                                    : view == "graph"      ? "Shader Graph"
+                                    : view == "grading"    ? "Color Grading"
+                                    : view == "scopes"     ? "Video Scopes"
                                     : view == "hlsl"       ? "HLSL"
-                                    : view == "audio"      ? "Mixeur & graphe audio"
-                                    : view == "dsp"        ? "Graphe DSP"
-                                    : view == "motion"     ? "Motion design"
-                                    : view == "library"    ? "Bibliothèque Shaderixel"
-                                    : view == "clip"       ? "Éditeur de clip"
-                                    : view == "animations" ? "Animations"
+                                    : view == "audio"      ? "Mixer & Audio Graph"
+                                    : view == "dsp"        ? "DSP Graph"
+                                    : view == "motion"     ? "Motion Design"
+                                    : view == "library"    ? "Shaderixel Library"
+                                    : view == "clip"       ? "Clip Editor"
+                                    : view == "animations" ? "Animation"
                                     : view == "plugins"    ? "Plugins & MCP"
                                     : view == "exports"    ? "Exports"
+                                    : view == "markers"    ? "Markers"
+                                    : view == "history"    ? "History"
+                                    : view == "subtitles"  ? "Subtitles"
+                                    : view == "angles"     ? "Camera Angles"
+                                    : view == "shortcuts"  ? "Keyboard Shortcuts"
                                                            : "Timeline";
                 ui.openPanel(panel);
                 ImGui::SetWindowFocus(panel);
                 if (view == "dsp")
                     ui.showDspGraph();
+            }
+            // Workspace smoke: Composition detached to its own native window, then two rounds of the six
+            // modes. Each mode must show a docked timeline and keep the detached window where it is.
+            if (!modeReport.empty()) {
+                if (ticks == 2) {
+                    sf::Json start = sf::Json::Object();
+                    start["storedAtStart"] = ui.storedModeLayouts();
+                    modeResults.Push(start);
+                }
+                if (ticks == 3) {
+                    ImGui::SetWindowDock(ImGui::FindWindowByName("Composition"), 0, ImGuiCond_Always);
+                    ImGui::SetWindowPos("Composition", {1760, 100}, ImGuiCond_Always);
+                    ImGui::SetWindowSize("Composition", {600, 400}, ImGuiCond_Always);
+                }
+                if (ticks >= 12 && ticks < 12 + 6 * 12 && (ticks - 12) % 6 == 5) {
+                    auto *timeline = ImGui::FindWindowByName("Timeline");
+                    auto *composition = ImGui::FindWindowByName("Composition");
+                    bool docked = timeline && timeline->Active && timeline->DockIsActive;
+                    bool detached = !composition || !composition->Active ||
+                                    (!composition->DockIsActive && composition->Viewport != ImGui::GetMainViewport());
+                    sf::Json visit = sf::Json::Object();
+                    visit["mode"] = int(ui.currentMode());
+                    visit["timelineDocked"] = docked;
+                    visit["compositionDetached"] = detached;
+                    modeResults.Push(visit);
+                    modeFailure = modeFailure || !docked || !detached;
+                }
+                if (ticks >= 12 && ticks < 12 + 6 * 12 && (ticks - 12) % 6 == 0)
+                    ui.setMode(sf::Editor::Mode(((ticks - 12) / 6 + 1) % sf::Editor::modeCount));
+                if (ticks == 12 + 6 * 12 + 2) {
+                    sf::Json report = sf::Json::Object();
+                    report["visits"] = modeResults;
+                    report["storedLayouts"] = ui.storedModeLayouts();
+                    report["ok"] = !modeFailure && ui.storedModeLayouts() >= sf::Editor::modeCount - 1;
+                    std::ofstream f(sx::Utf8Path(modeReport), std::ios::binary);
+                    f << report.Dump(2);
+                    if (!f || !report["ok"].B())
+                        exitCode = 1;
+                    closing = true;
+                }
             }
             if (!viewportReport.empty() && ticks == 3 && view != "clip") {
                 auto *composition = ImGui::FindWindowByName("Composition");
@@ -331,7 +454,9 @@ int main() {
             context->OMSetRenderTargets(1, &rt, nullptr);
             context->ClearRenderTargetView(rt, bg);
             ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-            if (!snapshot.empty() && ++frames == 10) {
+            if (!snapshot.empty() && frames < snapshotFrames && snapshotFrames > 10)
+                Sleep(25); // background thumbnails get time to arrive before the capture
+            if (!snapshot.empty() && ++frames == snapshotFrames) {
                 capture(snapshot);
                 closing = true;
             }

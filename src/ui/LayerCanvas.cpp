@@ -56,15 +56,15 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
     ImGui::SameLine();
     if (ImGui::Button("+ Correction")) {
         auto e = makeGrade();
-        add(NodeKind::Effect, "Correction colorimétrique", &e);
+        add(NodeKind::Effect, "Color Correction", &e);
     }
     ImGui::SameLine();
-    if (ImGui::Button("+ Graphe shader")) {
+    if (ImGui::Button("+ Shader Graph")) {
         Effect e;
         e.id = "graph";
         e.graph = EffectGraph::Default().ToJson();
         e.code = effectCode(e);
-        add(NodeKind::Effect, "Graphe shader", &e);
+        add(NodeKind::Effect, "Shader Graph", &e);
     }
     ImGui::SameLine();
     if (ImGui::Button("+ LUT 2D / 3D")) {
@@ -73,13 +73,13 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         lutRequest = selected;
     }
     ImGui::SameLine();
-    if (ImGui::BeginCombo("+ Transition multitrack", "Choisir…")) {
+    if (ImGui::BeginCombo("+ Transition multitrack", "Choose…")) {
         for (auto &d : renderer.library.definitions)
             if (d.kind == "transition" && ImGui::Selectable(d.name.c_str())) {
                 Effect e;
                 e.id = "transition";
-                e.code = "//@input 0 \"Arrivée\"\n//@input 1 \"Départ\"\n//@param progress float 0 0 1 "
-                         "\"Progression\"\n" +
+                e.code = "//@input 0 \"Incoming\"\n//@input 1 \"Outgoing\"\n//@param progress float 0 0 1 "
+                         "\"Progress\"\n" +
                          d.code + "\n//@premultiplied\n";
                 e.params["progress"].keys = {{time, 0, Curve::Smooth, 0}, {time + 1, 1, Curve::Smooth, 0}};
                 for (auto &p : d.parameters) {
@@ -96,9 +96,9 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
     }
     ImGui::SameLine();
     if (ImGui::Button("+ Split RGBA"))
-        add(NodeKind::Split, "Séparer RGBA");
+        add(NodeKind::Split, "Split RGBA");
     ImGui::SameLine();
-    if (ImGui::BeginCombo("+ Effet / timeline", "Choisir…")) {
+    if (ImGui::BeginCombo("+ Effect / Timeline", "Choose…")) {
         for (auto &track : project.tracks)
             if (track.kind == TrackKind::Video && ImGui::Selectable(("Timeline / " + track.name).c_str()))
                 add(NodeKind::Surface, track.name, nullptr, track.id);
@@ -109,7 +109,7 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     e.code = def.code;
                 add(NodeKind::Effect, def.name, &e);
             }
-        if (ImGui::Selectable("HLSL personnalisé")) {
+        if (ImGui::Selectable("Custom HLSL")) {
             Effect e;
             e.id = "custom";
             e.code = "float4 Effect(EffectContext ctx){return Input(0,ctx.px);}";
@@ -117,9 +117,9 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         }
         ImGui::EndCombo();
     }
-    bool fit = ImGui::Button("Tout voir [F]");
+    bool fit = ImGui::Button("Fit All [F]");
     ImGui::SameLine();
-    ImGui::TextDisabled("Molette : zoom · milieu : déplacement · relier les ports · clic droit : débrancher");
+    ImGui::TextDisabled("Wheel: zoom - middle button: pan - connect ports - right-click: disconnect");
     ImGui::BeginChild("ShaderixelComposition",
                       {0, selected ? std::max(180.f, ImGui::GetContentRegionAvail().y * .60f) : 0}, true,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
@@ -254,17 +254,17 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                 ImGui::TextUnformatted(node->name.c_str());
                 ImGui::Separator();
                 auto name = node->name;
-                if (ImGui::InputText("Nom", &name))
+                if (ImGui::InputText("Name", &name))
                     mutate(selected, [&](Json &v) { v["name"] = name; });
                 if (node->kind != NodeKind::Output) {
-                    if (ImGui::MenuItem("Activer / contourner"))
+                    if (ImGui::MenuItem("Enable / Bypass"))
                         mutate(selected, [&](Json &v) { v["bypass"] = !node->bypass; });
-                    if (ImGui::MenuItem("Copier le nœud")) {
+                    if (ImGui::MenuItem("Copy Node")) {
                         for (auto &v : document["nodes"].Elements())
                             if (v["id"].U() == selected)
                                 clipboard = v;
                     }
-                    if (ImGui::MenuItem("Supprimer")) {
+                    if (ImGui::MenuItem("Delete")) {
                         auto nodes = Json::Array();
                         for (auto item : document["nodes"].Elements())
                             if (item["id"].U() != selected) {
@@ -279,31 +279,31 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     }
                 }
                 if (node->kind == NodeKind::Effect && decoded.effects.at(node->id).id != "grading" &&
-                    ImGui::MenuItem("Éditer le graphe shader"))
+                    ImGui::MenuItem("Edit Shader Graph"))
                     shaderRequest = node->id;
             }
         } else {
             if (ImGui::MenuItem("Fusion Shaderixel"))
                 add(NodeKind::Blend, "Fusion");
-            if (ImGui::MenuItem("Correction colorimétrique")) {
+            if (ImGui::MenuItem("Color Correction")) {
                 auto e = makeGrade();
                 add(NodeKind::Effect, "Correction", &e);
             }
-            if (ImGui::MenuItem("Graphe shader")) {
+            if (ImGui::MenuItem("Shader Graph")) {
                 Effect e;
                 e.id = "graph";
                 e.graph = EffectGraph::Default().ToJson();
-                add(NodeKind::Effect, "Graphe shader", &e);
+                add(NodeKind::Effect, "Shader Graph", &e);
             }
-            if (ImGui::MenuItem("Séparer RGBA"))
+            if (ImGui::MenuItem("Split RGBA"))
                 add(NodeKind::Split, "Split RGBA");
-            if (ImGui::BeginMenu("Timeline / calque")) {
+            if (ImGui::BeginMenu("Timeline / Layer")) {
                 for (auto &t : project.tracks)
                     if (t.kind == TrackKind::Video && ImGui::MenuItem(t.name.c_str()))
                         add(NodeKind::Surface, t.name, nullptr, t.id);
                 ImGui::EndMenu();
             }
-            if (!clipboard.IsNull() && ImGui::MenuItem("Coller le nœud")) {
+            if (!clipboard.IsNull() && ImGui::MenuItem("Paste Node")) {
                 auto n = clipboard;
                 Id next = 1;
                 for (auto &v : g.nodes)
@@ -318,7 +318,7 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
             }
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("Tout voir [F]"))
+        if (ImGui::MenuItem("Fit All [F]"))
             needsFit = true;
         ImGui::EndPopup();
     }
@@ -326,13 +326,13 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
     dl->PopClipRect();
     ImGui::EndChild();
     if (auto *n = g.Find(selected)) {
-        ImGui::Text("%s / nœud %u", n->name.c_str(), n->id);
+        ImGui::Text("%s / node %u", n->name.c_str(), n->id);
         if (n->kind != NodeKind::Output) {
             bool bypass = n->bypass;
             if (ImGui::Checkbox("Bypass", &bypass))
                 mutate(selected, [&](Json &v) { v["bypass"] = bypass; });
             ImGui::SameLine();
-            if (ImGui::Button("Supprimer le nœud")) {
+            if (ImGui::Button("Delete Node")) {
                 auto nodes = Json::Array();
                 for (auto item : document["nodes"].Elements())
                     if (item["id"].U() != selected) {
@@ -350,36 +350,36 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         if (n->kind == NodeKind::Blend) {
             int mode = int(n->blend);
             const char *names[] = {"Normal",
-                                   "Produit",
-                                   "Écran",
-                                   "Incrustation",
-                                   "Addition",
+                                   "Multiply",
+                                   "Screen",
+                                   "Keying",
+                                   "Add",
                                    "Soustraction",
                                    "Assombrir",
-                                   "Éclaircir",
-                                   "Différence",
-                                   "Densité couleur -",
-                                   "Densité couleur +",
-                                   "Lumière crue",
-                                   "Lumière tamisée",
-                                   "Dissoudre",
-                                   "Densité linéaire +",
-                                   "Lumière vive",
-                                   "Lumière linéaire",
-                                   "Lumière ponctuelle",
-                                   "Mélange maximal",
+                                   "Lighten",
+                                   "Difference",
+                                   "Color Dodge",
+                                   "Color Burn",
+                                   "Hard Light",
+                                   "Soft Light",
+                                   "Dissolve",
+                                   "Linear Burn",
+                                   "Vivid Light",
+                                   "Linear Light",
+                                   "Pin Light",
+                                   "Hard Mix",
                                    "Exclusion",
                                    "Division",
-                                   "Teinte",
+                                   "Hue",
                                    "Saturation",
-                                   "Couleur",
-                                   "Luminosité",
-                                   "Couleur plus foncée",
-                                   "Couleur plus claire"};
+                                   "Color",
+                                   "Luminosity",
+                                   "Darker Color",
+                                   "Lighter Color"};
             if (ImGui::Combo("Fusion Shaderixel", &mode, names, 27))
                 mutate(selected, [&](Json &v) { v["blend"] = mode; });
             bool clip = n->clip;
-            if (ImGui::Checkbox("Écrêter sur l'alpha du fond", &clip))
+            if (ImGui::Checkbox("Clip to Background Alpha", &clip))
                 mutate(selected, [&](Json &v) { v["clip"] = clip; });
             for (int c = 0; c < 4; ++c) {
                 ImGui::PushID(c);
@@ -394,15 +394,15 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                 ImGui::PopID();
             }
             if (ImGui::TreeNode("Blend If / Fusion conditionnelle")) {
-                ImGui::TextDisabled("Poignées 0–255 : entrée douce, sortie douce");
+                ImGui::TextDisabled("Handles 0-255: soft in, soft out");
                 for (int c = 0; c < 4; ++c)
                     for (int side = 0; side < 2; ++side) {
                         ImGui::PushID(c * 2 + side);
                         int range[4];
                         for (int k = 0; k < 4; ++k)
                             range[k] = side ? n->blendIf.under[c][k] : n->blendIf.self[c][k];
-                        const char *channel = c == 0 ? "Gris" : c == 1 ? "Rouge" : c == 2 ? "Vert" : "Bleu";
-                        if (ImGui::SliderInt4((std::string(side ? "Fond / " : "Calque / ") + channel).c_str(),
+                        const char *channel = c == 0 ? "Gray" : c == 1 ? "Red" : c == 2 ? "Green" : "Blue";
+                        if (ImGui::SliderInt4((std::string(side ? "Background / " : "Layer / ") + channel).c_str(),
                                               range, 0, 255)) {
                             for (int k = 1; k < 4; ++k)
                                 range[k] = std::max(range[k], range[k - 1]);
@@ -425,19 +425,19 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         }
         std::vector<EffectParameter> descriptors;
         if (n->kind == NodeKind::Blend)
-            descriptors.push_back({"opacity", "Opacité", "float", {n->opacity, 0, 0, 0}, 0, 1});
+            descriptors.push_back({"opacity", "Opacity", "float", {n->opacity, 0, 0, 0}, 0, 1});
         else if (n->kind == NodeKind::Effect) {
             auto &e = decoded.effects.at(n->id);
             descriptors =
                 effectParameters(e.id == "grading" ? gradeShader(e, project.workingSpace) : effectCode(e));
             if (e.id == "grading") {
-                ImGui::Combo("Disposition LUT image", &lutLayout, "Automatique\0Atlas 3D\0Carte RG 2D\0");
-                if (ImGui::Button("Importer LUT .cube / image 2D"))
+                ImGui::Combo("Image LUT layout", &lutLayout, "Automatic\0 3D atlas\0 2D RG map\0");
+                if (ImGui::Button("Import .cube / 2D image LUT"))
                     lutRequest = selected;
                 ImGui::SameLine();
-                if (ImGui::BeginCombo("Look", "Choisir…")) {
+                if (ImGui::BeginCombo("Look", "Choose…")) {
                     for (auto preset :
-                         {"Neutre", "Chaud", "Froid", "Noir et blanc", "Ombres cyan / hautes chaudes"})
+                         {"Neutral", "Warm", "Cool", "Black and White", "Cyan shadows / warm highlights"})
                         if (ImGui::Selectable(preset)) {
                             auto grade = gradePreset(preset);
                             mutate(selected, [&](Json &v) {
@@ -449,11 +449,11 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                         }
                     ImGui::EndCombo();
                 }
-                if (ImGui::Button("Retirer la LUT"))
+                if (ImGui::Button("Remove LUT"))
                     mutate(selected, [&](Json &v) { v["effect"]["grading"]["lut"] = Json(); });
             }
             if (e.id != "grading") {
-                if (ImGui::Button("Ouvrir le graphe shader")) {
+                if (ImGui::Button("Open Shader Graph")) {
                     if (e.graph.IsNull())
                         mutate(selected,
                                [&](Json &v) { v["effect"]["graph"] = EffectGraph::Default().ToJson(); });
@@ -465,7 +465,7 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     draftIdentity = identity;
                 }
                 ImGui::InputTextMultiline("Shader HLSL / EffectGraph", &shaderDraft, {-1, 100});
-                if (ImGui::Button("Compiler et appliquer")) {
+                if (ImGui::Button("Compile and Apply")) {
                     renderer.validateShader(shaderDraft);
                     mutate(selected, [&](Json &v) {
                         v["effect"]["code"] = shaderDraft;
@@ -510,7 +510,7 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                 automationKey = d.key;
             }
             ImGui::SameLine();
-            if (ImGui::SmallButton("Courbe"))
+            if (ImGui::SmallButton("Curve"))
                 automationKey = d.key;
             if (automationKey == d.key && !p.keys.empty()) {
                 float values[128];
@@ -525,16 +525,16 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                                                    ImGuiInputTextFlags_EnterReturnsTrue);
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(100);
-                    edit |= ImGui::InputFloat("Valeur", &frame.value, 0, 0, "%.4f",
+                    edit |= ImGui::InputFloat("Value", &frame.value, 0, 0, "%.4f",
                                               ImGuiInputTextFlags_EnterReturnsTrue);
                     int curve = int(frame.curve);
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(110);
-                    edit |= ImGui::Combo("Interpolation", &curve, "Linéaire\0Douce\0Palier\0Courbée\0");
+                    edit |= ImGui::Combo("Interpolation", &curve, "Linear\0Smooth\0Step\0Curved\0");
                     frame.curve = Curve(curve);
                     if (curve == 3)
                         edit |= ImGui::SliderFloat("Courbure", &frame.shape, -1, 1);
-                    bool remove = ImGui::SmallButton("Retirer");
+                    bool remove = ImGui::SmallButton("Remove");
                     if (edit || remove) {
                         p.keys.erase(p.keys.begin() + k);
                         if (!remove)

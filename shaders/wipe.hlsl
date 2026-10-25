@@ -1,5 +1,5 @@
-//@param transition_softness float 0.03 0 1 "Contour du balayage"
-//@param transition_direction int 0 0 3 "Direction (droite/gauche/bas/haut)"
+//@param transition_softness float 0.03 0 1 "Wipe feather"
+//@param transition_direction int 0 0 3 "Direction (right/left/down/up)"
 float4 Effect(EffectContext ctx) {
     float progress = saturate(ctx.transitionProgress);
     float4 before = InputUV(1, ctx.uv), after = InputUV(0, ctx.uv);

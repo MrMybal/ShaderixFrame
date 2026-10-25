@@ -24,20 +24,20 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
 //@name PBR Clamp
 //@category Traitements
-//@graph {"name":"PBR Clamp","category":"Traitements","inputs":1,"premultiplied":false,"nextId":12,"nodes":[{"id":1,"op":"texture","pos":[40,40],"in":[],"value":[0,0,0,0],"index":0,"name":"CyInput"},{"id":2,"op":"uv","pos":[40,150],"in":[],"value":[0,0,0,0]},{"id":3,"op":"canvassize","pos":[40,240],"in":[],"value":[0,0,0,0]},{"id":4,"op":"param","pos":[40,330],"in":[],"value":[0.0,0.0,0.0,0.0],"name":"AlphaMinimum","text":"Alpha Minimum","index":1},{"id":5,"op":"param","pos":[40,440],"in":[],"value":[1.0,0.0,0.0,0.0],"name":"AlphaMaximum","text":"Alpha Maximum","index":1},{"id":6,"op":"param","pos":[40,550],"in":[],"value":[0.0,0.0,0.0,0.0],"name":"ClampAlpha","text":"Clamp Alpha","index":1},{"id":7,"op":"paramcolor","pos":[40,660],"in":[],"value":[0.0,0.0,0.0,0.0],"name":"Minimum","text":"Minimum","index":1},{"id":8,"op":"paramcolor","pos":[40,770],"in":[],"value":[1.0,1.0,1.0,0.0],"name":"Maximum","text":"Maximum","index":1},{"id":9,"op":"paramcolor","pos":[40,880],"in":[],"value":[1.0,1.0,1.0,0.0],"name":"Channels","text":"Channels","index":1},{"id":10,"op":"custom","pos":[420,40],"in":[[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0],[8,0],[9,0]],"value":[0,0,0,0],"name":"PBR Clamp","text":"    float4 s=Texture2DSample(CyInput,CyInputSampler,UV);float3 clamped=clamp(s.rgb,Minimum.rgb,Maximum.rgb);float3 rgb=lerp(s.rgb,clamped,Channels.rgb);float alpha=lerp(s.a,clamp(s.a,AlphaMinimum,AlphaMaximum),ClampAlpha);return float4(rgb,alpha);","pins":[["CyInput",5],["UV",2],["CyCanvasSize",4],["AlphaMinimum",1],["AlphaMaximum",1],["ClampAlpha",1],["Minimum",3],["Maximum",3],["Channels",3]],"outs":[["Resultat",4]]},{"id":11,"op":"output","pos":[780,40],"in":[[10,0],[0,0],[0,0]],"value":[0,0,0,0]}]}
+//@graph {"category":"Traitements","inputs":1,"name":"PBR Clamp","nextId":12,"nodes":[{"id":1,"in":[],"name":"CyInput","op":"texture","pos":[40, 40],"value":[0, 0, 0, 0]},{"id":2,"in":[],"op":"uv","pos":[40, 150],"value":[0, 0, 0, 0]},{"id":3,"in":[],"op":"canvassize","pos":[40, 240],"value":[0, 0, 0, 0]},{"id":4,"in":[],"index":1,"name":"AlphaMinimum","op":"param","pos":[40, 330],"text":"Alpha Minimum","value":[0, 0, 0, 0]},{"id":5,"in":[],"index":1,"name":"AlphaMaximum","op":"param","pos":[40, 440],"text":"Alpha Maximum","value":[1, 0, 0, 0]},{"id":6,"in":[],"index":1,"name":"ClampAlpha","op":"param","pos":[40, 550],"text":"Clamp Alpha","value":[0, 0, 0, 0]},{"id":7,"in":[],"index":1,"name":"Minimum","op":"paramcolor","pos":[40, 660],"text":"Minimum","value":[0, 0, 0, 0]},{"id":8,"in":[],"index":1,"name":"Maximum","op":"paramcolor","pos":[40, 770],"text":"Maximum","value":[1, 1, 1, 0]},{"id":9,"in":[],"index":1,"name":"Channels","op":"paramcolor","pos":[40, 880],"text":"Channels","value":[1, 1, 1, 0]},{"id":10,"in":[[1, 0],[2, 0],[3, 0],[4, 0],[5, 0],[6, 0],[7, 0],[8, 0],[9, 0]],"name":"PBR Clamp","op":"custom","outs":[["Resultat",4]],"pins":[["CyInput",5],["UV",2],["CyCanvasSize",4],["AlphaMinimum",1],["AlphaMaximum",1],["ClampAlpha",1],["Minimum",3],["Maximum",3],["Channels",3]],"pos":[420, 40],"text":"    float4 s = Texture2DSample(CyInput, CyInputSampler, UV);\n    float3 clamped = clamp(s.rgb, Minimum.rgb, Maximum.rgb);\n    float3 rgb = lerp(s.rgb, clamped, Channels.rgb);\n    float alpha = lerp(s.a, clamp(s.a, AlphaMinimum, AlphaMaximum), ClampAlpha);\n    return float4(rgb, alpha);","value":[0, 0, 0, 0]},{"id":11,"in":[[10, 0],[0, 0],[0, 0]],"op":"output","pos":[780, 40],"value":[0, 0, 0, 0]}],"premultiplied":false}
 //@input Image
 //@halo 0
 //@param sx_AlphaMinimum float 0 0 1 "Alpha Minimum"
@@ -46,18 +46,21 @@ float2 Hash22(float2 p)
 //@param sx_Minimum color 0 0 0 0 "Minimum"
 //@param sx_Maximum color 1 1 1 0 "Maximum"
 //@param sx_Channels color 1 1 1 0 "Channels"
-
 // Imported preset (Effect / PBR): Clamps selected linear PBR channels to physically plausible per-channel ranges.
 // Unreal Custom-node code kept as written; Texture2DSample reads the effect inputs.
-float4 CyTex(uint i, float2 uv) { return HasInput(i) ? InputUV(i, uv) : float4(1.0, 1.0, 1.0, 1.0); }
+float4 CyTex(uint i, float2 uv) {
+    return HasInput(i) ? InputUV(i, uv) : float4(1.0, 1.0, 1.0, 1.0);
+}
 #define Texture2DSample(T, S, UVS) CyTex(T, UVS)
 static const uint CyInput = 0;
-
 float4 CyPreset(float2 UV, float4 CyCanvasSize, float sx_arg_AlphaMinimum, float sx_arg_AlphaMaximum, float sx_arg_ClampAlpha, float3 sx_arg_Minimum, float3 sx_arg_Maximum, float3 sx_arg_Channels)
 {
-    float4 s=Texture2DSample(CyInput,CyInputSampler,UV);float3 clamped=clamp(s.rgb,sx_arg_Minimum.rgb,sx_arg_Maximum.rgb);float3 rgb=lerp(s.rgb,clamped,sx_arg_Channels.rgb);float alpha=lerp(s.a,clamp(s.a,sx_arg_AlphaMinimum,sx_arg_AlphaMaximum),sx_arg_ClampAlpha);return float4(rgb,alpha);
+    float4 s = Texture2DSample(CyInput, CyInputSampler, UV);
+    float3 clamped = clamp(s.rgb, sx_arg_Minimum.rgb, sx_arg_Maximum.rgb);
+    float3 rgb = lerp(s.rgb, clamped, sx_arg_Channels.rgb);
+    float alpha = lerp(s.a, clamp(s.a, sx_arg_AlphaMinimum, sx_arg_AlphaMaximum), sx_arg_ClampAlpha);
+    return float4(rgb, alpha);
 }
-
 float4 Effect(EffectContext ctx)
 {
     return CyPreset(ctx.uv, float4(ctx.size, ctx.texel), sx_AlphaMinimum, sx_AlphaMaximum, sx_ClampAlpha, sx_Minimum.rgb, sx_Maximum.rgb, sx_Channels.rgb);

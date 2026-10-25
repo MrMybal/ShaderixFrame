@@ -100,6 +100,10 @@ int main(int argc, char **argv) {
         movie.open(path("snapshot.mp4"));
         auto image = movie.at(.1);
         size_t pixel = (20 * 320 + 20) * 4;
+        size_t bottom = (size_t(movie.frame.height - 1) * movie.frame.width + 20) * 4;
+        require(movie.frame.height == 180 && image.pixels.size() == size_t(320) * 180 * 4 &&
+                    image.pixels[bottom + 1] < 100 && image.pixels[bottom + 2] > 120,
+                "Decoded H.264 frames keep the picture height, without the coded padding rows");
         require(movie.video && movie.hasAudio && movie.frame.width == 320 && movie.duration > .35 &&
                     image.pixels[pixel + 2] > 170 && image.pixels[pixel] < 60 &&
                     rendered.pixels[pixel + 2] < 10,
@@ -115,6 +119,13 @@ int main(int argc, char **argv) {
         sf::MediaAsset wav;
         wav.open(path("mix.wav"));
         require(wav.hasAudio && wav.pcm.size() == 4800 * 2, "WAV duration follows its own snapshot");
+        auto rangeId = jobs.start(p, library, sf::ExportKind::Audio, path("range.wav"), "project", {.025, .075});
+        require(wait(jobs, rangeId).state == sf::ExportState::Completed &&
+                    std::abs(jobs.status(rangeId).duration - .05) < 1e-9,
+                "A ranged export renders only the work area");
+        sf::MediaAsset ranged;
+        ranged.open(path("range.wav"));
+        require(ranged.hasAudio && ranged.pcm.size() == 2400 * 2, "The ranged WAV lasts the work area");
         auto aviId = jobs.start(p, library, sf::ExportKind::Video, path("lossless.avi"));
         require(wait(jobs, aviId).state == sf::ExportState::Completed,
                 "Uncompressed AVI exports complete in the render queue");

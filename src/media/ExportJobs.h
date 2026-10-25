@@ -45,7 +45,7 @@ class ExportJobs {
     ExportJobs &operator=(const ExportJobs &) = delete;
     ~ExportJobs();
     Id start(const Project &snapshot, const EffectLibrary &library, ExportKind kind, const std::string &path,
-             const std::string &preset = "project");
+             const std::string &preset = "project", ExportRange range = {});
     ExportInfo status(Id id) const;
     std::vector<ExportInfo> list() const;
     bool cancel(Id id);

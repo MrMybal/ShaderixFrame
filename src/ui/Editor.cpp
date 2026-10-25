@@ -1,20 +1,24 @@
+#include "ui/EnglishPanels.h"
 #include "ui/Editor.h"
 #include "adapters/CyDawWidgets.h"
 #include "core/AtomicFile.h"
 #include "core/Version.h"
+#include "ui/FrameStyle.h"
 #include "ui/Theme.h"
 #include <commdlg.h>
+#include <shobjidl.h>
 #include <cstdio>
 #include <cydaw/graph/GraphDefinition.h>
 #include <fstream>
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
+#include <mfapi.h>
 #include <set>
 
 namespace sf {
 static constexpr ImU32 Orange = IM_COL32(239, 139, 58, 255), Audio = IM_COL32(66, 179, 184, 255),
                        Muted = IM_COL32(120, 127, 143, 255);
-static std::string timecode(double time, int fps) {
+std::string timecode(double time, int fps) {
     int frame = int(std::max(0., time) * fps + 0.0001), sec = frame / fps;
     char b[40];
     snprintf(b, sizeof(b), "%02d:%02d:%02d:%02d", sec / 3600, sec / 60 % 60, sec % 60, frame % fps);
@@ -32,9 +36,539 @@ Json Editor::selectionArgs() const {
         args["clips"].Push(id);
     return args;
 }
+std::vector<unsigned char> clipboardDib(const Image &image) {
+    BITMAPINFOHEADER header{};
+    header.biSize = sizeof(header);
+    header.biWidth = LONG(image.width);
+    header.biHeight = LONG(image.height);
+    header.biPlanes = 1;
+    header.biBitCount = 32;
+    header.biCompression = BI_RGB;
+    header.biSizeImage = image.width * image.height * 4;
+    std::vector<unsigned char> dib(sizeof(header) + header.biSizeImage);
+    memcpy(dib.data(), &header, sizeof(header));
+    for (unsigned y = 0; y < image.height; ++y) {
+        auto *from = image.pixels.data() + size_t(image.height - 1 - y) * image.width * 4;
+        auto *to = dib.data() + sizeof(header) + size_t(y) * image.width * 4;
+        for (unsigned x = 0; x < image.width; ++x, from += 4, to += 4) {
+            to[0] = from[2];
+            to[1] = from[1];
+            to[2] = from[0];
+            to[3] = from[3];
+        }
+    }
+    return dib;
+}
+void Editor::exportStill() {
+    auto path = dialog(true, L"PNG image\0*.png\0Half-float EXR 16-bit\0*.exr\0\0", L"png");
+    if (path.empty())
+        return;
+    Json a = Json::Object();
+    a["path"] = path;
+    a["time"] = s.time;
+    action("render_frame", a);
+}
+bool Editor::takeSnapshot() {
+    auto image = s.renderer.readback();
+    if (image.pixels.empty())
+        return false;
+    D3D11_TEXTURE2D_DESC d{};
+    d.Width = image.width;
+    d.Height = image.height;
+    d.MipLevels = d.ArraySize = 1;
+    d.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    d.SampleDesc.Count = 1;
+    d.Usage = D3D11_USAGE_IMMUTABLE;
+    d.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    D3D11_SUBRESOURCE_DATA pixels{image.pixels.data(), d.Width * 4, 0};
+    Com<ID3D11Texture2D> texture;
+    Com<ID3D11ShaderResourceView> view;
+    if (FAILED(s.renderer.gpu()->CreateTexture2D(&d, &pixels, &texture)) ||
+        FAILED(s.renderer.gpu()->CreateShaderResourceView(texture.Get(), nullptr, &view)))
+        return false;
+    snapshotView = view;
+    snapshotLabel = "A  ·  " + timecode(s.time, s.project.fps);
+    snapshotCompare = true;
+    return true;
+}
+void Editor::guidesMenu() {
+    ImGui::CheckboxFlags("Safe Areas (93% Action, 90% Title)", &guideFlags, 1);
+    ImGui::CheckboxFlags("Thirds", &guideFlags, 2);
+    ImGui::CheckboxFlags("Center", &guideFlags, 4);
+    ImGui::SetNextItemWidth(160);
+    ImGui::Combo("Target Aspect Ratio", &guideRatio, "None\0" "2.39:1 Cinema\0" "1,85:1\0" "1:1 Square\0" "4:5 portrait\0"
+                                              "9:16 vertical\0");
+    ImGui::Separator();
+    if (ImGui::MenuItem("Take Snapshot (A)"))
+        takeSnapshot();
+    if (ImGui::MenuItem("Compare A / B", nullptr, snapshotCompare, bool(snapshotView)))
+        snapshotCompare = !snapshotCompare;
+}
+// Over the picture: A/B wipe, target format mask, safe areas, thirds and centre.
+void Editor::compositionOverlays(ImVec2 origin, float w, float h, bool hovered) {
+    auto *draw = ImGui::GetWindowDrawList();
+    ImVec2 end = origin + ImVec2(w, h);
+    if (comparing()) {
+        float split = origin.x + w * wipe;
+        draw->AddImage((ImTextureID)(intptr_t)snapshotView.Get(), origin, {split, end.y}, {0, 0}, {wipe, 1});
+        auto mouse = ImGui::GetIO().MousePos;
+        bool onWipe = hovered && std::abs(mouse.x - split) < 7 && mouse.y >= origin.y && mouse.y <= end.y;
+        if (onWipe && ImGui::IsMouseClicked(0))
+            wipeDragging = true;
+        if (wipeDragging) {
+            wipe = std::clamp((mouse.x - origin.x) / std::max(1.f, w), 0.f, 1.f);
+            if (!ImGui::IsMouseDown(0))
+                wipeDragging = false;
+        }
+        if (onWipe || wipeDragging)
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+        draw->AddLine({split, origin.y}, {split, end.y}, IM_COL32(255, 255, 255, 220), 2);
+        draw->AddCircleFilled({split, (origin.y + end.y) * .5f}, 7, IM_COL32(239, 139, 58, 255));
+    }
+    constexpr float ratios[] = {0, 2.39f, 1.85f, 1, .8f, .5625f};
+    if (guideRatio > 0 && guideRatio < 6) {
+        // Outside the target format is darkened, as a letterbox or pillarbox.
+        float target = ratios[guideRatio], current = w / std::max(1.f, h);
+        ImVec2 a = origin, b = end;
+        if (target > current) {
+            float inner = w / target;
+            a.y = origin.y + (h - inner) * .5f;
+            b.y = a.y + inner;
+            draw->AddRectFilled(origin, {end.x, a.y}, IM_COL32(0, 0, 0, 150));
+            draw->AddRectFilled({origin.x, b.y}, end, IM_COL32(0, 0, 0, 150));
+        } else {
+            float inner = h * target;
+            a.x = origin.x + (w - inner) * .5f;
+            b.x = a.x + inner;
+            draw->AddRectFilled(origin, {a.x, end.y}, IM_COL32(0, 0, 0, 150));
+            draw->AddRectFilled({b.x, origin.y}, end, IM_COL32(0, 0, 0, 150));
+        }
+        draw->AddRect(a, b, IM_COL32(239, 139, 58, 200), 0.f, ImDrawFlags_None, 1.f);
+    }
+    ImU32 guide = IM_COL32(255, 255, 255, 110);
+    if (guideFlags & 1) {
+        for (float share : {.93f, .90f}) {
+            ImVec2 margin{w * (1 - share) * .5f, h * (1 - share) * .5f};
+            draw->AddRect(origin + margin, end - margin, guide, 0.f, ImDrawFlags_None, 1.f);
+        }
+    }
+    if (guideFlags & 2)
+        for (float third : {1 / 3.f, 2 / 3.f}) {
+            draw->AddLine({origin.x + w * third, origin.y}, {origin.x + w * third, end.y}, guide);
+            draw->AddLine({origin.x, origin.y + h * third}, {end.x, origin.y + h * third}, guide);
+        }
+    if (guideFlags & 4) {
+        ImVec2 c = (origin + end) * .5f;
+        draw->AddLine(c - ImVec2(12, 0), c + ImVec2(12, 0), guide, 1.5f);
+        draw->AddLine(c - ImVec2(0, 12), c + ImVec2(0, 12), guide, 1.5f);
+    }
+    // The A / B labels stay readable above the format mask and the guides.
+    if (comparing()) {
+        auto label = [&](ImVec2 at, const char *text) {
+            auto extent = ImGui::CalcTextSize(text);
+            draw->AddRectFilled(at - ImVec2(4, 2), at + extent + ImVec2(4, 2), IM_COL32(10, 11, 14, 210), 3);
+            draw->AddText(at, IM_COL32(222, 224, 232, 255), text);
+        };
+        label(origin + ImVec2(8, 8), snapshotLabel.c_str());
+        label({end.x - ImGui::CalcTextSize("B  ·  current").x - 8, origin.y + 8}, "B  ·  current");
+    }
+}
+bool Editor::copyStill() {
+    s.renderer.render(s.project, s.media, s.time, s.project.width, s.project.height);
+    auto dib = clipboardDib(s.renderer.readback());
+    HGLOBAL memory = GlobalAlloc(GMEM_MOVEABLE, dib.size());
+    if (!memory)
+        return false;
+    memcpy(GlobalLock(memory), dib.data(), dib.size());
+    GlobalUnlock(memory);
+    if (!OpenClipboard(GetActiveWindow())) {
+        GlobalFree(memory);
+        error = "Presse-papiers indisponible";
+        return false;
+    }
+    EmptyClipboard();
+    bool placed = SetClipboardData(CF_DIB, memory) != nullptr;
+    CloseClipboard();
+    if (!placed)
+        GlobalFree(memory);
+    return placed;
+}
+float Editor::previewScale() const {
+    return std::min(1.f, std::min(1280.f / s.project.width, 720.f / s.project.height));
+}
+std::string Editor::renderSignature() const {
+    return std::to_string(std::hash<std::string>{}(s.project.json().Dump(0))) + "@" +
+           std::to_string(previewScale());
+}
+void Editor::startRenderCache() {
+    bool area = s.project.hasWorkArea();
+    float scale = previewScale();
+    renderCache.start(s.project, s.renderer.library, renderSignature(), area ? s.project.workIn : 0,
+                      area ? s.project.workOut : s.project.duration,
+                      std::max(2u, unsigned(s.project.width * scale)), std::max(2u, unsigned(s.project.height * scale)),
+                      std::size_t(1536) << 20);
+    renderCacheChecked = ImGui::GetTime() + .5;
+}
+void Editor::startLoudness(double target) {
+    if (loudnessJob && !loudnessJob->finished)
+        return;
+    loudnessJob = std::make_unique<LoudnessJob>();
+    loudnessJob->target = target;
+    loudnessJob->limit = loudnessLimit;
+    auto *job = loudnessJob.get();
+    job->worker = std::thread([job, project = s.project] {
+        CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        MFStartup(MF_VERSION);
+        try {
+            MediaCache offline;
+            std::vector<float> block;
+            uint64_t total = uint64_t(project.duration * 48000);
+            for (uint64_t at = 0; at < total && !job->cancelled; at += 4096) {
+                offline.mix(project, at / 48000., unsigned(std::min<uint64_t>(4096, total - at)), block);
+                job->progress = float(double(at) / std::max<uint64_t>(1, total));
+            }
+            job->measured = offline.loudness.integrated();
+            job->peak = offline.loudness.truePeak(true);
+        } catch (const std::exception &failure) {
+            job->error = failure.what();
+        }
+        MFShutdown();
+        CoUninitialize();
+        job->finished = true;
+    });
+}
+void Editor::pollLoudness() {
+    if (!loudnessJob || !loudnessJob->finished)
+        return;
+    auto job = std::move(loudnessJob);
+    job->worker.join();
+    if (job->cancelled)
+        return;
+    if (!job->error.empty()) {
+        error = job->error;
+        return;
+    }
+    Json a = Json::Object();
+    a["target"] = job->target;
+    a["measured"] = job->measured;
+    a["true_peak"] = job->peak;
+    a["limit"] = job->limit;
+    if (action("normalize_loudness", a)) {
+        char text[200];
+        double peak = actionResult["true_peak"].Num();
+        snprintf(text, sizeof(text), "Measured mix %.1f LUFS; master %+.1f dB - true peak %.1f dBTP%s",
+                 actionResult["measured"].Num(), actionResult["gain"].Num(), peak,
+                 actionResult.Has("limiter") ? "  ·  limiter -1 dBTP"
+                 : peak > -1                 ? " : clipping warning"
+                                             : "");
+        say(text);
+    }
+}
+void Editor::startAnalysis(std::string label, std::string command, std::function<Json(AnalysisJob &)> work,
+                           std::function<std::string(const Json &)> report) {
+    if (analysis)
+        return;
+    analysis = std::make_unique<AnalysisJob>();
+    analysis->label = std::move(label);
+    analysis->command = std::move(command);
+    analysis->report = std::move(report);
+    auto *job = analysis.get();
+    job->worker = std::thread([job, work = std::move(work)] {
+        CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+        MFStartup(MF_VERSION);
+        try {
+            job->args = work(*job);
+        } catch (const std::exception &failure) {
+            job->error = failure.what();
+        }
+        MFShutdown();
+        CoUninitialize();
+        job->finished = true;
+    });
+}
+void Editor::pollAnalysis() {
+    if (!analysis || !analysis->finished)
+        return;
+    auto job = std::move(analysis);
+    job->worker.join();
+    if (job->cancelled)
+        return;
+    if (!job->error.empty()) {
+        error = job->error;
+        return;
+    }
+    // A job without a command (an export) only reports, from its own result.
+    if (job->command.empty()) {
+        if (job->report)
+            say(job->report(job->args));
+    } else if (action(job->command, job->args) && job->report)
+        say(job->report(actionResult));
+}
+// Rendered on a worker thread with its own renderer; the work area, else the sequence.
+void Editor::exportGifInBackground(const std::string &path) {
+    auto project = s.project;
+    auto library = s.renderer.library;
+    ExportRange range;
+    if (project.hasWorkArea())
+        range = {project.workIn, project.workOut};
+    startAnalysis("GIF", "",
+                  [project, library, range, path](AnalysisJob &job) {
+                      Renderer renderer;
+                      renderer.initialize();
+                      renderer.library = library;
+                      MediaCache media;
+                      sf::exportGif(project, media, renderer, path, range, 480, 15, [&](float done) {
+                          job.progress = done;
+                          return !job.cancelled.load();
+                      });
+                      Json args = Json::Object();
+                      args["path"] = path;
+                      return args;
+                  },
+                  [](const Json &result) { return "GIF exported: " + result["path"].S(); });
+}
+void Editor::removeSilencesInBackground(Id id, double threshold, double minLength) {
+    // The sound of the clip: itself, or the audio member of its linked group.
+    auto &p = s.project;
+    const Clip *sound = nullptr;
+    for (auto member : p.linked(id))
+        if (p.owner(member)->kind == TrackKind::Audio && !p.findClip(member)->source.empty())
+            sound = p.findClip(member);
+    if (!sound) {
+        error = "Choose an audio clip or a video clip with linked audio";
+        return;
+    }
+    Clip copy = *sound;
+    int fps = p.fps;
+    startAnalysis("Silences", "remove_silences",
+                  [copy, fps, threshold, minLength](AnalysisJob &) {
+                      MediaCache offline;
+                      auto spans = silenceSpans(copy, offline.get(copy.source), float(threshold), minLength, .1, fps);
+                      Json args = Json::Object();
+                      args["clip"] = copy.id;
+                      args["spans"] = Json::Array();
+                      for (auto [from, to] : spans) {
+                          Json span = Json::Array();
+                          span.Push(from);
+                          span.Push(to);
+                          args["spans"].Push(span);
+                      }
+                      return args;
+                  },
+                  [](const Json &result) {
+                      return std::to_string(result["cuts"].I()) + " silent range(s) removed, " +
+                             std::to_string(int(std::round(result["seconds"].Num()))) + " s";
+                  });
+}
+void Editor::detectScenesInBackground(Id id, bool split) {
+    auto *c = s.project.findClip(id);
+    if (!c || c->source.empty())
+        return;
+    Clip copy = *c;
+    int fps = s.project.fps;
+    startAnalysis("Shots", "detect_scenes",
+                  [copy, fps, split](AnalysisJob &job) {
+                      MediaAsset reader;
+                      reader.open(copy.source, {}, false);
+                      auto cuts = sf::detectScenes(reader, copy.in, copy.in + copy.duration * copy.speed,
+                                               std::max(1. / fps, copy.speed / fps), .15f, [&](float done) {
+                                                   job.progress = done;
+                                                   return !job.cancelled.load();
+                                               });
+                      Json args = Json::Object();
+                      args["clip"] = copy.id;
+                      args["split"] = split;
+                      args["times"] = Json::Array();
+                      for (double cut : cuts)
+                          args["times"].Push(copy.start + (cut - copy.in) / copy.speed);
+                      return args;
+                  },
+                  [](const Json &result) {
+                      return std::to_string(result["times"].Size()) + " scene change(s)";
+                  });
+}
+void Editor::rememberProject(const std::string &path) {
+    if (path.empty())
+        return;
+    std::erase(recentProjects, path);
+    recentProjects.insert(recentProjects.begin(), path);
+    if (recentProjects.size() > 10)
+        recentProjects.resize(10);
+    // Written like the panel settings: not by previews or tests without an ini file.
+    if (!panelSuffix.empty() || !ImGui::GetIO().IniFilename)
+        return;
+    Json list = Json::Array();
+    for (auto &item : recentProjects)
+        list.Push(item);
+    try {
+        AtomicFile output(sx::Narrow((root / "recent-projects.json").wstring()));
+        {
+            std::ofstream file(output.path(), std::ios::binary);
+            file << list.Dump(2);
+        }
+        output.commit();
+    } catch (const std::exception &) {
+        // A recent list that cannot be written is only a convenience lost.
+    }
+}
+void Editor::loadRecentProjects() {
+    if (recentRead)
+        return;
+    recentRead = true;
+    std::string text;
+    Json list;
+    if (sx::ReadTextFile(sx::Narrow((root / "recent-projects.json").wstring()), text) && Json::Parse(text, list) &&
+        list.IsArray())
+        for (auto &item : list.Elements())
+            if (!item.S().empty())
+                recentProjects.push_back(item.S());
+}
+void Editor::welcomeCard(ImVec2 origin, ImVec2 size) {
+    welcomeShown = false;
+    if (!panelSuffix.empty())
+        return;
+    for (auto &track : s.project.tracks)
+        if (!track.clips.empty())
+            return;
+    loadRecentProjects();
+    welcomeShown = true;
+    // As tall as its content: the buttons, then up to five recent projects.
+    int recent = 0;
+    for (auto &path : recentProjects) {
+        std::error_code missing;
+        recent += recent < 5 && std::filesystem::exists(sx::Utf8Path(path), missing);
+    }
+    float rows = 6.3f + (recent ? 1.2f + recent : 0.f);
+    ImVec2 card{std::min(size.x - 24, 460.f), std::min(size.y - 24, rows * ImGui::GetFrameHeightWithSpacing())};
+    if (card.x < 220 || card.y < 160)
+        return;
+    ImGui::SetCursorScreenPos(origin + (size - card) * .5f);
+    ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(style::alpha(style::bg1, .94f)));
+    ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 6);
+    if (ImGui::BeginChild("welcome", card, ImGuiChildFlags_Borders | ImGuiChildFlags_AlwaysUseWindowPadding)) {
+        ImGui::PushFont(style::boldFont(), 0);
+        ImGui::TextUnformatted("Welcome to ShaderixFrame");
+        ImGui::PopFont();
+        ImGui::TextDisabled("The sequence is empty: start with a template, open a project or import media.");
+        ImGui::Spacing();
+        float half = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2;
+        int n = 0;
+        for (auto [label, id] : {std::pair{"YouTube Video", "youtube"}, {"Vertical Video", "short"},
+                                 {"Video Podcast", "podcast"}, {"Short Film", "cinema"}}) {
+            if (n++ % 2)
+                ImGui::SameLine();
+            if (ImGui::Button(label, {half, 0})) {
+                Json a = Json::Object();
+                a["template"] = id;
+                action("new_project", a);
+            }
+        }
+        ImGui::Spacing();
+        if (ImGui::Button("Open Project...", {half, 0})) {
+            auto path = dialog(false, L"ShaderixFrame\0*.sframe\0\0", L"sframe");
+            if (!path.empty()) {
+                Json a = Json::Object();
+                a["path"] = path;
+                action("open_project", a);
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Import Media...", {half, 0})) {
+            auto path = dialog(false,
+                               L"Media\0*.mp4;*.mov;*.mkv;*.avi;*.wmv;*.wav;*.mp3;*.flac;*.aac;*.png;*.jpg;*.jpeg;*.bmp\0"
+                               L"All\0*.*\0\0",
+                               nullptr);
+            if (!path.empty())
+                drop(path);
+        }
+        if (!recentProjects.empty()) {
+            ImGui::Spacing();
+            ImGui::TextDisabled("Recent");
+            int shown = 0;
+            for (auto &path : recentProjects) {
+                std::error_code missing;
+                if (shown >= 5 || !std::filesystem::exists(sx::Utf8Path(path), missing))
+                    continue;
+                ++shown;
+                auto label = sx::Narrow(sx::Utf8Path(path).filename().wstring()) + "##recent" + path;
+                if (ImGui::Selectable(label.c_str())) {
+                    Json a = Json::Object();
+                    a["path"] = path;
+                    action("open_project", a);
+                }
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("%s", path.c_str());
+            }
+        }
+        ImGui::Spacing();
+        ImGui::TextDisabled("Or drop files onto the window.");
+    }
+    ImGui::EndChild();
+    ImGui::PopStyleVar();
+    ImGui::PopStyleColor();
+}
+void Editor::playAround() {
+    playAroundReturn = s.time;
+    playAroundEnd = std::min(s.project.duration, s.time + 2);
+    s.time = std::max(0., s.time - 2);
+    shuttleRate = 1;
+    s.playing = true;
+}
+// A missing medium found again: the folder of the file chosen is searched for every missing name.
+void Editor::relinkDialog() {
+    auto folder = folderDialog(L"Folder to Search for Missing Media");
+    if (folder.empty())
+        return;
+    Json a = Json::Object();
+    a["folder"] = folder;
+    if (action("relink_media", a)) {
+        offlineChecked = 0;
+        if (actionResult["missing"].Size())
+            error = std::to_string(actionResult["missing"].Size()) + " media file(s) still missing in this folder";
+        else
+            say(std::to_string(actionResult["relinked"].I()) + " media file(s) relinked");
+    }
+}
+// J reverses, Shift+L goes forward; pressed again in the same direction, the rate doubles up to ×8.
+void Editor::shuttleStep(int direction) {
+    if (s.playing && (shuttleRate > 0) == (direction > 0))
+        shuttleRate = std::clamp(shuttleRate * 2, -8., 8.);
+    else
+        shuttleRate = direction > 0 ? 1 : -1;
+    s.playing = true;
+}
 void applyFrameTheme() {
     sx::ui::ApplyTheme(1);
-    sx::ui::LoadFonts(1);
+    // Shaderixel's fonts, with CyDAW's Segoe MDL2 icons and semibold font for the timeline.
+    auto &io = ImGui::GetIO();
+    auto font = [&](const char *path, float size, bool merge, bool icons = false) -> ImFont * {
+        if (!std::filesystem::exists(path))
+            return nullptr;
+        ImFontConfig config;
+        config.MergeMode = merge;
+        config.OversampleH = 2;
+        if (icons) {
+            config.PixelSnapH = true;
+            config.GlyphOffset = {0, 2};
+            config.GlyphMinAdvanceX = size;
+        }
+        return io.Fonts->AddFontFromFileTTF(path, icons ? size * .95f : size, &config);
+    };
+    auto &fonts = sx::ui::GetFonts();
+    fonts.ui = font("C:/Windows/Fonts/segoeui.ttf", 16, false);
+    if (fonts.ui) {
+        font("C:/Windows/Fonts/segmdl2.ttf", 16, true, true);
+        font("C:/Windows/Fonts/seguisym.ttf", 16, true);
+    } else
+        fonts.ui = io.Fonts->AddFontDefault();
+    if (auto *bold = font("C:/Windows/Fonts/seguisb.ttf", 16, false)) {
+        font("C:/Windows/Fonts/segmdl2.ttf", 16, true, true);
+        style::setBoldFont(bold);
+    }
+    fonts.mono = font("C:/Windows/Fonts/consola.ttf", 15, false);
+    if (!fonts.mono)
+        fonts.mono = fonts.ui;
+    io.FontDefault = fonts.ui;
     auto &style = ImGui::GetStyle();
     for (auto &c : style.Colors)
         if (c.x > 0.25f && c.z > c.x * 1.2f && c.z > c.y * 1.2f) {
@@ -52,7 +586,9 @@ bool Editor::action(const std::string &name, Json args) {
         if ((name == "new_project" || name == "open_project" || name == "undo" || name == "redo") &&
             hasClipDrafts() && s.recovery.enabled())
             s.recovery.preserve(projectWithClipDrafts(), s.projectPath, s.time);
-        protocol.execute(name, args);
+        actionResult = protocol.execute(name, args);
+        if (name == "open_project" || name == "save_project")
+            rememberProject(s.projectPath);
         if (name == "start_export")
             exportsFocus = true;
         if (name == "new_project" || name == "open_project" || name == "undo" || name == "redo") {
@@ -89,7 +625,9 @@ void Editor::drop(const std::string &path) {
     }
     Json a = Json::Object();
     a["path"] = path;
-    action("import_media", a);
+    a["proxy"] = autoProxies;
+    if (action("import_media", a) && actionResult.Has("proxy_job"))
+        say("Large video: preparing a 720p preview proxy");
 }
 std::string Editor::dialog(bool save, const wchar_t *f, const wchar_t *ext) {
     wchar_t buffer[32768]{};
@@ -103,6 +641,24 @@ std::string Editor::dialog(bool save, const wchar_t *f, const wchar_t *ext) {
     o.Flags = OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | (save ? OFN_OVERWRITEPROMPT : OFN_FILEMUSTEXIST);
     bool ok = save ? GetSaveFileNameW(&o) : GetOpenFileNameW(&o);
     return ok ? sx::Narrow(buffer) : "";
+}
+std::string Editor::folderDialog(const wchar_t *title) {
+    Com<IFileOpenDialog> picker;
+    if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&picker))))
+        return {};
+    DWORD options = 0;
+    picker->GetOptions(&options);
+    picker->SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
+    picker->SetTitle(title);
+    if (FAILED(picker->Show(GetActiveWindow())))
+        return {};
+    Com<IShellItem> item;
+    PWSTR path = nullptr;
+    if (FAILED(picker->GetResult(&item)) || FAILED(item->GetDisplayName(SIGDN_FILESYSPATH, &path)))
+        return {};
+    auto folder = sx::Narrow(path);
+    CoTaskMemFree(path);
+    return folder;
 }
 void Editor::editCheckpoint(const Project &before) {
     if (ImGui::IsItemActivated())
@@ -123,19 +679,33 @@ bool Editor::beginPanel(const char *name) {
 void Editor::panelSettings() {
     if (!panelSuffix.empty() || !ImGui::GetIO().IniFilename)
         return;
-    auto path = root / "workspace-panels.json";
+    auto path = panelSettingsFile.empty() ? root / "workspace-panels.json" : panelSettingsFile;
     if (!panelSettingsRead) {
         panelSettingsRead = true;
         std::string text;
         Json j;
-        if (sx::ReadTextFile(sx::Narrow(path.wstring()), text) && Json::Parse(text, j) && j.IsObject())
-            for (auto &[name, open] : panels)
-                if (j.Has(name))
-                    open = j[name].B(open);
+        if (sx::ReadTextFile(sx::Narrow(path.wstring()), text) && Json::Parse(text, j) && j.IsObject() &&
+            j["modes"].IsArray()) {
+            j = englishPanelSettings(j);
+            for (int m = 0; m < modeCount && m < int(j["modes"].Size()); ++m)
+                for (auto &[name, open] : modePanels[m])
+                    if (j["modes"].At(m).Has(name))
+                        open = j["modes"].At(m)[name].B(open);
+            mode = Mode(std::clamp(j["mode"].I(), 0, modeCount - 1));
+            panels = modePanels[int(mode)];
+        } else
+            layoutForce = true; // the dock layout saved before workspaces is replaced once
     }
+    modePanels[int(mode)] = panels;
     Json j = Json::Object();
-    for (auto &[name, open] : panels)
-        j[name] = open;
+    j["mode"] = int(mode);
+    j["modes"] = Json::Array();
+    for (auto &set : modePanels) {
+        Json item = Json::Object();
+        for (auto &[name, open] : set)
+            item[name] = open;
+        j["modes"].Push(item);
+    }
     auto signature = j.Dump(0);
     if (signature != panelSettingsSignature) {
         try {
@@ -144,7 +714,7 @@ void Editor::panelSettings() {
                 std::ofstream f(output.path(), std::ios::binary);
                 f << signature;
                 if (!f)
-                    throw std::runtime_error("Écriture panneaux");
+                    throw std::runtime_error("Write panel settings");
             }
             output.commit();
             panelSettingsSignature = signature;
@@ -155,10 +725,38 @@ void Editor::panelSettings() {
 }
 void Editor::menu() {
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("Fichier")) {
-            if (ImGui::MenuItem("Nouvelle séquence", "Ctrl+N"))
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("New Sequence", "Ctrl+N"))
                 action("new_project");
-            if (ImGui::MenuItem("Ouvrir…", "Ctrl+O")) {
+            if (ImGui::BeginMenu("New from Template")) {
+                for (auto [label, id] : {std::pair{"YouTube Video - 1920 x 1080, 30 fps", "youtube"},
+                                         {"Vertical Video - 1080 x 1920 (Shorts, Reels, TikTok)", "short"},
+                                         {"Video Podcast - Two Cameras, Two Voices", "podcast"},
+                                         {"Short Film - 1920 x 1080, 24 fps", "cinema"}})
+                    if (ImGui::MenuItem(label)) {
+                        Json a = Json::Object();
+                        a["template"] = id;
+                        action("new_project", a);
+                    }
+                ImGui::EndMenu();
+            }
+            loadRecentProjects();
+            if (ImGui::BeginMenu("Recent Projects", !recentProjects.empty())) {
+                for (auto &path : recentProjects) {
+                    std::error_code missing;
+                    bool present = std::filesystem::exists(sx::Utf8Path(path), missing);
+                    auto label = sx::Narrow(sx::Utf8Path(path).filename().wstring()) + "##" + path;
+                    if (ImGui::MenuItem(label.c_str(), nullptr, false, present)) {
+                        Json a = Json::Object();
+                        a["path"] = path;
+                        action("open_project", a);
+                    }
+                    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+                        ImGui::SetTooltip("%s%s", path.c_str(), present ? "" : "\n(not found)");
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("Open...", "Ctrl+O")) {
                 auto path = dialog(false, L"ShaderixFrame\0*.sframe\0\0", L"sframe");
                 if (!path.empty()) {
                     Json a = Json::Object();
@@ -166,7 +764,7 @@ void Editor::menu() {
                     action("open_project", a);
                 }
             }
-            if (ImGui::MenuItem("Enregistrer", "Ctrl+S")) {
+            if (ImGui::MenuItem("Save", "Ctrl+S")) {
                 auto path = s.projectPath.empty() ? dialog(true, L"ShaderixFrame\0*.sframe\0\0", L"sframe")
                                                   : s.projectPath;
                 if (!path.empty()) {
@@ -175,7 +773,7 @@ void Editor::menu() {
                     action("save_project", a);
                 }
             }
-            if (ImGui::MenuItem("Enregistrer sous…")) {
+            if (ImGui::MenuItem("Save As...")) {
                 auto path = dialog(true, L"ShaderixFrame\0*.sframe\0\0", L"sframe");
                 if (!path.empty()) {
                     Json a = Json::Object();
@@ -184,14 +782,14 @@ void Editor::menu() {
                 }
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Récupérer une session…", nullptr, false, s.recovery.enabled())) {
+            if (ImGui::MenuItem("Recover Session...", nullptr, false, s.recovery.enabled())) {
                 recoveries = s.recovery.list();
                 recoveryVisible = true;
             }
-            if (ImGui::MenuItem("Importer un média…", "Ctrl+I")) {
+            if (ImGui::MenuItem("Import Media...", "Ctrl+I")) {
                 auto path = dialog(false,
-                                   L"Médias\0*.mp4;*.mov;*.mkv;*.avi;*.wmv;*.wav;*.mp3;*.flac;*.aac;*.png;*."
-                                   L"jpg;*.jpeg;*.bmp\0Tous\0*.*\0\0",
+                                   L"Media\0*.mp4;*.mov;*.mkv;*.avi;*.wmv;*.wav;*.mp3;*.flac;*.aac;*.png;*."
+                                   L"jpg;*.jpeg;*.bmp\0All\0*.*\0\0",
                                    nullptr);
                 if (!path.empty())
                     drop(path);
@@ -199,8 +797,8 @@ void Editor::menu() {
             auto jobs = s.exports.list();
             bool activeExport =
                 std::count_if(jobs.begin(), jobs.end(), [](const auto &job) { return job.active(); }) >= 32;
-            if (ImGui::MenuItem("Exporter MP4 · H264 / AAC", nullptr, false, !activeExport)) {
-                auto path = dialog(true, L"Vidéo MP4\0*.mp4\0\0", L"mp4");
+            if (ImGui::MenuItem("Export MP4 · H264 / AAC", nullptr, false, !activeExport)) {
+                auto path = dialog(true, L"MP4 Video\0*.mp4\0\0", L"mp4");
                 if (!path.empty()) {
                     Json a = Json::Object();
                     a["path"] = path;
@@ -208,7 +806,129 @@ void Editor::menu() {
                     action("start_export", a);
                 }
             }
-            if (ImGui::MenuItem("Exporter le mix WAV", nullptr, false, !activeExport)) {
+            if (ImGui::MenuItem("Export current frame…"))
+                exportStill();
+            ImGui::Separator();
+            if (ImGui::MenuItem("Import SRT Subtitles...")) {
+                auto path = dialog(false, L"SubRip subtitles\0*.srt\0\0", L"srt");
+                if (!path.empty()) {
+                    Json a = Json::Object();
+                    a["path"] = path;
+                    action("import_subtitles", a);
+                }
+            }
+            if (ImGui::MenuItem("Export SRT subtitles…")) {
+                auto path = dialog(true, L"SubRip subtitles\0*.srt\0\0", L"srt");
+                if (!path.empty()) {
+                    Json a = Json::Object();
+                    a["path"] = path;
+                    action("export_subtitles", a);
+                }
+            }
+            if (ImGui::BeginMenu("Export EDL (CMX 3600)")) {
+                // One video track per list.
+                for (auto &track : s.project.tracks)
+                    if (track.kind == TrackKind::Video && !track.clips.empty() &&
+                        ImGui::MenuItem((track.name + "##edl" + std::to_string(track.id)).c_str())) {
+                        auto path = dialog(true, L"EDL Edit Decision List\0*.edl\0\0", L"edl");
+                        if (!path.empty()) {
+                            Json a = Json::Object();
+                            a["path"] = path;
+                            a["track"] = track.id;
+                            if (action("export_edl", a))
+                                say(std::to_string(actionResult["events"].I()) + " shot(s) in the EDL");
+                        }
+                    }
+                ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("Import EDL...")) {
+                auto path = dialog(false, L"EDL Edit Decision List\0*.edl\0\0", L"edl");
+                if (!path.empty()) {
+                    Json a = Json::Object();
+                    a["path"] = path;
+                    if (action("import_edl", a))
+                        say(std::to_string(actionResult["clips"].I()) + " shot(s) imported" +
+                            (actionResult["offline"].I() ? ", " + std::to_string(actionResult["offline"].I()) +
+                                                               " offline: File > Relink Media"
+                                                         : std::string()));
+                }
+            }
+            if (ImGui::MenuItem("Export Shot List (CSV)...")) {
+                auto path = dialog(true, L"CSV Shot List\0*.csv\0\0", L"csv");
+                if (!path.empty()) {
+                    Json a = Json::Object();
+                    a["path"] = path;
+                    action("export_shot_list", a);
+                }
+            }
+            if (ImGui::BeginMenu("Previous Versions", !s.projectPath.empty())) {
+                auto versions = projectVersions(s.projectPath);
+                if (versions.empty())
+                    ImGui::TextDisabled("None: a version is kept each time you save");
+                for (auto &[saved, path] : versions) {
+                    // AAAA-MM-JJ HHMMSS shown as AAAA-MM-JJ  HH:MM:SS.
+                    auto label = saved.size() == 17 ? saved.substr(0, 10) + "  " + saved.substr(11, 2) + ":" +
+                                                          saved.substr(13, 2) + ":" + saved.substr(15, 2)
+                                                    : saved;
+                    if (ImGui::MenuItem(label.c_str())) {
+                        Json a = Json::Object();
+                        a["path"] = sx::Narrow(path.wstring());
+                        if (action("restore_version", a))
+                            say("Version from " + label + " restored (Ctrl+Z to undo)");
+                    }
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::MenuItem("Relink Missing Media...", nullptr, false, offlineMedia > 0))
+                relinkDialog();
+            if (ImGui::MenuItem("Collect Media...")) {
+                auto folder = folderDialog(L"Folder for a Copy of Each Media File");
+                if (!folder.empty()) {
+                    Json a = Json::Object();
+                    a["folder"] = folder;
+                    if (action("collect_media", a))
+                        say(std::to_string(actionResult["copied"].I()) + " media file(s) copied, " +
+                            std::to_string(int(actionResult["bytes"].Num() / 1048576)) + " Mo");
+                }
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Export Selection as MP4...", nullptr, false, !activeExport && !s.selection.empty())) {
+                auto path = dialog(true, L"MP4 Video\0*.mp4\0\0", L"mp4");
+                if (!path.empty()) {
+                    Json a = Json::Object();
+                    a["path"] = path;
+                    a["kind"] = "video";
+                    a["range"] = "selection";
+                    action("start_export", a);
+                }
+            }
+            if (ImGui::MenuItem("Export each chapter to MP4…", nullptr, false, !activeExport && !s.project.markers.empty())) {
+                auto folder = folderDialog(L"Chapter Output Folder");
+                if (!folder.empty()) {
+                    Json a = Json::Object();
+                    a["folder"] = folder;
+                    if (action("export_chapters", a))
+                        say(std::to_string(actionResult["jobs"].Size()) + " chapter(s) exporting");
+                }
+            }
+            bool regions = std::any_of(s.project.markers.begin(), s.project.markers.end(),
+                                       [](const Marker &m) { return m.duration > 0; });
+            if (ImGui::MenuItem("Export Each Region as MP4...", nullptr, false, !activeExport && regions)) {
+                auto folder = folderDialog(L"Region Output Folder");
+                if (!folder.empty()) {
+                    Json a = Json::Object();
+                    a["folder"] = folder;
+                    a["regions"] = true;
+                    if (action("export_chapters", a))
+                        say(std::to_string(actionResult["jobs"].Size()) + " region(s) exporting");
+                }
+            }
+            if (ImGui::MenuItem("Export Animated GIF", nullptr, false, !analysis)) {
+                auto path = dialog(true, L"Animated GIF\0*.gif\0\0", L"gif");
+                if (!path.empty())
+                    exportGifInBackground(path);
+            }
+            if (ImGui::MenuItem("Export WAV Mix", nullptr, false, !activeExport)) {
                 auto path = dialog(true, L"Audio WAV\0*.wav\0\0", L"wav");
                 if (!path.empty()) {
                     Json a = Json::Object();
@@ -219,70 +939,122 @@ void Editor::menu() {
             }
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Édition")) {
-            if (ImGui::MenuItem("Annuler", "Ctrl+Z"))
+        if (ImGui::BeginMenu("Edit")) {
+            if (ImGui::MenuItem("Undo", "Ctrl+Z"))
                 action("undo");
-            if (ImGui::MenuItem("Rétablir", "Ctrl+Y"))
+            if (ImGui::MenuItem("Redo", "Ctrl+Y"))
                 action("redo");
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Séquence")) {
-            if (ImGui::MenuItem("Étalonnage")) {
+        if (ImGui::BeginMenu("Sequence")) {
+            if (ImGui::MenuItem("Color Grading")) {
                 showGrading();
-                ImGui::SetWindowFocus(panelTitle("Étalonnage").c_str());
+                ImGui::SetWindowFocus(panelTitle("Color Grading").c_str());
             }
-            if (ImGui::MenuItem("Scopes vidéo"))
-                ImGui::SetWindowFocus(panelTitle("Scopes vidéo").c_str());
+            if (ImGui::MenuItem("Video Scopes"))
+                ImGui::SetWindowFocus(panelTitle("Video Scopes").c_str());
             ImGui::Separator();
-            ImGui::TextDisabled("Composition RGBA · 16 bits flottants");
+            if (ImGui::MenuItem(s.project.hasWorkArea() ? "Pre-render Work Area" : "Pre-render Sequence",
+                                "Input"))
+                startRenderCache();
+            if (ImGui::MenuItem("Clear Pre-render Cache", nullptr, false, !renderCache.empty()))
+                renderCache.clear();
+            if (ImGui::MenuItem("Close All Gaps"))
+                action("close_gaps");
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("Remove ranges where all tracks are empty; shorten the sequence");
+            if (ImGui::BeginMenu("Normalize Loudness")) {
+                for (auto [label, target] : {std::pair{"-14 LUFS  (YouTube, Spotify)", -14.}, {"-16 LUFS  (podcast, Apple)", -16.},
+                                             {"-23 LUFS (EBU R128, Broadcast)", -23.}, {"-24 LUFS  (ATSC A/85)", -24.}})
+                    if (ImGui::MenuItem(label, nullptr, false, !loudnessJob))
+                        startLoudness(target);
+                ImGui::Separator();
+                ImGui::MenuItem("-1 dBTP Master Limiter", nullptr, &loudnessLimit);
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Format")) {
+                // Common delivery sizes; clips keep their place, pictures are fitted to the new frame.
+                for (auto [label, width, height] :
+                     {std::tuple{"1920 × 1080  ·  HD 16:9", 1920, 1080}, {"3840 × 2160  ·  4K UHD", 3840, 2160},
+                      {"1280 × 720  ·  HD 720p", 1280, 720}, {"1080 × 1920  ·  vertical 9:16", 1080, 1920},
+                      {"1080 x 1080 - Square", 1080, 1080}, {"1080 × 1350  ·  portrait 4:5", 1080, 1350}})
+                    if (ImGui::MenuItem(label, nullptr, s.project.width == width && s.project.height == height)) {
+                        Json a = Json::Object();
+                        a["width"] = width;
+                        a["height"] = height;
+                        action("set_sequence", a);
+                    }
+                ImGui::Separator();
+                for (int fps : {24, 25, 30, 50, 60})
+                    if (ImGui::MenuItem((std::to_string(fps) + " ips").c_str(), nullptr, s.project.fps == fps)) {
+                        Json a = Json::Object();
+                        a["fps"] = fps;
+                        action("set_sequence", a);
+                    }
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
+            ImGui::TextDisabled("RGBA composition · 16-bit float");
             const char *spaces[] = {"srgb", "linear709", "linear2020"};
             int space = s.project.workingSpace == "srgb" ? 0 : s.project.workingSpace == "linear709" ? 1 : 2;
-            if (ImGui::Combo("Espace de travail", &space,
-                             "sRGB historique\0Rec.709 linéaire\0Rec.2020 linéaire\0")) {
+            if (ImGui::Combo("Working Space", &space,
+                             "Legacy sRGB\0Linear Rec.709\0Linear Rec.2020\0")) {
                 Json a = Json::Object();
                 a["space"] = spaces[space];
                 action("set_color_management", a);
             }
             int tone = s.project.toneMap == "clip" ? 0 : s.project.toneMap == "reinhard" ? 1 : 2;
             const char *tones[] = {"clip", "reinhard", "aces"};
-            if (ImGui::Combo("Affichage SDR", &tone, "Écrêtage\0Reinhard\0Courbe ACES ajustée\0")) {
+            if (ImGui::Combo("SDR display", &tone, "Clip\0Reinhard\0Fitted ACES Curve\0")) {
                 Json a = Json::Object();
                 a["tone"] = tones[tone];
                 action("set_color_management", a);
             }
             auto before = s.project;
-            if (ImGui::SliderFloat("Exposition affichage", &s.project.exposure, -10, 10, "%.1f EV"))
+            if (ImGui::SliderFloat("Display exposure", &s.project.exposure, -10, 10, "%.1f EV"))
                 s.dirty = true;
             editCheckpoint(before);
             bool transparent = s.project.backgroundAlpha == 0;
-            if (ImGui::Checkbox("Fond transparent", &transparent)) {
+            if (ImGui::Checkbox("Transparent Background", &transparent)) {
                 Json a = Json::Object();
                 a["backgroundAlpha"] = transparent ? 0 : 1;
                 action("set_color_management", a);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Piste vidéo")) {
+            if (ImGui::MenuItem("Video Track")) {
                 Json a = Json::Object();
                 a["kind"] = "video";
                 action("add_track", a);
             }
-            if (ImGui::MenuItem("Piste audio")) {
+            if (ImGui::MenuItem("Audio Track")) {
                 Json a = Json::Object();
                 a["kind"] = "audio";
                 action("add_track", a);
             }
-            if (ImGui::MenuItem("Générateur HLSL"))
+            if (ImGui::MenuItem("HLSL Generator"))
                 action("add_generator");
-            if (ImGui::MenuItem("Titre / texte"))
+            if (ImGui::MenuItem("Title / Text"))
                 action("add_title");
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Affichage")) {
+        if (ImGui::BeginMenu("View")) {
+            if (ImGui::MenuItem("Command Palette...", keymap.label("view.palette").c_str()))
+                openPalette();
+            if (panelSuffix.empty() && ImGui::BeginMenu("Mode")) {
+                const char *names[] = {"Edit", "Effects", "Motion", "Color Grading", "Audio", "Deliver"};
+                for (int m = 0; m < modeCount; ++m) {
+                    auto key = "F" + std::to_string(m + 1);
+                    if (ImGui::MenuItem(names[m], key.c_str(), int(mode) == m))
+                        setMode(Mode(m));
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
             for (auto &[name, open] : panels)
                 if (ImGui::MenuItem(name.c_str(), nullptr, open)) {
                     openPanel(name);
                 }
-            if (clipWorkspace && ImGui::BeginMenu("Fenêtres du clip")) {
+            if (clipWorkspace && ImGui::BeginMenu("Clip Windows")) {
                 for (auto &[name, open] : clipWorkspace->panels)
                     if (ImGui::MenuItem(name.c_str(), nullptr, open)) {
                         clipWorkspace->openPanel(name);
@@ -290,10 +1062,20 @@ void Editor::menu() {
                 ImGui::EndMenu();
             }
             ImGui::Separator();
-            ImGui::TextDisabled("Glisser un onglet hors de la fenêtre : écran séparé");
-            if (ImGui::MenuItem("Réinitialiser les panneaux")) {
-                for (auto &[name, open] : panels)
-                    open = true;
+            ImGui::TextDisabled("Drag a tab outside the window to use another screen");
+            if (ImGui::MenuItem("Reset This Workspace")) {
+                if (panelSuffix.empty()) {
+                    resetModeLayout();
+                    auto current = mode;
+                    auto saved = modePanels;
+                    modesReady = false;
+                    setMode(current);
+                    for (int m = 0; m < modeCount; ++m)
+                        if (m != int(current))
+                            modePanels[m] = saved[m];
+                } else
+                    for (auto &[name, open] : panels)
+                        open = true;
                 layoutReady = false;
                 if (auto *workspace = ImGui::FindWindowByName("Workspace"))
                     ImGui::DockBuilderRemoveNode(workspace->GetID("FrameDock"));
@@ -314,13 +1096,14 @@ void Editor::parameter(const char *label, const std::string &key, float lo, floa
     if (!c)
         return;
     auto &params = fx < 0 ? c->params : c->effects[fx].params;
+    parameterRanges[key] = {lo, hi};
     auto before = s.project;
     auto it = params.find(key);
     float value = it == params.end() ? fallback : it->second.value;
     bool animated = it != params.end() && !it->second.keys.empty();
     ImGui::PushID(key.c_str());
     ImGui::PushID(fx);
-    ImGui::TextDisabled("%s%s", label, animated ? "  / ANIMÉ" : "");
+    ImGui::TextDisabled("%s%s", label, animated ? "  / ANIMATED" : "");
     ImGui::SetNextItemWidth(std::max(50.f, ImGui::GetContentRegionAvail().x - 42));
     if (ImGui::SliderFloat("##value", &value, lo, hi, "%.3f", ImGuiSliderFlags_AlwaysClamp))
         params.try_emplace(key, Parameter{fallback}).first->second.value = value;
@@ -333,99 +1116,39 @@ void Editor::parameter(const char *label, const std::string &key, float lo, floa
         s.dirty = true;
         animationKey = key;
         animationEffect = fx;
+        automationReveal = true;
     }
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Ajouter un point au temps courant ; clic droit : afficher la courbe");
+        ImGui::SetTooltip("Add a keyframe at the current time; right-click: show curve in timeline");
     if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
         animationKey = key;
         animationEffect = fx;
+        automationReveal = true;
     }
     ImGui::PopID();
     ImGui::PopID();
 }
 void Editor::library() {
-    if (!panels["Médias & effets"] || !beginPanel("Médias & effets"))
+    if (!panels["Media & Effects"] || !beginPanel("Media & Effects"))
         return;
-    if (ImGui::Button("+ Importer", {ImGui::GetContentRegionAvail().x, 0})) {
+    if (ImGui::Button("+ Import", {ImGui::GetContentRegionAvail().x, 0})) {
         auto path =
-            dialog(false, L"Médias\0*.mp4;*.mov;*.avi;*.wav;*.mp3;*.png;*.jpg\0Tous\0*.*\0\0", nullptr);
+            dialog(false, L"Media\0*.mp4;*.mov;*.avi;*.wav;*.mp3;*.png;*.jpg\0All\0*.*\0\0", nullptr);
         if (!path.empty())
             drop(path);
     }
-    ImGui::TextDisabled("Glisser un fichier dans la fenêtre");
-    ImGui::Checkbox("Proxies de prévisualisation", &s.media.proxiesEnabled);
-    if (ImGui::Button("Préparer un proxy du clip sélectionné") && s.selected)
+    ImGui::TextDisabled("Drop a file onto the window");
+    ImGui::Checkbox("Preview Proxies", &s.media.proxiesEnabled);
+    if (ImGui::Button("Prepare Proxy for Selected Clip") && s.selected)
         action("prepare_proxy", clipArgs(s.selected));
     ImGui::Spacing();
     if (ImGui::BeginTabBar("library")) {
-        if (ImGui::BeginTabItem("Médias")) {
-            std::set<std::string> sources;
-            for (auto &t : s.project.tracks)
-                for (auto &c : t.clips)
-                    if (!c.source.empty())
-                        sources.insert(c.source);
-            if (sources.empty()) {
-                ImGui::Spacing();
-                ImGui::TextWrapped(
-                    "Importez une vidéo, une image ou une bande sonore pour commencer votre montage.");
-            }
-            for (auto &path : sources) {
-                ImGui::PushID(path.c_str());
-                std::string name = sx::Narrow(sx::Utf8Path(path).filename().wstring());
-                if (ImGui::Selectable(name.c_str())) {
-                    for (auto &t : s.project.tracks)
-                        for (auto &c : t.clips)
-                            if (c.source == path) {
-                                s.selectClip(c.id);
-                                break;
-                            }
-                }
-                if (ImGui::BeginDragDropSource()) {
-                    ImGui::SetDragDropPayload("MEDIA", path.c_str(), path.size() + 1);
-                    ImGui::TextUnformatted(name.c_str());
-                    ImGui::EndDragDropSource();
-                }
-                try {
-                    auto &a = s.media.get(path);
-                    if (!a.thumbnail.pixels.empty()) {
-                        auto found = thumbnails.find(path);
-                        if (found == thumbnails.end()) {
-                            if (thumbnails.size() >= 64)
-                                thumbnails.erase(thumbnails.begin());
-                            D3D11_TEXTURE2D_DESC desc{};
-                            desc.Width = a.thumbnail.width;
-                            desc.Height = a.thumbnail.height;
-                            desc.MipLevels = desc.ArraySize = 1;
-                            desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-                            desc.SampleDesc.Count = 1;
-                            desc.Usage = D3D11_USAGE_IMMUTABLE;
-                            desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-                            D3D11_SUBRESOURCE_DATA pixels{a.thumbnail.pixels.data(), a.thumbnail.width * 4,
-                                                          0};
-                            Com<ID3D11Texture2D> texture;
-                            check(s.renderer.gpu()->CreateTexture2D(&desc, &pixels, &texture),
-                                  "Vignette média");
-                            Com<ID3D11ShaderResourceView> view;
-                            check(s.renderer.gpu()->CreateShaderResourceView(texture.Get(), nullptr, &view),
-                                  "Vue vignette");
-                            found = thumbnails.emplace(path, std::move(view)).first;
-                        }
-                        ImGui::Image((ImTextureID)(intptr_t)found->second.Get(),
-                                     {160, float(a.thumbnail.height)});
-                    }
-                    if (a.loading)
-                        ImGui::TextDisabled("Préparation en arrière-plan…");
-                    ImGui::TextDisabled("%s  %.1f s", a.video ? "VIDÉO / IMAGE" : "AUDIO", a.duration);
-                } catch (...) {
-                    ImGui::TextColored(ImVec4(1, 0.3f, 0.3f, 1), "Média hors ligne");
-                }
-                ImGui::Separator();
-                ImGui::PopID();
-            }
+        if (ImGui::BeginTabItem("Media")) {
+            mediaBin();
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Effets")) {
-            ImGui::InputTextWithHint("##search", "Chercher un effet…", &filter);
+        if (ImGui::BeginTabItem("Effects")) {
+            ImGui::InputTextWithHint("##search", "Find an effect...", &filter);
             for (auto &d : s.renderer.library.definitions) {
                 if (!filter.empty() && d.name.find(filter) == std::string::npos)
                     continue;
@@ -453,16 +1176,16 @@ void Editor::library() {
                 ImGui::TextDisabled("%s  /  %s", d.category.c_str(), d.origin.c_str());
                 ImGui::PopID();
             }
-            ImGui::TextWrapped("Double-clic : ajouter au clip sélectionné.");
+            ImGui::TextWrapped("Double-click: add to selected clip.");
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Sources")) {
-            if (ImGui::Button("+ Titre / texte", {-1, 0}))
+            if (ImGui::Button("+ Title / Text", {-1, 0}))
                 action("add_title");
-            if (ImGui::Button("+ Lumière procédurale", {-1, 0}))
+            if (ImGui::Button("+ Procedural Light", {-1, 0}))
                 action("add_generator");
             ImGui::TextWrapped(
-                "Générateur animé calculé en HLSL. Ajoutez vos effets et animez tous leurs paramètres.");
+                "Animated HLSL generator. Add effects and animate any parameter.");
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();
@@ -474,55 +1197,216 @@ void Editor::preview() {
         ImGui::SetNextWindowFocus();
     if (!panels["Composition"] || !beginPanel("Composition"))
         return;
-    ImGui::TextUnformatted(s.project.name.c_str());
-    ImGui::SameLine();
-    ImGui::TextDisabled("%d × %d  /  %d fps%s", s.project.width, s.project.height, s.project.fps,
-                        s.dirty ? "  •" : "");
-    ImVec2 available = ImGui::GetContentRegionAvail();
-    float w = std::max(64.f, available.x), h = std::max(64.f, available.y - 55);
+    auto &viewIo = ImGui::GetIO();
     float ratio = float(s.project.width) / s.project.height;
-    if (w / h > ratio)
-        w = h * ratio;
+    // Zoom bar: percentages are screen pixels per image pixel, "Ajuster" fits the panel.
+    ImVec2 available = ImGui::GetContentRegionAvail();
+    // The viewport child is the panel minus the zoom bar and the transport row.
+    float viewportHeight = std::max(80.f, available.y - ImGui::GetFrameHeightWithSpacing() - 60);
+    float fitW = std::max(64.f, available.x), fitH = viewportHeight;
+    if (fitW / fitH > ratio)
+        fitW = fitH * ratio;
     else
-        h = w / ratio;
-    ImGui::BeginChild("CompositionViewport", {0, std::max(80.f, available.y - 60)}, false,
+        fitH = fitW / ratio;
+    auto pixelZoom = [&] { return fitW * compositionView.zoom / float(s.project.width); };
+    // A chosen percentage stays exact when the panel is resized; the wheel and "Ajuster" release it.
+    auto setPixelZoom = [&](float percent) {
+        float previous = compositionView.zoom;
+        compositionPixelLock = std::clamp(percent, .01f, 32.f);
+        compositionView.zoom = std::clamp(percent * float(s.project.width) / fitW, .125f, 64.f);
+        compositionView.pan = compositionView.pan * (compositionView.zoom / previous);
+    };
+    if (compositionPixelLock > 0) {
+        float locked = std::clamp(compositionPixelLock * float(s.project.width) / fitW, .125f, 64.f);
+        compositionView.pan = compositionView.pan * (locked / compositionView.zoom);
+        compositionView.zoom = locked;
+    }
+    float barWidth = 3 * (ImGui::GetFrameHeight() + 2 + 2) + 130 + 46;
+    char about[96];
+    snprintf(about, sizeof(about), "%d × %d  /  %d fps%s", s.project.width, s.project.height, s.project.fps,
+             s.dirty ? "  •" : "");
+    if (ImGui::CalcTextSize(s.project.name.c_str()).x + ImGui::CalcTextSize(about).x + barWidth + 30 <
+        ImGui::GetContentRegionAvail().x) {
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(s.project.name.c_str());
+        ImGui::SameLine();
+        ImGui::TextDisabled("%s", about);
+        ImGui::SameLine();
+    }
+    {
+        char current[32];
+        bool fitted = std::abs(compositionView.zoom - 1) < 1e-4f && compositionView.pan.x == 0 &&
+                      compositionView.pan.y == 0;
+        snprintf(current, sizeof(current), fitted ? "Fit (%.0f %%)" : "%.0f %%", pixelZoom() * 100);
+        ImGui::SetCursorPosX(std::max(ImGui::GetCursorPosX(), ImGui::GetWindowContentRegionMax().x - barWidth));
+        if (style::iconButton(icon::zoomOut, "Zoom Out [Ctrl + -]"))
+            setPixelZoom(pixelZoom() / 1.5f);
+        ImGui::SameLine(0, 2);
+        ImGui::SetNextItemWidth(130);
+        if (ImGui::BeginCombo("##viewZoom", current)) {
+            if (ImGui::Selectable("Fit to Window", fitted)) {
+                compositionView = {};
+                compositionPixelLock = 0;
+            }
+            for (float percent : {.25f, .5f, 1.f, 2.f, 4.f, 8.f, 16.f}) {
+                char label[24];
+                snprintf(label, sizeof(label), "%.0f %%%s", percent * 100, percent == 1 ? "  (1:1)" : "");
+                if (ImGui::Selectable(label, std::abs(pixelZoom() - percent) < 1e-3f))
+                    setPixelZoom(percent);
+            }
+            ImGui::EndCombo();
+        }
+        style::tooltip("Final image view zoom; wheel over the image, Space or middle button to pan");
+        ImGui::SameLine(0, 2);
+        if (style::iconButton(icon::zoomIn, "Zoom In [Ctrl + +]"))
+            setPixelZoom(pixelZoom() * 1.5f);
+        ImGui::SameLine(0, 2);
+        if (style::iconButton(icon::fit, "Fit [Ctrl + 0] - double-click image")) {
+            compositionView = {};
+            compositionPixelLock = 0;
+        }
+        ImGui::SameLine(0, 2);
+        if (ImGui::Button("1:1", {40, 0}))
+            setPixelZoom(1);
+        style::tooltip("One image pixel per screen pixel [Ctrl + 1]");
+    }
+    if (pendingPixelZoom > 0) {
+        setPixelZoom(pendingPixelZoom);
+        pendingPixelZoom = 0;
+    }
+    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && viewIo.KeyCtrl && !viewIo.WantTextInput) {
+        if (ImGui::IsKeyPressed(ImGuiKey_0) || ImGui::IsKeyPressed(ImGuiKey_Keypad0)) {
+            compositionView = {};
+            compositionPixelLock = 0;
+        }
+        if (ImGui::IsKeyPressed(ImGuiKey_1) || ImGui::IsKeyPressed(ImGuiKey_Keypad1))
+            setPixelZoom(1);
+        if (ImGui::IsKeyPressed(ImGuiKey_Equal) || ImGui::IsKeyPressed(ImGuiKey_KeypadAdd))
+            setPixelZoom(pixelZoom() * 1.5f);
+        if (ImGui::IsKeyPressed(ImGuiKey_Minus) || ImGui::IsKeyPressed(ImGuiKey_KeypadSubtract))
+            setPixelZoom(pixelZoom() / 1.5f);
+    }
+    float w = fitW, h = fitH;
+    ImGui::BeginChild("CompositionViewport", {0, viewportHeight}, false,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     auto areaOrigin = ImGui::GetCursorScreenPos(), areaSize = ImGui::GetContentRegionAvail();
     ImGui::InvisibleButton("##compositionView", areaSize,
                            ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle |
                                ImGuiButtonFlags_MouseButtonRight);
     bool imageHovered = ImGui::IsItemHovered();
-    auto &viewIo = ImGui::GetIO();
     auto centre = areaOrigin + areaSize * .5f;
     if (imageHovered && viewIo.MouseWheel) {
+        compositionPixelLock = 0;
         auto fixed =
             (sx::float2{viewIo.MousePos.x - centre.x, viewIo.MousePos.y - centre.y} - compositionView.pan) /
             compositionView.zoom;
         compositionView.zoom =
-            std::clamp(compositionView.zoom * std::pow(1.15f, viewIo.MouseWheel), .125f, 32.f);
+            std::clamp(compositionView.zoom * std::pow(1.15f, viewIo.MouseWheel), .125f, 64.f);
         compositionView.pan = sx::float2{viewIo.MousePos.x - centre.x, viewIo.MousePos.y - centre.y} -
                               fixed * compositionView.zoom;
     }
-    if (ImGui::IsItemActive() && ImGui::IsMouseDragging(2, 0))
+    bool spacePan = ImGui::IsKeyDown(ImGuiKey_Space) && imageHovered;
+    if (spacePan || compositionPanning)
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+    compositionHovered = imageHovered;
+    if (imageHovered && viewIo.KeyCtrl && viewIo.KeyShift && ImGui::IsKeyPressed(ImGuiKey_C, false))
+        copyStill();
+    if (imageHovered && (ImGui::IsMouseClicked(2) || (spacePan && ImGui::IsMouseClicked(0)))) {
+        compositionPanning = true;
+        spacePanned = spacePanned || spacePan;
+    }
+    if (compositionPanning) {
         compositionView.pan = compositionView.pan + sx::float2{viewIo.MouseDelta.x, viewIo.MouseDelta.y};
-    if (imageHovered && ImGui::IsMouseDoubleClicked(0) && !gradePick) {
+        if (!ImGui::IsMouseDown(0) && !ImGui::IsMouseDown(2))
+            compositionPanning = false;
+    }
+    if (imageHovered && ImGui::IsMouseDoubleClicked(0) && !gradePick && !spacePan) {
         compositionView = {};
+        compositionPixelLock = 0;
     }
     if (ImGui::BeginPopupContextItem("CompositionViewMenu")) {
-        if (ImGui::MenuItem("Adapter à la fenêtre"))
+        if (ImGui::MenuItem("Fit to Window", "Ctrl+0")) {
             compositionView = {};
-        if (ImGui::MenuItem("Pixels 1:1")) {
-            compositionView.pan = {};
-            compositionView.zoom = float(s.project.width) / w;
+            compositionPixelLock = 0;
         }
+        if (ImGui::MenuItem("Pixels 1:1", "Ctrl+1"))
+            setPixelZoom(1);
+        for (float percent : {2.f, 4.f, 8.f}) {
+            char label[16];
+            snprintf(label, sizeof(label), "%.0f %%", percent * 100);
+            if (ImGui::MenuItem(label))
+                setPixelZoom(percent);
+        }
+        ImGui::Separator();
+        guidesMenu();
+        ImGui::Separator();
+        if (ImGui::MenuItem("Export frame…"))
+            exportStill();
+        if (ImGui::MenuItem("Copy Image", "Ctrl+Shift+C"))
+            copyStill();
         ImGui::EndPopup();
     }
     w *= compositionView.zoom;
     h *= compositionView.zoom;
+    // Keep part of the image on screen.
+    float limitX = (w + areaSize.x) * .5f - 40, limitY = (h + areaSize.y) * .5f - 40;
+    compositionView.pan = {std::clamp(compositionView.pan.x, -limitX, limitX),
+                           std::clamp(compositionView.pan.y, -limitY, limitY)};
     ImVec2 imageOrigin = centre + ImVec2(compositionView.pan.x - w * .5f, compositionView.pan.y - h * .5f);
-    if (s.renderer.view())
-        ImGui::GetWindowDrawList()->AddImage((ImTextureID)(intptr_t)s.renderer.view(), imageOrigin,
-                                             imageOrigin + ImVec2(w, h));
+    // The next frames render at the displayed resolution, up to the sequence's own size.
+    compositionDetail = std::min(1.f, std::ceil(w / float(s.project.width) * 8) / 8);
+    {
+        auto *draw = ImGui::GetWindowDrawList();
+        auto &platform = ImGui::GetPlatformIO();
+        bool pixels = pixelZoom() >= 2 && platform.DrawCallback_SetSamplerNearest;
+        if (pixels)
+            draw->AddCallback(platform.DrawCallback_SetSamplerNearest, nullptr);
+        if (shownView())
+            draw->AddImage((ImTextureID)(intptr_t)shownView(), imageOrigin, imageOrigin + ImVec2(w, h));
+        if (pixels && platform.DrawCallback_SetSamplerLinear)
+            draw->AddCallback(platform.DrawCallback_SetSamplerLinear, nullptr);
+        compositionOverlays(imageOrigin, w, h, imageHovered);
+        welcomeCard(areaOrigin, areaSize);
+        // Navigator: the whole picture and the visible part, once the image overflows the panel.
+        if (w > areaSize.x + 1 || h > areaSize.y + 1) {
+            float mapW = std::min(180.f, areaSize.x * .3f), mapH = mapW / ratio;
+            ImVec2 mapMin = areaOrigin + areaSize - ImVec2(mapW + 10, mapH + 10), mapMax = mapMin + ImVec2(mapW, mapH);
+            draw->AddRectFilled(mapMin - ImVec2(3, 3), mapMax + ImVec2(3, 3), IM_COL32(10, 11, 14, 220), 4);
+            if (shownView())
+                draw->AddImage((ImTextureID)(intptr_t)shownView(), mapMin, mapMax);
+            ImVec2 visibleMin{std::max(mapMin.x, mapMin.x + (areaOrigin.x - imageOrigin.x) / w * mapW),
+                              std::max(mapMin.y, mapMin.y + (areaOrigin.y - imageOrigin.y) / h * mapH)};
+            ImVec2 visibleMax{std::min(mapMax.x, mapMin.x + (areaOrigin.x + areaSize.x - imageOrigin.x) / w * mapW),
+                              std::min(mapMax.y, mapMin.y + (areaOrigin.y + areaSize.y - imageOrigin.y) / h * mapH)};
+            draw->AddRectFilled(visibleMin, visibleMax, IM_COL32(239, 139, 58, 40));
+            draw->AddRect(visibleMin, visibleMax, Orange, 0, 0, 1.5f);
+            auto mouse = viewIo.MousePos;
+            bool overMap = imageHovered && mouse.x >= mapMin.x && mouse.x <= mapMax.x && mouse.y >= mapMin.y &&
+                           mouse.y <= mapMax.y;
+            if (overMap && ImGui::IsMouseClicked(0))
+                compositionMapDrag = true;
+            if (compositionMapDrag) {
+                // Centre the view on the image point under the pointer.
+                float u = std::clamp((mouse.x - mapMin.x) / mapW, 0.f, 1.f), v = std::clamp((mouse.y - mapMin.y) / mapH, 0.f, 1.f);
+                compositionView.pan = {(.5f - u) * w, (.5f - v) * h};
+                if (!ImGui::IsMouseDown(0))
+                    compositionMapDrag = false;
+            }
+        } else
+            compositionMapDrag = false;
+        // Pixel readout under the pointer.
+        auto mouse = viewIo.MousePos;
+        if (imageHovered && mouse.x >= imageOrigin.x && mouse.y >= imageOrigin.y && mouse.x < imageOrigin.x + w &&
+            mouse.y < imageOrigin.y + h) {
+            char where[48];
+            snprintf(where, sizeof(where), "%d, %d px  ·  %.0f %%", int((mouse.x - imageOrigin.x) / w * s.project.width),
+                     int((mouse.y - imageOrigin.y) / h * s.project.height), pixelZoom() * 100);
+            auto extent = ImGui::CalcTextSize(where);
+            ImVec2 at = areaOrigin + ImVec2(8, areaSize.y - extent.y - 10);
+            draw->AddRectFilled(at - ImVec2(5, 3), at + extent + ImVec2(5, 3), IM_COL32(10, 11, 14, 200), 3);
+            draw->AddText(at, IM_COL32(222, 224, 232, 255), where);
+        }
+    }
     bool wasGradePicking = gradePick != 0;
     gradePreview(imageOrigin, w, h);
     auto *selected = s.project.findClip(s.selected);
@@ -548,7 +1432,7 @@ void Editor::preview() {
             !s.project.owner(selected->id)->locked) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
             ImGui::SetTooltip(
-                "Déplacer le masque ; les paramètres animés reçoivent un point au temps courant");
+                "Move the mask; animated parameters receive a keyframe at the current time");
             if (ImGui::IsMouseClicked(0)) {
                 s.history.checkpoint(s.project);
                 s.playing = false;
@@ -625,7 +1509,7 @@ void Editor::preview() {
     if (ImGui::Button("<"))
         s.time = std::max(0., s.time - 1. / s.project.fps);
     ImGui::SameLine();
-    if (ImGui::Button(s.playing ? "Pause" : "Lecture", {90, 0}))
+    if (ImGui::Button(s.playing ? "Pause" : "Playback", {90, 0}))
         s.playing = !s.playing;
     ImGui::SameLine();
     if (ImGui::Button(">"))
@@ -633,15 +1517,30 @@ void Editor::preview() {
     ImGui::SameLine();
     ImGui::TextColored(ImVec4(.94f, .55f, .23f, 1), "%s", timecode(s.time, s.project.fps).c_str());
     ImGui::SameLine();
-    ImGui::Checkbox("Boucle", &loop);
+    ImGui::Checkbox("Loop", &loop);
     ImGui::SameLine();
-    ImGui::Checkbox("Guides du masque", &maskGuides);
+    ImGui::Checkbox("Mask Guides", &maskGuides);
+    ImGui::SameLine();
+    if (ImGui::Button("Guides…"))
+        ImGui::OpenPopup("compositionGuides");
+    if (ImGui::BeginPopup("compositionGuides")) {
+        guidesMenu();
+        ImGui::EndPopup();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Snapshot"))
+        takeSnapshot();
+    style::tooltip("Store the current image as A and compare it with the live image (B) using a wipe");
+    if (snapshotView) {
+        ImGui::SameLine();
+        ImGui::Checkbox("A / B", &snapshotCompare);
+    }
     ImGui::End();
 }
 void Editor::layers() {
-    if (!panels["Calques"] || !beginPanel("Calques"))
+    if (!panels["Layers"] || !beginPanel("Layers"))
         return;
-    ImGui::TextDisabled("HAUT → AVANT-PLAN");
+    ImGui::TextDisabled("TOP -> FOREGROUND");
     for (size_t i = 0; i < s.project.tracks.size(); ++i) {
         auto &t = s.project.tracks[i];
         ImGui::PushID(int(t.id));
@@ -660,29 +1559,29 @@ void Editor::layers() {
             if (!t.clips.empty())
                 s.selectClip(t.clips.front().id);
         if (ImGui::BeginPopupContextItem("trackMenu")) {
-            if (ImGui::MenuItem("Monter", nullptr, false, i > 0)) {
+            if (ImGui::MenuItem("Move Up", nullptr, false, i > 0)) {
                 s.history.checkpoint(before);
                 std::swap(s.project.tracks[i], s.project.tracks[i - 1]);
                 s.dirty = true;
             }
-            if (ImGui::MenuItem("Descendre", nullptr, false, i + 1 < s.project.tracks.size())) {
+            if (ImGui::MenuItem("Move Down", nullptr, false, i + 1 < s.project.tracks.size())) {
                 s.history.checkpoint(before);
                 std::swap(s.project.tracks[i], s.project.tracks[i + 1]);
                 s.dirty = true;
             }
-            if (ImGui::MenuItem(t.locked ? "Déverrouiller" : "Verrouiller")) {
+            if (ImGui::MenuItem(t.locked ? "Unlock" : "Lock")) {
                 s.history.checkpoint(before);
                 t.locked = !t.locked;
                 s.dirty = true;
             }
             ImGui::EndPopup();
         }
-        ImGui::TextDisabled("    %s  ·  %zu clip(s)%s", t.kind == TrackKind::Video ? "VIDÉO" : "AUDIO",
-                            t.clips.size(), t.locked ? "  / VERROUILLÉ" : "");
+        ImGui::TextDisabled("    %s  ·  %zu clip(s)%s", t.kind == TrackKind::Video ? "VIDEO" : "AUDIO",
+                            t.clips.size(), t.locked ? "  / LOCKED" : "");
         ImGui::PopID();
     }
     ImGui::Separator();
-    if (ImGui::Button("+ Vidéo")) {
+    if (ImGui::Button("+ Video")) {
         Json a = Json::Object();
         a["kind"] = "video";
         action("add_track", a);
@@ -701,16 +1600,16 @@ bool Editor::effectControls(Id clip, int index) {
         return false;
     int destination = index;
     ImGui::BeginDisabled(index == 0);
-    if (ImGui::SmallButton("Monter"))
+    if (ImGui::SmallButton("Move Up"))
         destination = index - 1;
     ImGui::EndDisabled();
     ImGui::SameLine();
     ImGui::BeginDisabled(index + 1 >= int(c->effects.size()));
-    if (ImGui::SmallButton("Descendre"))
+    if (ImGui::SmallButton("Move Down"))
         destination = index + 1;
     ImGui::EndDisabled();
     ImGui::SameLine();
-    bool remove = ImGui::SmallButton("Retirer");
+    bool remove = ImGui::SmallButton("Remove");
     if (!remove && destination == index)
         return false;
     auto args = clipArgs(clip);
@@ -744,16 +1643,16 @@ bool Editor::effectControls(Id clip, int index) {
 bool Editor::transitionControls(Id id) {
     auto *c = s.project.findClip(id);
     if (!c || s.project.owner(id)->kind != TrackKind::Video ||
-        !ImGui::CollapsingHeader("Transition d'entrée",
+        !ImGui::CollapsingHeader("Incoming Transition",
                                  c->transition.enabled ? ImGuiTreeNodeFlags_DefaultOpen : 0))
         return false;
-    std::string label = c->transition.enabled ? c->transition.id : "Aucune";
+    std::string label = c->transition.enabled ? c->transition.id : "None";
     if (auto *definition = s.renderer.library.find(c->transition.id); c->transition.enabled && definition)
         label = definition->name;
     std::string choice;
     bool remove = false;
     if (ImGui::BeginCombo("Transition", label.c_str())) {
-        remove = ImGui::Selectable("Aucune", !c->transition.enabled);
+        remove = ImGui::Selectable("None", !c->transition.enabled);
         for (auto &definition : s.renderer.library.definitions)
             if (definition.kind == "transition" &&
                 ImGui::Selectable(definition.name.c_str(), c->transition.id == definition.id))
@@ -777,17 +1676,17 @@ bool Editor::transitionControls(Id id) {
         return false;
     auto before = s.project;
     double duration = c->transition.duration, minimum = 1e-5, maximum = c->duration;
-    if (ImGui::DragScalar("Durée transition", ImGuiDataType_Double, &duration, .01f, &minimum, &maximum,
+    if (ImGui::DragScalar("Transition Duration", ImGuiDataType_Double, &duration, .01f, &minimum, &maximum,
                           "%.3f s", ImGuiSliderFlags_AlwaysClamp) &&
         std::isfinite(duration))
         c->transition.duration = duration;
     editCheckpoint(before);
     ImGui::TextWrapped(
-        "Superposer le début de ce clip aux calques dessous. Le son se règle avec ses propres fondus.");
-    ImGui::Text("Progression au temps courant : %.0f %%", c->transitionProgress(s.time) * 100.f);
-    parameter("Progression (remplace le temps automatique)", "transition_progress", 0, 1,
+        "Overlap this clip's start with the layers below. Audio has its own fades.");
+    ImGui::Text("Progress at Current Time: %.0f %%", c->transitionProgress(s.time) * 100.f);
+    parameter("Progress (Overrides Automatic Time)", "transition_progress", 0, 1,
               c->transitionProgress(s.time));
-    if (ImGui::SmallButton("Progression automatique")) {
+    if (ImGui::SmallButton("Automatic progress")) {
         auto args = clipArgs(id);
         args["reset_progress"] = true;
         action("set_transition", args);
@@ -806,7 +1705,7 @@ bool Editor::transitionControls(Id id) {
     } catch (const std::exception &ex) {
         ImGui::TextWrapped("%s", ex.what());
     }
-    if (ImGui::SmallButton("Éditer le HLSL de transition")) {
+    if (ImGui::SmallButton("Edit Transition HLSL")) {
         selectedEffect = -2;
         draftIdentity.clear();
         ImGui::SetWindowFocus(panelTitle("HLSL").c_str());
@@ -814,18 +1713,18 @@ bool Editor::transitionControls(Id id) {
     return false;
 }
 void Editor::inspector() {
-    if (!panels["Propriétés"] || !beginPanel("Propriétés"))
+    if (!panels["Properties"] || !beginPanel("Properties"))
         return;
     auto *c = s.project.findClip(s.selected);
     auto *track = s.project.owner(s.selected);
     if (!c || !track) {
-        ImGui::TextWrapped("Sélectionnez un clip dans la timeline pour régler ses propriétés.");
+        ImGui::TextWrapped("Select a clip in the timeline to edit its properties.");
         ImGui::End();
         return;
     }
     ImGui::BeginDisabled(track->locked);
     auto before = s.project;
-    ImGui::InputText("Nom", &c->name);
+    ImGui::InputText("Name", &c->name);
     editCheckpoint(before);
     double frame = 1. / s.project.fps;
     auto number = [&](const char *label, double value, double lo, double hi, int field) {
@@ -843,13 +1742,13 @@ void Editor::inspector() {
             }
         }
     };
-    number("Début", c->start, 0, 86400, 0);
-    number("Durée", c->duration, frame, 86400, 1);
-    number("Entrée source", c->in, 0, 86400, 2);
-    number("Vitesse", c->speed, 0.05, 16, 3);
+    number("Start", c->start, 0, 86400, 0);
+    number("Duration", c->duration, frame, 86400, 1);
+    number("Source In", c->in, 0, 86400, 2);
+    number("Speed", c->speed, 0.05, 16, 3);
     if (c->link)
-        ImGui::TextColored(ImVec4(.25f, .7f, .72f, 1), "Groupe lié · %u", c->link);
-    ImGui::SeparatorText("Fondus du clip");
+        ImGui::TextColored(ImVec4(.25f, .7f, .72f, 1), "Linked Group - %u", c->link);
+    ImGui::SeparatorText("Clip Fades");
     auto fade = [&](const char *label, double &value) {
         auto b = s.project;
         double lo = 0, hi = c->duration;
@@ -857,14 +1756,14 @@ void Editor::inspector() {
                           ImGuiSliderFlags_AlwaysClamp);
         editCheckpoint(b);
     };
-    fade("Entrée", c->fadeIn);
-    fade("Sortie", c->fadeOut);
+    fade("Input", c->fadeIn);
+    fade("Output", c->fadeOut);
     if (transitionControls(c->id)) {
         ImGui::EndDisabled();
         ImGui::End();
         return;
     }
-    if (c->title.enabled && ImGui::CollapsingHeader("Titre", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (c->title.enabled && ImGui::CollapsingHeader("Title", ImGuiTreeNodeFlags_DefaultOpen)) {
         char content[16385]{};
         memcpy(content, c->title.text.data(), std::min(c->title.text.size(), sizeof(content) - 1));
         before = s.project;
@@ -873,25 +1772,25 @@ void Editor::inspector() {
         editCheckpoint(before);
         auto font = c->title.font;
         before = s.project;
-        if (ImGui::InputText("Police", &font) && !font.empty() && font.size() <= 256)
+        if (ImGui::InputText("Font", &font) && !font.empty() && font.size() <= 256)
             c->title.font = font;
         editCheckpoint(before);
         before = s.project;
-        ImGui::Checkbox("Gras", &c->title.bold);
+        ImGui::Checkbox("Bold", &c->title.bold);
         editCheckpoint(before);
         ImGui::SameLine();
         before = s.project;
-        ImGui::Checkbox("Italique", &c->title.italic);
+        ImGui::Checkbox("Italic", &c->title.italic);
         editCheckpoint(before);
         before = s.project;
-        ImGui::Combo("Alignement", &c->title.alignment, "Gauche\0Centre\0Droite\0");
+        ImGui::Combo("Alignment", &c->title.alignment, "Left\0Center\0Right\0");
         editCheckpoint(before);
-        parameter("Taille du texte (px)", "font_size", 4, 256, 48);
-        parameter("Contour noir (px)", "text_outline", 0, 16, 0);
-        parameter("Opacité de l'ombre", "text_shadow", 0, 1, 0);
-        parameter("Ombre X (px)", "text_shadow_x", -256, 256, 4);
-        parameter("Ombre Y (px)", "text_shadow_y", -256, 256, 4);
-        parameter("Diffusion de l'ombre (px)", "text_shadow_blur", 0, 32, 0);
+        parameter("Text Size (px)", "font_size", 4, 256, 48);
+        parameter("Black outline (px)", "text_outline", 0, 16, 0);
+        parameter("Shadow Opacity", "text_shadow", 0, 1, 0);
+        parameter("Shadow X (px)", "text_shadow_x", -256, 256, 4);
+        parameter("Shadow Y (px)", "text_shadow_y", -256, 256, 4);
+        parameter("Shadow Blur (px)", "text_shadow_blur", 0, 32, 0);
         float color[4];
         const char *keys[] = {"text_r", "text_g", "text_b", "text_a"};
         for (int i = 0; i < 4; ++i) {
@@ -914,7 +1813,7 @@ void Editor::inspector() {
             s.dirty = true;
         }
     }
-    if (track->kind == TrackKind::Video && ImGui::CollapsingHeader("Couleurs de la source")) {
+    if (track->kind == TrackKind::Video && ImGui::CollapsingHeader("Source Colors")) {
         const char *spaces[] = {"auto", "srgb", "linear709", "linear2020", "logc3-awg3-ei800"};
         int choice = 0;
         for (int i = 0; i < 5; ++i)
@@ -922,18 +1821,18 @@ void Editor::inspector() {
                 choice = i;
         before = s.project;
         if (ImGui::Combo(
-                "Espace source", &choice,
-                "Automatique\0sRGB\0Rec.709 linéaire\0Rec.2020 linéaire\0ARRI LogC3 / AWG3 · EI800\0"))
+                "Source Space", &choice,
+                "Automatic\0sRGB\0Linear Rec.709\0Linear Rec.2020\0ARRI LogC3 / AWG3 - EI800\0"))
             c->sourceColor = spaces[choice];
         editCheckpoint(before);
         before = s.project;
-        ImGui::Checkbox("Pixels source prémultipliés", &c->sourcePremultiplied);
+        ImGui::Checkbox("Premultiplied Source Pixels", &c->sourcePremultiplied);
         editCheckpoint(before);
     }
-    if (track->kind == TrackKind::Video && ImGui::CollapsingHeader("Masque")) {
+    if (track->kind == TrackKind::Video && ImGui::CollapsingHeader("Mask")) {
         before = s.project;
         int shape = int(c->mask.shape);
-        if (ImGui::Combo("Forme", &shape, "Aucun\0Rectangle\0Ellipse\0Bézier\0")) {
+        if (ImGui::Combo("Shape", &shape, "None\0Rectangle\0Ellipse\0Bezier\0")) {
             c->mask.shape = MaskShape(shape);
             if (shape == 3 && c->mask.points.empty())
                 c->mask.points = {{-.4f, -.3f, -.4f, -.3f, -.4f, -.3f},
@@ -944,14 +1843,14 @@ void Editor::inspector() {
         editCheckpoint(before);
         if (c->mask.shape != MaskShape::None) {
             before = s.project;
-            ImGui::Checkbox("Inverser", &c->mask.inverted);
+            ImGui::Checkbox("Invert", &c->mask.inverted);
             editCheckpoint(before);
-            parameter("Centre X", "mask_x", -1, 1, 0);
-            parameter("Centre Y", "mask_y", -1, 1, 0);
-            parameter("Largeur", "mask_width", .001f, 2, 1);
-            parameter("Hauteur", "mask_height", .001f, 2, 1);
-            parameter("Rotation du masque", "mask_rotation", -180, 180, 0);
-            parameter("Contour progressif (px)", "mask_feather", 0, 256, 0);
+            parameter("Center X", "mask_x", -1, 1, 0);
+            parameter("Center Y", "mask_y", -1, 1, 0);
+            parameter("Width", "mask_width", .001f, 2, 1);
+            parameter("Height", "mask_height", .001f, 2, 1);
+            parameter("Mask Rotation", "mask_rotation", -180, 180, 0);
+            parameter("Feather (px)", "mask_feather", 0, 256, 0);
             if (c->mask.shape == MaskShape::Bezier) {
                 for (size_t i = 0; i < c->mask.points.size(); ++i) {
                     ImGui::PushID(int(i));
@@ -961,22 +1860,22 @@ void Editor::inspector() {
                         ImGui::SliderFloat2("Position", &point.x, -1, 1);
                         editCheckpoint(before);
                         before = s.project;
-                        ImGui::SliderFloat2("Poignée entrante", &point.inX, -2, 2);
+                        ImGui::SliderFloat2("Incoming Handle", &point.inX, -2, 2);
                         editCheckpoint(before);
                         before = s.project;
-                        ImGui::SliderFloat2("Poignée sortante", &point.outX, -2, 2);
+                        ImGui::SliderFloat2("Outgoing Handle", &point.outX, -2, 2);
                         editCheckpoint(before);
                         ImGui::TreePop();
                     }
                     ImGui::PopID();
                 }
-                if (c->mask.points.size() < 16 && ImGui::Button("Ajouter un point Bézier")) {
+                if (c->mask.points.size() < 16 && ImGui::Button("Add Bezier Point")) {
                     before = s.project;
                     c->mask.points.push_back({0, .5f, 0, .5f, 0, .5f});
                     s.history.checkpoint(before);
                     s.dirty = true;
                 }
-                if (c->mask.points.size() > 3 && ImGui::Button("Retirer le dernier point")) {
+                if (c->mask.points.size() > 3 && ImGui::Button("Remove Last Point")) {
                     before = s.project;
                     c->mask.points.pop_back();
                     s.history.checkpoint(before);
@@ -984,18 +1883,18 @@ void Editor::inspector() {
                 }
             }
 
-            if (ImGui::Button("Suivre le masque…")) {
+            if (ImGui::Button("Track Mask...")) {
                 trackingBegin = std::max(s.time, c->start);
                 trackingEnd = std::min(c->start + c->duration, trackingBegin + 5);
-                ImGui::OpenPopup("Suivi du masque");
+                ImGui::OpenPopup("Mask Tracking");
             }
             bool requested = false;
-            if (ImGui::BeginPopup("Suivi du masque")) {
-                ImGui::TextWrapped("Le suivi calcule une translation à partir de la zone centrale du masque. "
-                                   "Choisissez une zone contrastée. Les points restent éditables.");
-                ImGui::InputDouble("Début s", &trackingBegin);
-                ImGui::InputDouble("Fin s", &trackingEnd);
-                ImGui::SliderInt("Rayon de recherche px", &trackingRadius, 1, 64);
+            if (ImGui::BeginPopup("Mask Tracking")) {
+                ImGui::TextWrapped("Tracking calculates translation from the mask's central region. "
+                                   "Choose a high-contrast region. Keyframes remain editable.");
+                ImGui::InputDouble("Start (s)", &trackingBegin);
+                ImGui::InputDouble("End (s)", &trackingEnd);
+                ImGui::SliderInt("Search Radius (px)", &trackingRadius, 1, 64);
                 auto status = s.tracking.status();
                 ImGui::Text("%s · %s", status["state"].S().c_str(), status["error"].S().c_str());
                 ImGui::ProgressBar(status["progress"].F());
@@ -1008,12 +1907,12 @@ void Editor::inspector() {
                     requested = true;
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Annuler")) {
+                if (ImGui::Button("Undo")) {
                     action("cancel_mask_tracking");
                     requested = true;
                 }
                 ImGui::BeginDisabled(status["state"].S() != "completed");
-                if (ImGui::Button("Appliquer les animations")) {
+                if (ImGui::Button("Apply animations")) {
                     Json args = Json::Object();
                     args["job"] = status["job"];
                     action("apply_mask_tracking", args);
@@ -1031,27 +1930,27 @@ void Editor::inspector() {
     }
     if (track->kind == TrackKind::Video) {
         ImGui::SeparatorText("Transformation");
-        parameter("Opacité", "opacity", 0, 1, 1);
+        parameter("Opacity", "opacity", 0, 1, 1);
         parameter("Position X", "x", -1, 1, 0);
         parameter("Position Y", "y", -1, 1, 0);
-        parameter("Échelle", "scale", 0.05f, 4, 1);
+        parameter("Scale", "scale", 0.05f, 4, 1);
         parameter("Rotation", "rotation", -180, 180, 0);
         int mode = int(c->param("blend", s.time, 0));
         auto blendBefore = s.project;
-        if (ImGui::Combo("Fusion", &mode, "Normal\0Addition\0Produit\0Écran\0")) {
+        if (ImGui::Combo("Fusion", &mode, "Normal\0Add\0Multiply\0Screen\0")) {
             s.history.checkpoint(blendBefore);
             c->params["blend"].value = float(mode);
             s.dirty = true;
         }
     } else {
-        ImGui::SeparatorText("Mixage du clip");
+        ImGui::SeparatorText("Clip Mix");
         parameter("Gain dB", "gain", -60, 12, 0);
         parameter("Panoramique", "pan", -1, 1, 0);
         animationKey = animationEffect < 0 && animationKey == "opacity" ? "gain" : animationKey;
     }
     if (track->kind == TrackKind::Video) {
-        ImGui::SeparatorText("Pile d'effets HLSL");
-        if (ImGui::BeginCombo("+ Effet", "Ajouter…")) {
+        ImGui::SeparatorText("HLSL effect stack");
+        if (ImGui::BeginCombo("+ Effect", "Add...")) {
             for (auto &d : s.renderer.library.definitions)
                 if (d.kind == "effect" && ImGui::Selectable(d.name.c_str())) {
                     auto a = clipArgs(c->id);
@@ -1062,7 +1961,7 @@ void Editor::inspector() {
             ImGui::EndCombo();
         }
         if (ImGui::Button("+ Plugin OFX…")) {
-            auto path = dialog(false, L"Plugin OpenFX Windows x64\0*.ofx\0Tous\0*.*\0\0", nullptr);
+            auto path = dialog(false, L"Windows x64 OpenFX plugin\0*.ofx\0All\0*.*\0\0", nullptr);
             if (!path.empty()) {
                 auto a = clipArgs(c->id);
                 a["path"] = path;
@@ -1097,8 +1996,8 @@ void Editor::inspector() {
             if (selectedEffect == i) {
                 try {
                     if (e.id == "grading") {
-                        if (ImGui::Button("Ouvrir Étalonnage"))
-                            ImGui::SetWindowFocus(panelTitle("Étalonnage").c_str());
+                        if (ImGui::Button("Open Color Grading"))
+                            ImGui::SetWindowFocus(panelTitle("Color Grading").c_str());
                     }
                     if (e.id == "ofx")
                         for (auto &p : e.graph["parameters"].Elements())
@@ -1127,10 +2026,10 @@ void Editor::inspector() {
         }
     }
     if (track->kind == TrackKind::Audio) {
-        ImGui::SeparatorText("Effets audio CyDAW 2");
+        ImGui::SeparatorText("CyDAW 2 audio effects");
         int stretch = int(std::lround(
             c->param("stretch_mode", s.time, c->param("preserve_pitch", s.time, 0) > .5f ? 1 : 0)));
-        if (ImGui::Combo("Adaptation temporelle", &stretch, "Repitch\0Tonal\0Battements\0Texture\0")) {
+        if (ImGui::Combo("Time adaptation", &stretch, "Repitch\0Tonal\0Battements\0Texture\0")) {
             auto a = clipArgs(c->id);
             a["key"] = "stretch_mode";
             a["value"] = stretch;
@@ -1143,8 +2042,8 @@ void Editor::inspector() {
             ImGui::End();
             return;
         }
-        if (ImGui::Button("+ Plugin natif / VST3")) {
-            auto path = dialog(false, L"Plugins audio\0*.dll;*.vst3\0Tous\0*.*\0\0", nullptr);
+        if (ImGui::Button("+ Native / VST3 plugin")) {
+            auto path = dialog(false, L"Audio plugins\0*.dll;*.vst3\0All\0*.*\0\0", nullptr);
             if (!path.empty()) {
                 auto args = clipArgs(c->id);
                 args["scope"] = "clip";
@@ -1156,7 +2055,7 @@ void Editor::inspector() {
             ImGui::End();
             return;
         }
-        if (ImGui::BeginCombo("+ DSP", "Ajouter…")) {
+        if (ImGui::BeginCombo("+ DSP", "Add...")) {
             for (auto &d : cydaw::engine::effectCatalogue)
                 if (!d.convertsChannels() && ImGui::Selectable(std::string(d.displayName).c_str())) {
                     auto a = clipArgs(c->id);
@@ -1201,583 +2100,6 @@ void Editor::inspector() {
     ImGui::EndDisabled();
     ImGui::End();
 }
-void Editor::timeline() {
-    clipPreviews.beginFrame();
-    if (!panels["Timeline"] || !beginPanel("Timeline"))
-        return;
-    if (ImGui::Button("Découper [S]") && !s.selection.empty()) {
-        auto a = selectionArgs();
-        a["time"] = s.time;
-        action("split_clips", a);
-    }
-    ImGui::SameLine();
-    ImGui::Checkbox("Magnétisme / images", &snap);
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(100);
-    ImGui::SliderFloat("Zoom", &zoom, 2, 2000, "%.0f px/s", ImGuiSliderFlags_Logarithmic);
-    ImGui::SameLine();
-    if (ImGui::Button("Tout voir")) {
-        zoom = std::clamp((ImGui::GetWindowWidth() - 220) * .95f / float(s.project.duration), 2.f, 2000.f);
-        scroll = 0;
-    }
-    ImGui::SameLine();
-    ImGui::TextDisabled("Alt : libre  ·  Molette : zoom · Maj+molette : déplacement  ·  bords : trim");
-    auto selectAll = [&]() {
-        std::vector<Id> ids;
-        for (auto &track : s.project.tracks)
-            for (auto &clip : track.clips)
-                ids.push_back(clip.id);
-        s.setSelection(ids);
-    };
-    if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !ImGui::GetIO().WantTextInput) {
-        if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_A))
-            selectAll();
-        if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-            s.selectClip(0);
-            timelineDragging = 0;
-            timelineDragBefore.reset();
-            marquee = false;
-        }
-    }
-    if (ImGui::SmallButton("Éditer le clip / conteneur") && s.selected)
-        openClipEditor(s.selected);
-    ImGui::SameLine();
-    ImGui::TextDisabled("%zu clips sélectionnés", s.selection.size());
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Tout [Ctrl+A]"))
-        selectAll();
-    ImGui::SameLine();
-    ImGui::BeginDisabled(s.selection.empty());
-    if (ImGui::SmallButton("Dupliquer"))
-        action("duplicate_clips", selectionArgs());
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Supprimer"))
-        action("delete_clips", selectionArgs());
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Supprimer + fermer l'espace")) {
-        auto args = selectionArgs();
-        args["ripple"] = true;
-        action("delete_clips", args);
-    }
-    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-        ImGui::SetTooltip("Referme les intervalles de la sélection sur toutes les pistes.\nLes clips qui les "
-                          "traversent doivent être découpés ou sélectionnés.");
-    ImGui::EndDisabled();
-    ImGui::SameLine();
-    ImGui::TextDisabled("Ctrl/clic · rectangle : sélection");
-    ImGui::SameLine();
-    if (ImGui::SmallButton("Montage avancé…"))
-        ImGui::OpenPopup("Montage avancé");
-    if (ImGui::BeginPopup("Montage avancé")) {
-        auto &delta = trimDelta;
-        auto &overlap = transitionOverlap;
-
-        ImGui::TextUnformatted("Trim sur le clip sélectionné");
-        ImGui::InputFloat("Variation de durée (s)", &delta, .1f, 1.f);
-        ImGui::Checkbox("Régler l'entrée source", &leftTrim);
-        ImGui::BeginDisabled(!s.selected);
-        if (ImGui::Button("Trim ripple")) {
-            auto args = clipArgs(s.selected);
-            args["delta"] = delta;
-            args["left"] = leftTrim;
-            action("ripple_trim", args);
-        }
-        Id next = 0;
-        if (auto *clip = s.project.findClip(s.selected)) {
-            for (auto &other : s.project.owner(clip->id)->clips)
-                if (other.id != clip->id && std::abs(clip->start + clip->duration - other.start) < 1e-6) {
-                    next = other.id;
-                    break;
-                }
-        }
-        ImGui::BeginDisabled(!next);
-        if (ImGui::Button("Trim roll avec le clip suivant")) {
-            auto args = clipArgs(s.selected);
-            args["next"] = next;
-            args["delta"] = delta;
-            action("roll_trim", args);
-        }
-        ImGui::InputFloat("Chevauchement (s)", &overlap, .1f, 1.f);
-        if (ImGui::Button("Créer un fondu avec le suivant")) {
-            auto args = clipArgs(s.selected);
-            args["next"] = next;
-            args["duration"] = overlap;
-            action("overlap_transition", args);
-        }
-        ImGui::EndDisabled();
-        ImGui::EndDisabled();
-        ImGui::SeparatorText("Retirer un intervalle sur toutes les pistes");
-        ImGui::InputDouble("Début", &rangeBegin, .1, 1, "%.3f");
-        ImGui::InputDouble("Fin", &rangeEnd, .1, 1, "%.3f");
-        if (ImGui::Button("Découper et fermer")) {
-            Json args = Json::Object();
-            args["begin"] = rangeBegin;
-            args["end"] = rangeEnd;
-            action("remove_range", args);
-        }
-        ImGui::EndPopup();
-    }
-    ImVec2 navOrigin = ImGui::GetCursorScreenPos();
-    ImGui::SetCursorScreenPos(navOrigin + ImVec2(180, 0));
-    ImGui::InvisibleButton("CyDAWNavigator", {std::max(40.f, ImGui::GetContentRegionAvail().x), 16});
-    auto &navIo = ImGui::GetIO();
-    if (ImGui::IsItemActivated())
-        navigateAnchor = scroll + (navIo.MousePos.x - navOrigin.x - 180) / zoom;
-    if (ImGui::IsItemActive()) {
-        zoom = std::clamp(zoom * std::exp(navIo.MouseDelta.y * .012f), 2.f, 2000.f);
-        scroll = std::max(0., navigateAnchor - (navIo.MousePos.x - navOrigin.x - 180) / zoom);
-    }
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
-        ImGui::SetTooltip("Glisser : gauche/droite pour naviguer, bas pour zoomer, haut pour dézoomer. "
-                          "Double clic : tout voir.");
-        if (ImGui::IsMouseDoubleClicked(0)) {
-            zoom =
-                std::clamp((ImGui::GetContentRegionAvail().x - 180) / float(s.project.duration), 2.f, 2000.f);
-            scroll = 0;
-        }
-    }
-    auto *navDraw = ImGui::GetWindowDrawList();
-    auto navMin = ImGui::GetItemRectMin(), navMax = ImGui::GetItemRectMax();
-    navDraw->AddRectFilled(navMin, navMax,
-                           ImGui::IsItemActive() ? IM_COL32(95, 63, 35, 255) : IM_COL32(44, 46, 54, 255), 3);
-    for (float xx = navMin.x; xx < navMax.x; xx += 16)
-        navDraw->AddLine({xx, navMin.y + 8}, {xx, navMax.y - 2}, IM_COL32(112, 116, 128, 180));
-    ImGui::BeginChild("timelineCanvas", {0, -24}, false,
-                      ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    ImVec2 origin = ImGui::GetCursorScreenPos();
-    float header = 180, lane = 68;
-    float width = std::max(300.f, ImGui::GetContentRegionAvail().x),
-          height = std::max(120.f, 32 + lane * s.project.tracks.size() + 78);
-    ImGui::InvisibleButton("timelineInput", {width, height},
-                           ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
-    bool hovered = ImGui::IsItemHovered();
-    auto *dl = ImGui::GetWindowDrawList();
-    ImVec2 mouse = ImGui::GetIO().MousePos;
-    float left = origin.x + header, right = origin.x + width, bottom = origin.y + height;
-    auto x = [&](double t) { return left + float((t - scroll) * zoom); };
-    auto time = [&](float px) {
-        return snapTime(scroll + (px - left) / zoom, s.project.fps, snap && !ImGui::GetIO().KeyAlt);
-    };
-    if (ImGui::BeginDragDropTarget()) {
-        if (auto *payload = ImGui::AcceptDragDropPayload("MEDIA")) {
-            Json a = Json::Object();
-            a["path"] = static_cast<const char *>(payload->Data);
-            a["start"] = time(mouse.x);
-            action("import_media", a);
-        }
-        if (auto *payload = ImGui::AcceptDragDropPayload("EFFECT")) {
-            int target = int((mouse.y - origin.y - 32) / lane);
-            if (target >= 0 && target < int(s.project.tracks.size())) {
-                for (auto &clip : s.project.tracks[target].clips)
-                    if (clip.active(time(mouse.x))) {
-                        Json a = clipArgs(clip.id);
-                        a["id"] = static_cast<const char *>(payload->Data);
-                        auto &track = s.project.tracks[target];
-                        if (track.kind == TrackKind::Audio && a["id"].S().starts_with("cydaw.")) {
-                            auto id = a["id"];
-                            a = Json::Object();
-                            a["scope"] = "track";
-                            a["target"] = track.id;
-                            a["id"] = id;
-                            action("add_mix_effect", a);
-                        } else
-                            action("add_effect", a);
-                        break;
-                    }
-            }
-        }
-        if (auto *payload = ImGui::AcceptDragDropPayload("SHADERIXEL_LAYER"))
-            addLibraryLayer(static_cast<const char *>(payload->Data));
-        if (auto *payload = ImGui::AcceptDragDropPayload("TRANSITION")) {
-            int target = int((mouse.y - origin.y - 32) / lane);
-            if (target >= 0 && target < int(s.project.tracks.size()))
-                for (auto &clip : s.project.tracks[target].clips)
-                    if (clip.active(time(mouse.x))) {
-                        auto args = clipArgs(clip.id);
-                        args["id"] = static_cast<const char *>(payload->Data);
-                        action("set_transition", args);
-                        break;
-                    }
-        }
-        ImGui::EndDragDropTarget();
-    }
-    dl->AddRectFilled(origin, {right, bottom}, IM_COL32(18, 20, 25, 255));
-    dl->PushClipRect({left, origin.y}, {right, bottom}, true);
-    float minimumStep = (ImGui::CalcTextSize("00:00:00:00").x + 18) / zoom;
-    float step = 3600;
-    for (float interval : {.25f, .5f, 1.f, 2.f, 5.f, 10.f, 30.f, 60.f, 120.f, 300.f, 600.f, 1800.f, 3600.f})
-        if (interval >= minimumStep) {
-            step = interval;
-            break;
-        }
-    for (double t = std::floor(scroll / step) * step; t < scroll + (right - left) / zoom; t += step) {
-        float xx = x(t);
-        dl->AddLine({xx, origin.y}, {xx, bottom}, IM_COL32(255, 255, 255, 16));
-        auto text = timecode(t, s.project.fps);
-        dl->AddText({xx + 4, origin.y + 7}, Muted, text.c_str());
-    }
-    if (hovered && mouse.y < origin.y + 30 && mouse.x >= left && ImGui::IsMouseDown(0))
-        s.time = std::clamp(time(mouse.x), 0., s.project.duration);
-    if (hovered && ImGui::GetIO().MouseWheel != 0) {
-        if (!ImGui::GetIO().KeyShift) {
-            double anchor = scroll + (mouse.x - left) / zoom;
-            zoom = std::clamp(zoom * std::pow(1.2f, ImGui::GetIO().MouseWheel), 2.f, 2000.f);
-            scroll = std::max(0., anchor - (mouse.x - left) / zoom);
-        } else
-            scroll = std::max(0., scroll - ImGui::GetIO().MouseWheel * 80 / zoom);
-    }
-    bool clickedClip = false;
-    for (size_t ti = 0; ti < s.project.tracks.size(); ++ti) {
-        auto &t = s.project.tracks[ti];
-        float y = origin.y + 32 + ti * lane;
-        dl->AddRectFilled({left, y}, {right, y + lane - 1},
-                          ti % 2 ? IM_COL32(25, 27, 33, 255) : IM_COL32(22, 24, 30, 255));
-        for (auto &c : t.clips) {
-            float a = x(c.start), b = x(c.start + c.duration);
-            if (b < left || a > right)
-                continue;
-            ImU32 tint = t.kind == TrackKind::Audio ? Audio : Orange;
-            if (t.muted)
-                tint = Muted;
-            bool chosen = std::find(s.selection.begin(), s.selection.end(), c.id) != s.selection.end();
-            cydaw::v2::ui::arrangerClipBackground(dl, {a, y + 7}, {b, y + lane - 7}, tint,
-                                                  hovered && mouse.x >= a && mouse.x <= b &&
-                                                      mouse.y >= y + 7 && mouse.y <= y + lane - 7);
-            dl->AddRect({a, y + 7}, {b, y + lane - 7}, tint, 4, 0, chosen ? 2.f : 1.f);
-            dl->PushClipRect({std::max(a + 5, left), y + 8}, {std::min(b - 4, right), y + lane - 8}, true);
-            dl->AddText({a + 8, y + 12}, tint, c.name.c_str());
-            if (t.kind == TrackKind::Audio && !c.source.empty()) {
-                try {
-                    auto &asset = s.media.get(c.source);
-                    for (float xx = std::max(a, left); xx < std::min(b, right); xx += 3) {
-                        double st = c.in + (scroll + (xx - left) / zoom - c.start) * c.speed;
-                        size_t index = size_t(std::max(0., st) * 100);
-                        float peak = index < asset.peaks.size() ? asset.peaks[index] / asset.peakCeiling : 0;
-                        float mid = y + 44;
-                        dl->AddLine({xx, mid - peak * 15}, {xx, mid + peak * 15}, Audio);
-                    }
-                } catch (...) {
-                }
-            } else {
-                float start = std::max(a, left), end = std::min(b, right);
-                for (float px = start; px < end; px += 72) {
-                    auto sample = std::clamp(scroll + (px + 36 - left) / zoom,
-                                             c.start + std::min(.05, c.duration * .25),
-                                             c.start + c.duration - std::min(.001, c.duration * .1));
-                    sample = c.start + std::floor((sample - c.start) * 2) / 2;
-                    sample = std::clamp(sample, c.start + std::min(.05, c.duration * .25),
-                                        c.start + c.duration - std::min(.001, c.duration * .1));
-                    if (auto *view = clipPreviews.get(s.project, c, sample, s.renderer))
-                        dl->AddImage((ImTextureID)view, {px, y + 28}, {std::min(px + 70, end), y + lane - 9});
-                }
-            }
-            dl->PopClipRect();
-            if (c.fadeIn > 0)
-                dl->AddLine({a, y + lane - 8}, {x(c.start + c.fadeIn), y + 8}, tint, 1.5f);
-            if (c.fadeOut > 0)
-                dl->AddLine({x(c.start + c.duration - c.fadeOut), y + 8}, {b, y + lane - 8}, tint, 1.5f);
-            if (c.link)
-                dl->AddCircleFilled({a + 5, y + lane - 11}, 2, Audio);
-            if (c.transition.enabled) {
-                float end = x(c.start + c.transition.duration);
-                dl->AddRectFilled({a, y + lane - 15}, {end, y + lane - 7}, IM_COL32(66, 179, 184, 140));
-            }
-            bool hit = hovered && mouse.x >= std::max(a, left) && mouse.x <= std::min(b, right) &&
-                       mouse.y > y + 7 && mouse.y < y + lane - 7;
-            if (hit && ImGui::IsMouseDoubleClicked(0) && t.kind == TrackKind::Video) {
-                openClipEditor(c.id);
-                clickedClip = true;
-            } else if (hit && ImGui::IsMouseClicked(0)) {
-                clickedClip = true;
-                bool additive = ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift;
-                s.selectClip(c.id, additive, !additive);
-                animationEffect = -1;
-                animationKey = t.kind == TrackKind::Audio ? "gain" : "opacity";
-                draftIdentity.clear();
-                if (!t.locked && !additive) {
-                    try {
-                        timelineTrim = mouse.x - a < 8 ? -1 : b - mouse.x < 8 ? 1 : 0;
-                        timelineDragClips =
-                            s.project.selection(timelineTrim == 0 ? s.selection : std::vector<Id>{c.id});
-                        timelineDragBefore = s.project;
-                        timelineDragging = c.id;
-                        timelineStart = c.start;
-                        timelineLength = c.duration;
-                        timelineIn = c.in;
-                        timelineDragX = mouse.x;
-                        timelineMoved = 0;
-                        timelineMinimum = c.start;
-                        timelineSequenceLength = s.project.duration;
-                        for (auto id : timelineDragClips)
-                            timelineMinimum = std::min(timelineMinimum, s.project.findClip(id)->start);
-                        s.playing = false;
-                    } catch (const std::exception &e) {
-                        error = e.what();
-                    }
-                }
-            }
-            if (hit && ImGui::IsMouseClicked(1)) {
-                s.selectClip(c.id, false, true);
-                ImGui::OpenPopup("clipContext");
-            }
-        }
-    }
-    if (timelineDragging && ImGui::IsMouseDown(0)) {
-        auto *c = s.project.findClip(timelineDragging);
-        if (c) {
-            double delta = (mouse.x - timelineDragX) / zoom;
-            double start = c->start, length = c->duration, in = c->in;
-            if (timelineTrim == 0)
-                start = snapTime(timelineStart + delta, s.project.fps, snap && !ImGui::GetIO().KeyAlt);
-            if (timelineTrim == 1)
-                length = std::max(1. / s.project.fps,
-                                  time(x(timelineStart + timelineLength) + mouse.x - timelineDragX) -
-                                      timelineStart);
-            if (timelineTrim == -1) {
-                double pos = snapTime(timelineStart + delta, s.project.fps, snap && !ImGui::GetIO().KeyAlt);
-                pos = std::clamp(pos, std::max(0., timelineStart - timelineIn / c->speed),
-                                 timelineStart + timelineLength - 1. / s.project.fps);
-                length = timelineLength - (pos - timelineStart);
-                in = timelineIn + (pos - timelineStart) * c->speed;
-                start = pos;
-            }
-            try {
-                bool edited = false;
-                if (timelineTrim == 0) {
-                    double moved = std::max(-timelineMinimum, start - timelineStart);
-                    double change = moved - timelineMoved;
-                    if (change != 0) {
-                        s.project.moveClips(timelineDragClips, change);
-                        edited = true;
-                    }
-                    timelineMoved = moved;
-                    s.project.duration = timelineSequenceLength;
-                    for (auto id : timelineDragClips) {
-                        auto &clip = *s.project.findClip(id);
-                        s.project.duration = std::max(s.project.duration, clip.start + clip.duration);
-                    }
-                } else if (start != c->start || length != c->duration || in != c->in) {
-                    s.project.setTiming(timelineDragging, start, length, in, c->speed, false);
-                    edited = true;
-                }
-                if (edited) {
-                    if (timelineDragBefore) {
-                        s.history.checkpoint(*timelineDragBefore);
-                        timelineDragBefore.reset();
-                    }
-                    s.dirty = true;
-                }
-            } catch (const std::exception &e) {
-                error = e.what();
-            }
-        }
-    }
-    if (timelineDragging && ImGui::IsMouseReleased(0)) {
-        auto *owner = s.project.owner(timelineDragging);
-        if (timelineTrim == 0 && owner && !owner->locked &&
-            timelineDragClips.size() == s.project.linked(timelineDragging, false).size()) {
-            int target = int((mouse.y - origin.y - 32) / lane);
-            if (owner && target >= 0 && target < int(s.project.tracks.size())) {
-                auto &dest = s.project.tracks[target];
-                if (&dest != owner && dest.kind == owner->kind && !dest.locked) {
-                    if (timelineDragBefore) {
-                        s.history.checkpoint(*timelineDragBefore);
-                        timelineDragBefore.reset();
-                    }
-                    Clip moved = *s.project.findClip(timelineDragging);
-                    std::erase_if(owner->clips,
-                                  [&](const Clip &clip) { return clip.id == timelineDragging; });
-                    dest.clips.push_back(moved);
-                    s.dirty = true;
-                }
-            }
-        }
-        timelineDragging = 0;
-        timelineDragBefore.reset();
-    }
-    if (hovered && !clickedClip && ImGui::IsMouseClicked(0) && mouse.x >= left && mouse.y >= origin.y + 32 &&
-        mouse.y < origin.y + 32 + lane * s.project.tracks.size()) {
-        marquee = true;
-        marqueeAnchor = mouse;
-        marqueeAdd = ImGui::GetIO().KeyCtrl || ImGui::GetIO().KeyShift;
-        marqueeBase = marqueeAdd ? s.selection : std::vector<Id>{};
-        if (!marqueeAdd)
-            s.selectClip(0);
-    }
-    if (marquee) {
-        ImVec2 low{std::max(left, std::min(marqueeAnchor.x, mouse.x)), std::min(marqueeAnchor.y, mouse.y)};
-        ImVec2 high{std::min(right, std::max(marqueeAnchor.x, mouse.x)), std::max(marqueeAnchor.y, mouse.y)};
-        auto ids = marqueeBase;
-        if (std::abs(mouse.x - marqueeAnchor.x) > 3 || std::abs(mouse.y - marqueeAnchor.y) > 3)
-            for (size_t ti = 0; ti < s.project.tracks.size(); ++ti) {
-                float y = origin.y + 32 + ti * lane;
-                for (auto &clip : s.project.tracks[ti].clips)
-                    if (x(clip.start) <= high.x && x(clip.start + clip.duration) >= low.x &&
-                        y + 7 <= high.y && y + lane - 7 >= low.y)
-                        ids.push_back(clip.id);
-            }
-        s.setSelection(ids);
-        dl->AddRectFilled(low, high, IM_COL32(239, 139, 58, 30));
-        dl->AddRect(low, high, Orange);
-        if (ImGui::IsMouseReleased(0) || !ImGui::IsMouseDown(0))
-            marquee = false;
-    }
-    auto *selected = s.project.findClip(s.selected);
-    if (selected) {
-        bool animationLocked = s.project.owner(selected->id)->locked;
-        if (animationEffect >= int(selected->effects.size()))
-            animationEffect = -1;
-        float top = origin.y + 32 + lane * s.project.tracks.size() + 5, band = 65;
-        auto &ps =
-            animationEffect < 0
-                ? selected->params
-                : selected->effects[std::min(animationEffect, int(selected->effects.size()) - 1)].params;
-        auto it = ps.find(animationKey);
-        if (it != ps.end()) {
-            auto &param = it->second;
-            float lo = animationKey == "gain" ? -60.f : 0, hi = animationKey == "gain" ? 12.f : 1;
-            for (auto &k : param.keys) {
-                lo = std::min(lo, k.value);
-                hi = std::max(hi, k.value);
-            }
-            auto ky = [&](float v) { return top + band - 7 - (v - lo) / (hi - lo) * (band - 14); };
-            float oldX = left, oldY = ky(param.at(scroll));
-            for (float xx = left + 2; xx < right; xx += 2) {
-                float yy = ky(param.at(scroll + (xx - left) / zoom));
-                dl->AddLine({oldX, oldY}, {xx, yy}, Audio, 1.7f);
-                oldX = xx;
-                oldY = yy;
-            }
-            auto &keyDrag = timelineKeyDrag;
-            for (int i = 0; i < int(param.keys.size()); ++i) {
-                auto &k = param.keys[i];
-                ImVec2 center{x(k.time), ky(k.value)};
-                dl->AddCircleFilled(center, 4, Orange);
-                if (!animationLocked && hovered && ImGui::IsMouseClicked(0) &&
-                    std::abs(mouse.x - center.x) < 8 && std::abs(mouse.y - center.y) < 8) {
-                    s.history.checkpoint(s.project);
-                    keyDrag = i;
-                }
-                if (!animationLocked && hovered && ImGui::IsMouseClicked(1) &&
-                    std::abs(mouse.x - center.x) < 8 && std::abs(mouse.y - center.y) < 8) {
-                    s.history.checkpoint(s.project);
-                    param.keys.erase(param.keys.begin() + i);
-                    s.dirty = true;
-                    break;
-                }
-            }
-            if (!animationLocked && keyDrag >= 0 && keyDrag < int(param.keys.size()) &&
-                ImGui::IsMouseDown(0)) {
-                auto &k = param.keys[keyDrag];
-                double low = keyDrag ? param.keys[keyDrag - 1].time + 1. / s.project.fps : 0,
-                       high = keyDrag + 1 < int(param.keys.size())
-                                  ? param.keys[keyDrag + 1].time - 1. / s.project.fps
-                                  : s.project.duration;
-                if (low <= high)
-                    k.time = std::clamp(time(mouse.x), low, high);
-                k.value = std::clamp(lo + (top + band - 7 - mouse.y) / (band - 14) * (hi - lo), lo, hi);
-                s.dirty = true;
-            }
-            if (ImGui::IsMouseReleased(0))
-                keyDrag = -1;
-            if (!animationLocked && hovered && mouse.y > top && mouse.y < top + band && mouse.x > left &&
-                ImGui::IsMouseDoubleClicked(0)) {
-                s.history.checkpoint(s.project);
-                param.setKey({time(mouse.x),
-                              std::clamp(lo + (top + band - 7 - mouse.y) / (band - 14) * (hi - lo), lo, hi),
-                              Curve::Smooth, 0});
-                s.dirty = true;
-            }
-        }
-        dl->AddText(
-            {left + 8, top + 4}, Muted,
-            ("AUTOMATION  /  " + animationKey + "  ·  double-clic : point  /  clic droit : retirer").c_str());
-    }
-    float play = x(s.time);
-    dl->AddLine({play, origin.y + 23}, {play, bottom}, Orange, 2);
-    dl->AddTriangleFilled({play - 5, origin.y + 19}, {play + 5, origin.y + 19}, {play, origin.y + 26},
-                          Orange);
-    dl->PopClipRect();
-    dl->AddRectFilled(origin, {left, origin.y + 32}, IM_COL32(29, 31, 38, 255));
-    dl->AddText({origin.x + 12, origin.y + 7}, Muted, "PISTES  /  SECONDES");
-    for (size_t i = 0; i < s.project.tracks.size(); ++i) {
-        auto &t = s.project.tracks[i];
-        float y = origin.y + 32 + i * lane;
-        dl->AddRectFilled({origin.x, y}, {left, y + lane - 1}, IM_COL32(31, 33, 40, 255));
-        dl->AddRectFilled({origin.x, y}, {origin.x + 3, y + lane - 1},
-                          t.kind == TrackKind::Audio ? Audio : Orange);
-        dl->PushClipRect({origin.x + 10, y + 4}, {left - 7, y + 30}, true);
-        dl->AddText({origin.x + 10, y + 11}, IM_COL32(222, 224, 232, 255), t.name.c_str());
-        dl->PopClipRect();
-        ImGui::SetCursorScreenPos({origin.x + 10, y + 36});
-        ImGui::PushID(int(t.id));
-        auto before = s.project;
-        if (ImGui::SmallButton(t.muted ? "M •" : "M")) {
-            s.history.checkpoint(before);
-            t.muted = !t.muted;
-            s.dirty = true;
-        }
-        ImGui::SameLine();
-        if (ImGui::SmallButton(t.solo ? "S •" : "S")) {
-            s.history.checkpoint(before);
-            t.solo = !t.solo;
-            s.dirty = true;
-        }
-        ImGui::SameLine();
-        ImGui::TextDisabled(t.locked ? "VERROUILLÉ" : t.kind == TrackKind::Audio ? "AUDIO" : "VIDÉO");
-        ImGui::PopID();
-    }
-    if (ImGui::BeginPopup("clipContext")) {
-        if (ImGui::MenuItem("Découper à la tête")) {
-            auto a = selectionArgs();
-            a["time"] = s.time;
-            action("split_clips", a);
-        }
-        if (ImGui::MenuItem("Dupliquer"))
-            action("duplicate_clips", selectionArgs());
-        if (auto *c = s.project.findClip(s.selected)) {
-            if (c->link && ImGui::MenuItem("Délier le groupe"))
-                action("unlink_clip", clipArgs(s.selected));
-            if (ImGui::BeginMenu("Lier avec…")) {
-                Id other = 0;
-                for (auto &track : s.project.tracks)
-                    for (auto &candidate : track.clips) {
-                        if (candidate.id == s.selected || (c->link && candidate.link == c->link))
-                            continue;
-                        ImGui::PushID(int(candidate.id));
-                        if (ImGui::MenuItem((track.name + " / " + candidate.name).c_str(), nullptr, false,
-                                            !track.locked))
-                            other = candidate.id;
-                        ImGui::PopID();
-                    }
-                if (other) {
-                    auto a = clipArgs(s.selected);
-                    a["other"] = other;
-                    action("link_clips", a);
-                }
-                ImGui::EndMenu();
-            }
-        }
-        if (ImGui::MenuItem("Supprimer"))
-            action("delete_clips", selectionArgs());
-        if (ImGui::MenuItem("Supprimer et fermer l'espace", "Maj+Suppr")) {
-            auto args = selectionArgs();
-            args["ripple"] = true;
-            action("delete_clips", args);
-        }
-        ImGui::EndPopup();
-    }
-    ImGui::SetCursorScreenPos({origin.x, bottom});
-    ImGui::Dummy({width, 1});
-    ImGui::EndChild();
-    ImGui::SetNextItemWidth(-1);
-    float pos = float(scroll);
-    if (ImGui::SliderFloat("##scroll", &pos, 0, float(std::max(0., s.project.duration - 1)),
-                           "Position %.2f s"))
-        scroll = pos;
-    ImGui::End();
-}
 void Editor::shaderEditor() {
     if (!panels["HLSL"] || !beginPanel("HLSL"))
         return;
@@ -1785,7 +2107,7 @@ void Editor::shaderEditor() {
     bool transition = selectedEffect == -2 && c && c->transition.enabled;
     if (c && !transition && selectedEffect >= 0 && selectedEffect < int(c->effects.size()) &&
         c->effects[selectedEffect].id == "grading") {
-        ImGui::TextUnformatted("Shader généré par Étalonnage, adapté à l'espace de travail.");
+        ImGui::TextUnformatted("Shader generated by color grading for the working color space.");
         auto generated = gradeShader(c->effects[selectedEffect], s.project.workingSpace);
         ImGui::InputTextMultiline("##gradeShader", &generated, {-1, -1}, ImGuiInputTextFlags_ReadOnly);
         ImGui::End();
@@ -1793,14 +2115,14 @@ void Editor::shaderEditor() {
     }
     if (c && !transition && selectedEffect >= 0 && selectedEffect < int(c->effects.size()) &&
         c->effects[selectedEffect].id == "ofx") {
-        ImGui::TextWrapped("OFX · %s. Ses paramètres et animations sont dans Propriétés.",
+        ImGui::TextWrapped("OFX - %s. Its parameters and animation are in Properties.",
                            c->effects[selectedEffect].graph["name"].S().c_str());
         ImGui::End();
         return;
     }
     if (!c || (!transition && (selectedEffect < 0 || selectedEffect >= int(c->effects.size())))) {
-        ImGui::TextWrapped("Choisissez un effet dans Propriétés pour éditer son shader. EffectContext "
-                           "fournit time, localTime, deltaTime et frame.");
+        ImGui::TextWrapped("Choose an effect in Properties to edit its shader. EffectContext "
+                           "provides time, localTime, deltaTime and frame.");
         ImGui::End();
         return;
     }
@@ -1814,7 +2136,7 @@ void Editor::shaderEditor() {
         }
         draftIdentity = identity;
     }
-    if (ImGui::Button("Compiler & appliquer")) {
+    if (ImGui::Button("Compile & Apply")) {
         auto a = clipArgs(c->id);
         if (!transition)
             a["effect"] = selectedEffect;
@@ -1822,7 +2144,7 @@ void Editor::shaderEditor() {
         action(transition ? "set_transition_shader" : "set_shader", a);
     }
     ImGui::SameLine();
-    if (ImGui::Button("Recharger"))
+    if (ImGui::Button("Reload"))
         draftIdentity.clear();
     ImGui::SameLine();
     ImGui::TextDisabled("HLSL 5.0  /  pixel shader");
@@ -1831,127 +2153,15 @@ void Editor::shaderEditor() {
     ImGui::PopFont();
     ImGui::End();
 }
-void Editor::animations() {
-    if (!panels["Animations"] || !beginPanel("Animations"))
-        return;
-    auto *clip = s.project.findClip(s.selected);
-    if (!clip) {
-        ImGui::TextWrapped(
-            "Sélectionnez un clip, puis un paramètre. K ajoute un point à la tête de lecture.");
-        ImGui::End();
-        return;
-    }
-    if (s.project.owner(clip->id)->locked) {
-        ImGui::TextDisabled("Piste verrouillée");
-        ImGui::End();
-        return;
-    }
-    if (animationEffect >= int(clip->effects.size()))
-        animationEffect = -1;
-    if (ImGui::BeginCombo("Paramètre", animationKey.c_str())) {
-        for (auto &[key, p] : clip->params) {
-            if (ImGui::Selectable(("Clip / " + key).c_str(), animationEffect < 0 && animationKey == key)) {
-                animationKey = key;
-                animationEffect = -1;
-            }
-        }
-        for (int i = 0; i < int(clip->effects.size()); ++i)
-            for (auto &[key, p] : clip->effects[i].params) {
-                std::string label = clip->effects[i].id + " / " + key;
-                if (ImGui::Selectable(label.c_str(), animationEffect == i && animationKey == key)) {
-                    animationKey = key;
-                    animationEffect = i;
-                }
-            }
-        ImGui::EndCombo();
-    }
-    auto &parameters = animationEffect < 0 ? clip->params : clip->effects[animationEffect].params;
-    auto found = parameters.find(animationKey);
-    if (found == parameters.end()) {
-        ImGui::End();
-        return;
-    }
-    auto &parameter = found->second;
-    ImGui::Text("Valeur à %s : %.3f", timecode(s.time, s.project.fps).c_str(), parameter.at(s.time));
-    if (ImGui::Button("+ Point à la tête")) {
-        s.history.checkpoint(s.project);
-        parameter.setKey({snapTime(s.time, s.project.fps, true), parameter.value, Curve::Smooth, 0});
-        s.dirty = true;
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("Retirer l'animation") && !parameter.keys.empty()) {
-        s.history.checkpoint(s.project);
-        parameter.value = parameter.at(s.time);
-        parameter.keys.clear();
-        s.dirty = true;
-    }
-    if (ImGui::BeginTable("keys", 5, ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg)) {
-        ImGui::TableSetupColumn("Temps");
-        ImGui::TableSetupColumn("Valeur");
-        ImGui::TableSetupColumn("Interpolation");
-        ImGui::TableSetupColumn("Courbure");
-        ImGui::TableSetupColumn("Action");
-        ImGui::TableHeadersRow();
-        for (int i = 0; i < int(parameter.keys.size()); ++i) {
-            ImGui::PushID(i);
-            auto &k = parameter.keys[i];
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-            auto before = s.project;
-            double lo = i ? parameter.keys[i - 1].time + 1e-5 : 0;
-            double hi = i + 1 < int(parameter.keys.size()) ? parameter.keys[i + 1].time - 1e-5
-                                                           : std::max(s.project.duration, k.time);
-            ImGui::SetNextItemWidth(-1);
-            ImGui::DragScalar("##time", ImGuiDataType_Double, &k.time, .01f, &lo, &hi, "%.3f s",
-                              ImGuiSliderFlags_AlwaysClamp);
-            editCheckpoint(before);
-            ImGui::TableNextColumn();
-            before = s.project;
-            ImGui::SetNextItemWidth(-1);
-            ImGui::DragFloat("##value", &k.value, .01f);
-            editCheckpoint(before);
-            ImGui::TableNextColumn();
-            int curve = int(k.curve);
-            before = s.project;
-            ImGui::SetNextItemWidth(-1);
-            if (ImGui::Combo("##curve", &curve, "Linéaire\0Douce\0Palier\0CyDAW\0")) {
-                s.history.checkpoint(before);
-                k.curve = Curve(curve);
-                s.dirty = true;
-            }
-            ImGui::TableNextColumn();
-            before = s.project;
-            ImGui::BeginDisabled(k.curve != Curve::Shaped);
-            ImGui::SetNextItemWidth(-1);
-            ImGui::SliderFloat("##shape", &k.shape, -1, 1, "%.2f");
-            editCheckpoint(before);
-            ImGui::EndDisabled();
-            ImGui::TableNextColumn();
-            if (ImGui::SmallButton("Aller"))
-                s.time = k.time;
-            ImGui::SameLine();
-            if (ImGui::SmallButton("X")) {
-                s.history.checkpoint(s.project);
-                parameter.keys.erase(parameter.keys.begin() + i);
-                s.dirty = true;
-                ImGui::PopID();
-                break;
-            }
-            ImGui::PopID();
-        }
-        ImGui::EndTable();
-    }
-    ImGui::End();
-}
 void Editor::layerGraphEditor() {
-    if (!panels["Graphe des calques"] || !beginPanel("Graphe des calques"))
+    if (!panels["Layer Graph"] || !beginPanel("Layer Graph"))
         return;
     try {
         const bool implicit = s.project.layerGraph.IsNull();
         if (implicit)
-            ImGui::TextWrapped("Timelines → calques → graphe de composition Shaderixel. Le graphe organise "
-                               "le mélange nodal.");
-        if (ImGui::Button("Reconstruire depuis les pistes")) {
+            ImGui::TextWrapped("Timelines -> layers -> Shaderixel composition graph. The graph controls "
+                               "node-based compositing.");
+        if (ImGui::Button("Rebuild from Tracks")) {
             Json args = Json::Object();
             args["graph"] = defaultLayerGraph(s.project);
             action("set_layer_graph", args);
@@ -1965,7 +2175,7 @@ void Editor::layerGraphEditor() {
             action("set_layer_graph", args);
         }
         if (auto node = layerCanvas.takeLutRequest()) {
-            auto path = dialog(false, L"LUT 1D / 2D / 3D\0*.cube;*.png;*.tif;*.exr\0Tous\0*.*\0\0", nullptr);
+            auto path = dialog(false, L"1D / 2D / 3D LUT\0*.cube;*.png;*.tif;*.exr\0All\0*.*\0\0", nullptr);
             if (!path.empty()) {
                 auto lut = loadLut(sx::Utf8Path(path), layerCanvas.lutLayoutName());
                 auto graph = s.project.layerGraph;
@@ -1983,7 +2193,7 @@ void Editor::layerGraphEditor() {
         }
         if (auto node = layerCanvas.takeShaderRequest()) {
             layerShaderNode = node;
-            ImGui::SetWindowFocus(panelTitle("Graphe VFX").c_str());
+            ImGui::SetWindowFocus(panelTitle("Shader Graph").c_str());
         }
     } catch (const std::exception &e) {
         error = e.what();
@@ -1992,7 +2202,7 @@ void Editor::layerGraphEditor() {
     ImGui::End();
 }
 void Editor::graphEditor() {
-    if (!panels["Graphe VFX"] || !beginPanel("Graphe VFX"))
+    if (!panels["Shader Graph"] || !beginPanel("Shader Graph"))
         return;
     Effect layerEffect;
     if (layerShaderNode) {
@@ -2004,25 +2214,25 @@ void Editor::graphEditor() {
         }
     }
     if (layerShaderNode) {
-        ImGui::Text("Graphe shader du nœud layer %u", layerShaderNode);
+        ImGui::Text("Shader Graph for Layer Node %u", layerShaderNode);
         ImGui::SameLine();
-        if (ImGui::Button("Retour aux effets du clip"))
+        if (ImGui::Button("Back to Clip Effects"))
             layerShaderNode = 0;
     }
     auto *c = s.project.findClip(s.selected);
     if (!layerShaderNode) {
         if (!c || s.project.owner(c->id)->kind != TrackKind::Video) {
             ImGui::TextWrapped(
-                "Sélectionnez un clip vidéo pour créer ou ouvrir un graphe d'effet Shaderixel.");
+                "Select a video clip to create or open a Shaderixel effect graph.");
             ImGui::End();
             return;
         }
         if (s.project.owner(c->id)->locked) {
-            ImGui::TextDisabled("Piste verrouillée");
+            ImGui::TextDisabled("Track is locked");
             ImGui::End();
             return;
         }
-        if (ImGui::Button("+ Graphe Shaderixel")) {
+        if (ImGui::Button("+ Shaderixel Graph")) {
             s.history.checkpoint(s.project);
             Effect e;
             e.id = "graph";
@@ -2033,8 +2243,8 @@ void Editor::graphEditor() {
             s.dirty = true;
         }
         ImGui::SameLine();
-        if (ImGui::Button("Importer .json")) {
-            auto path = dialog(false, L"Graphe Shaderixel\0*.json;*.sxgraph\0Tous\0*.*\0\0", nullptr);
+        if (ImGui::Button("Import .json")) {
+            auto path = dialog(false, L"Shaderixel graph\0*.json;*.sxgraph\0All\0*.*\0\0", nullptr);
             if (!path.empty())
                 try {
                     std::string text;
@@ -2059,8 +2269,8 @@ void Editor::graphEditor() {
         if (selectedEffect < 0 || selectedEffect >= int(c->effects.size()) ||
             c->effects[selectedEffect].graph.IsNull() || c->effects[selectedEffect].id == "ofx") {
             ImGui::TextWrapped(
-                "Le graphe génère le même HLSL que Shaderixel. Les shaders texte se trouvent dans "
-                "le panneau HLSL.");
+                "The graph generates the same HLSL as Shaderixel. Text shaders are in "
+                "the HLSL panel.");
             ImGui::End();
             return;
         }
@@ -2084,8 +2294,27 @@ void Editor::graphEditor() {
     }
     bool changed = false;
     auto before = s.project;
+    // Shaderixel takes the alpha from the RGBA pin of the output: with only RGB wired, the image vanishes.
+    if (auto *output = graph.Find(graph.OutputNode())) {
+        auto wired = [&](size_t i) { return i < output->inputs.size() && output->inputs[i].node; };
+        if (!wired(0) && !wired(2) && wired(1)) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, .72f, .35f, 1));
+            ImGui::TextWrapped("Output: alpha is disconnected; the image will be transparent. Connect an image to RGBA "
+                               "or a value to Alpha.");
+            ImGui::PopStyleColor();
+            sx::EGNode *input = nullptr;
+            for (auto &node : graph.nodes)
+                if (node.op == "input" && node.index == 0)
+                    input = &node;
+            if (input && ImGui::SmallButton("Connect Input Image to RGBA")) {
+                output->inputs.resize(std::max<size_t>(output->inputs.size(), 3));
+                output->inputs[0] = {input->id, 0};
+                changed = true;
+            }
+        }
+    }
     ImGui::SameLine();
-    if (ImGui::BeginCombo("##node", "+ Nœud")) {
+    if (ImGui::BeginCombo("##node", "+ Node")) {
         for (auto &op : sx::EffectGraphOps())
             if (sx::OpAllowed(op, sx::EGKind::Effect) && std::string(op.op) != "output" &&
                 std::string(op.op) != "opacity") {
@@ -2105,18 +2334,43 @@ void Editor::graphEditor() {
         ImGui::EndCombo();
     }
     if (auto *node = graph.Find(graphNode)) {
-        ImGui::Text("Nœud %u · %s", node->id, node->op.c_str());
-        if (ImGui::InputText("Nom paramètre", &node->name))
+        ImGui::Text("Node %u - %s", node->id, node->op.c_str());
+        if (ImGui::InputText("Parameter Name", &node->name))
             changed = true;
         float v[4] = {node->value.x, node->value.y, node->value.z, node->value.w};
-        if (ImGui::DragFloat4("Valeur", v, .01f)) {
+        if (ImGui::DragFloat4("Value", v, .01f)) {
             node->value = {v[0], v[1], v[2], v[3]};
             changed = true;
         }
         if (node->op == "custom" && ImGui::InputTextMultiline("Code", &node->text, {-1, 70}))
             changed = true;
+        // Shaderixel's values for unconnected inputs: each scalar pin can differ from the operation default.
+        auto definition = sx::EffectiveOp(*node);
+        for (size_t i = 0; i < definition.inputs.size(); ++i) {
+            auto &pin = definition.inputs[i];
+            bool wired = i < node->inputs.size() && node->inputs[i].node;
+            if (wired || pin.defValue < 0)
+                continue;
+            ImGui::PushID(int(i));
+            float value = node->PinValue(i, pin.defValue);
+            ImGui::SetNextItemWidth(120);
+            if (ImGui::DragFloat(pin.name, &value, .01f)) {
+                if (node->pinValues.size() <= i)
+                    node->pinValues.resize(i + 1, std::numeric_limits<float>::quiet_NaN());
+                node->pinValues[i] = value;
+                changed = true;
+            }
+            if (node->PinValueSet(i)) {
+                ImGui::SameLine();
+                if (ImGui::SmallButton("default")) {
+                    node->pinValues[i] = std::numeric_limits<float>::quiet_NaN();
+                    changed = true;
+                }
+            }
+            ImGui::PopID();
+        }
         ImGui::SameLine();
-        if (node->op != "output" && ImGui::SmallButton("Retirer nœud")) {
+        if (node->op != "output" && ImGui::SmallButton("Remove Node")) {
             Id id = node->id;
             std::erase_if(graph.nodes, [id](auto &n) { return n.id == id; });
             for (auto &n : graph.nodes)
@@ -2127,12 +2381,12 @@ void Editor::graphEditor() {
             changed = true;
         }
     }
-    if (ImGui::Button("Tout voir"))
+    if (ImGui::Button("Fit All"))
         graphFitPending = true;
     ImGui::SameLine();
     bool actualSize = ImGui::Button("1:1");
     ImGui::SameLine();
-    ImGui::TextDisabled("%.0f %% · molette : zoom · bouton central : déplacer", graphView.zoom * 100);
+    ImGui::TextDisabled("%.0f %% - wheel: zoom - middle button: pan", graphView.zoom * 100);
     ImGui::BeginChild("graphCanvas", {0, 0}, true,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     ImVec2 origin = ImGui::GetCursorScreenPos(), avail = ImGui::GetContentRegionAvail();
@@ -2143,7 +2397,12 @@ void Editor::graphEditor() {
     auto *dl = ImGui::GetWindowDrawList();
     ImVec2 mouse = ImGui::GetIO().MousePos;
     bool hovered = ImGui::IsItemHovered();
+    // The automatic framing follows panel resizes (mode changes) until the user navigates.
+    if (graphAutoFit && (std::abs(avail.x - graphFitSize.x) > 1 || std::abs(avail.y - graphFitSize.y) > 1))
+        graphFitPending = true;
     if (graphFitPending && avail.x >= 100 && avail.y >= 80 && !graph.nodes.empty()) {
+        graphAutoFit = true;
+        graphFitSize = avail;
         sx::float2 low{FLT_MAX, FLT_MAX}, high{-FLT_MAX, -FLT_MAX};
         for (auto &n : graph.nodes) {
             auto def = sx::EffectiveOp(n);
@@ -2156,6 +2415,8 @@ void Editor::graphEditor() {
         graphView.fit(low, high, {avail.x, avail.y});
         graphFitPending = false;
     }
+    if (actualSize || (hovered && (ImGui::GetIO().MouseWheel != 0 || ImGui::IsMouseClicked(2))))
+        graphAutoFit = false;
     if (actualSize)
         graphView.zoomAt({avail.x * .5f, avail.y * .5f}, 1);
     if (hovered && ImGui::GetIO().MouseWheel != 0 && !graphDragging)
@@ -2297,13 +2558,13 @@ void Editor::mixDetails() {
     };
     if (track || bus) {
         std::string name = track ? track->name : bus->name;
-        if (ImGui::InputText("Nom du canal", &name, ImGuiInputTextFlags_EnterReturnsTrue)) {
+        if (ImGui::InputText("Channel Name", &name, ImGuiInputTextFlags_EnterReturnsTrue)) {
             auto a = args();
             a["name"] = name;
             action("set_mix_channel", a);
             return;
         }
-        if (bus && ImGui::SmallButton("Supprimer ce bus et reconnecter au master")) {
+        if (bus && ImGui::SmallButton("Delete This Bus and Reconnect to Master")) {
             Json a = Json::Object();
             a["bus"] = mixTarget;
             action("remove_bus", a);
@@ -2318,7 +2579,7 @@ void Editor::mixDetails() {
         bool animated = it != params.end() && !it->second.keys.empty();
         ImGui::PushID(index);
         ImGui::PushID(key.c_str());
-        ImGui::TextDisabled("%s%s", label, animated ? " / ANIMÉ" : "");
+        ImGui::TextDisabled("%s%s", label, animated ? " / ANIMATED" : "");
         auto before = s.project;
         ImGui::SetNextItemWidth(std::max(80.f, ImGui::GetContentRegionAvail().x - 45));
         cydaw::v2::ui::KnobStyle knobStyle;
@@ -2355,9 +2616,9 @@ void Editor::mixDetails() {
         }
         return add;
     };
-    ImGui::TextWrapped(track ? "Pan clip + piste → DSP → envois pré-fader → gain → sortie + envois post-fader"
-                       : bus ? "DSP → envois pré-fader → gain/pan → sortie + envois post-fader"
-                             : "Somme → DSP → gain/pan → sortie stéréo");
+    ImGui::TextWrapped(track ? "Clip + track pan -> DSP -> pre-fader sends -> gain -> output + post-fader sends"
+                       : bus ? "DSP -> pre-fader sends -> gain/pan -> output + post-fader sends"
+                             : "Sum -> DSP -> gain/pan -> stereo output");
     if (parameter("Gain dB", "gain", -80, 12, track ? track->gain : bus ? bus->gain : s.project.master))
         return;
     if (parameter("Panoramique", "pan", -1, 1, track ? track->pan : bus ? bus->pan : 0))
@@ -2379,7 +2640,7 @@ void Editor::mixDetails() {
         };
         Id destination = mix.output;
         bool changed = false;
-        if (ImGui::BeginCombo("Sortie", destinationName(destination).c_str())) {
+        if (ImGui::BeginCombo("Output", destinationName(destination).c_str())) {
             if (ImGui::Selectable("Master", !destination)) {
                 destination = 0;
                 changed = true;
@@ -2397,9 +2658,9 @@ void Editor::mixDetails() {
             action("set_mix_channel", a);
             return;
         }
-        if (ImGui::CollapsingHeader("Envois", ImGuiTreeNodeFlags_DefaultOpen)) {
+        if (ImGui::CollapsingHeader("Sends", ImGuiTreeNodeFlags_DefaultOpen)) {
             Id add = 0;
-            if (ImGui::BeginCombo("+ Envoi", "Choisir un bus…")) {
+            if (ImGui::BeginCombo("+ Send", "Choose a bus...")) {
                 for (auto &b : s.project.buses)
                     if (b.id != mixTarget && ImGui::Selectable(b.name.c_str()))
                         add = b.id;
@@ -2415,19 +2676,19 @@ void Editor::mixDetails() {
                 ImGui::PushID(int(send.bus));
                 ImGui::TextColored(ImVec4(.25f, .7f, .72f, 1), "%s", destinationName(send.bus).c_str());
                 before = s.project;
-                ImGui::Checkbox("Actif", &send.enabled);
+                ImGui::Checkbox("Enabled", &send.enabled);
                 editCheckpoint(before);
                 ImGui::SameLine();
                 before = s.project;
-                ImGui::Checkbox("Avant fader", &send.preFader);
+                ImGui::Checkbox("Pre-fader", &send.preFader);
                 editCheckpoint(before);
                 before = s.project;
                 ImGui::SetNextItemWidth(220);
-                ImGui::SliderFloat("Niveau dB", &send.gain, -80, 12, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+                ImGui::SliderFloat("Level dB", &send.gain, -80, 12, "%.1f", ImGuiSliderFlags_AlwaysClamp);
                 editCheckpoint(before);
                 ImGui::SameLine();
-                bool remove = ImGui::SmallButton("Retirer");
-                if (parameter("Niveau d'envoi animé", "send." + std::to_string(send.bus), -80, 12,
+                bool remove = ImGui::SmallButton("Remove");
+                if (parameter("Animated Send Level", "send." + std::to_string(send.bus), -80, 12,
                               send.gain)) {
                     ImGui::PopID();
                     return;
@@ -2443,11 +2704,11 @@ void Editor::mixDetails() {
             }
         }
     }
-    if (ImGui::CollapsingHeader("Pile DSP CyDAW 2", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("CyDAW 2 DSP stack", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (dspGraphEditor(args(), mix.effects))
             return;
-        if (ImGui::Button("+ Plugin natif / VST3")) {
-            auto path = dialog(false, L"Plugins audio\0*.dll;*.vst3\0Tous\0*.*\0\0", nullptr);
+        if (ImGui::Button("+ Native / VST3 plugin")) {
+            auto path = dialog(false, L"Audio plugins\0*.dll;*.vst3\0All\0*.*\0\0", nullptr);
             if (!path.empty()) {
                 auto a = args();
                 a["path"] = path;
@@ -2457,7 +2718,7 @@ void Editor::mixDetails() {
             return;
         }
         std::string id;
-        if (ImGui::BeginCombo("+ DSP", "Ajouter…")) {
+        if (ImGui::BeginCombo("+ DSP", "Add...")) {
             for (auto &d : cydaw::engine::effectCatalogue)
                 if (!d.convertsChannels() && ImGui::Selectable(std::string(d.displayName).c_str()))
                     id = "cydaw." + std::string(d.typeKey);
@@ -2489,16 +2750,16 @@ void Editor::mixDetails() {
                 }
                 int to = i;
                 ImGui::BeginDisabled(i == 0);
-                if (ImGui::SmallButton("Monter"))
+                if (ImGui::SmallButton("Move Up"))
                     to = i - 1;
                 ImGui::EndDisabled();
                 ImGui::SameLine();
                 ImGui::BeginDisabled(i + 1 == int(mix.effects.size()));
-                if (ImGui::SmallButton("Descendre"))
+                if (ImGui::SmallButton("Move Down"))
                     to = i + 1;
                 ImGui::EndDisabled();
                 ImGui::SameLine();
-                bool remove = ImGui::SmallButton("Retirer DSP");
+                bool remove = ImGui::SmallButton("Remove DSP");
                 if (remove || to != i) {
                     auto a = args();
                     a["effect"] = i;
@@ -2532,15 +2793,15 @@ void Editor::mixDetails() {
                 return;
         }
     }
-    if (ImGui::CollapsingHeader("Automation de mixage", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (ImGui::CollapsingHeader("Mix Automation", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (mixAnimationEffect >= int(mix.effects.size())) {
             mixAnimationEffect = -1;
             mixAnimationKey = "gain";
         }
         auto &params = mixAnimationEffect < 0 ? mix.params : mix.effects[mixAnimationEffect].params;
-        ImGui::Text("%s / %s", mixAnimationEffect < 0 ? "Canal" : mix.effects[mixAnimationEffect].id.c_str(),
+        ImGui::Text("%s / %s", mixAnimationEffect < 0 ? "Channel" : mix.effects[mixAnimationEffect].id.c_str(),
                     mixAnimationKey.c_str());
-        ImGui::TextDisabled("K : ajouter au temps courant ; clic droit sur K : afficher une courbe");
+        ImGui::TextDisabled("K: add at current time; right-click K: show curve");
         auto it = params.find(mixAnimationKey);
         if (it != params.end() && !it->second.keys.empty()) {
             float curve[128];
@@ -2552,20 +2813,20 @@ void Editor::mixDetails() {
                 double oldTime = key.time;
                 ImGui::PushID(int(n));
                 ImGui::SetNextItemWidth(120);
-                bool changed = ImGui::InputDouble("Temps s", &key.time, 0, 0, "%.4f",
+                bool changed = ImGui::InputDouble("Time (s)", &key.time, 0, 0, "%.4f",
                                                   ImGuiInputTextFlags_EnterReturnsTrue);
                 ImGui::SetNextItemWidth(120);
-                changed |= ImGui::InputFloat("Valeur", &key.value, 0, 0, "%.4f",
+                changed |= ImGui::InputFloat("Value", &key.value, 0, 0, "%.4f",
                                              ImGuiInputTextFlags_EnterReturnsTrue);
                 int interpolation = int(key.curve);
                 ImGui::SetNextItemWidth(180);
-                changed |= ImGui::Combo("Courbe", &interpolation, "Linéaire\0Douce\0Palier\0Courbe CyDAW\0");
+                changed |= ImGui::Combo("Curve", &interpolation, "Linear\0Smooth\0Step\0CyDAW Curve\0");
                 if (interpolation == int(Curve::Shaped)) {
                     ImGui::SetNextItemWidth(120);
-                    changed |= ImGui::InputFloat("Forme (-1 à 1)", &key.shape, 0, 0, "%.3f",
+                    changed |= ImGui::InputFloat("Shape (-1 to 1)", &key.shape, 0, 0, "%.3f",
                                                  ImGuiInputTextFlags_EnterReturnsTrue);
                 }
-                bool remove = ImGui::SmallButton("Supprimer le point");
+                bool remove = ImGui::SmallButton("Delete Keyframe");
                 ImGui::PopID();
                 if (changed || remove) {
                     auto a = args();
@@ -2582,8 +2843,8 @@ void Editor::mixDetails() {
                 ImGui::Separator();
             }
         } else
-            ImGui::TextDisabled("Aucun point ; le réglage de base est utilisé.");
-        if (ImGui::SmallButton("Rétablir le réglage de base")) {
+            ImGui::TextDisabled("No keyframes; the base value is used.");
+        if (ImGui::SmallButton("Restore Base Value")) {
             auto a = args();
             a["effect"] = mixAnimationEffect;
             a["key"] = mixAnimationKey;
@@ -2595,24 +2856,24 @@ void Editor::mixDetails() {
 bool Editor::pluginControls(Json target, const Effect &effect) {
     if (effect.id != "vst3")
         return false;
-    if (ImGui::Button("Ouvrir VST3")) {
+    if (ImGui::Button("Open VST3")) {
         target["visible"] = true;
         action("show_plugin_editor", target);
         return true;
     }
     ImGui::SameLine();
-    if (ImGui::Button("Fermer la fenêtre")) {
+    if (ImGui::Button("Close Window")) {
         action("capture_plugin_state", target);
         target["visible"] = false;
         action("show_plugin_editor", target);
         return true;
     }
-    if (ImGui::Button("Capturer l'état")) {
+    if (ImGui::Button("Capture State")) {
         action("capture_plugin_state", target);
         return true;
     }
     ImGui::SameLine();
-    if (ImGui::Button("Enregistrer preset")) {
+    if (ImGui::Button("Save preset")) {
         auto path = dialog(true, L"Preset VST3\0*.sfvstpreset\0\0", L"sfvstpreset");
         if (!path.empty()) {
             target["path"] = path;
@@ -2620,7 +2881,7 @@ bool Editor::pluginControls(Json target, const Effect &effect) {
         }
         return true;
     }
-    if (ImGui::Button("Charger preset")) {
+    if (ImGui::Button("Load preset")) {
         auto path = dialog(false, L"Preset VST3\0*.sfvstpreset\0\0", L"sfvstpreset");
         if (!path.empty()) {
             target["path"] = path;
@@ -2628,7 +2889,7 @@ bool Editor::pluginControls(Json target, const Effect &effect) {
         }
         return true;
     }
-    ImGui::TextDisabled("État complet embarqué ; les courbes d'automation restent prioritaires.");
+    ImGui::TextDisabled("Full state is embedded; automation curves take precedence.");
     return false;
 }
 bool Editor::dspGraphEditor(Json target, const std::vector<Effect> &chain) {
@@ -2649,21 +2910,21 @@ bool Editor::dspGraphEditor(Json target, const std::vector<Effect> &chain) {
     int &choice = choices[identity];
     if (choice >= int(chain.size()) || (choice >= 0 && chain[choice].id != "cydaw.graph"))
         choice = -1;
-    auto label = choice < 0 ? "Nouveau graphe"
-                            : chain[choice].graph["name"].S("Graphe DSP") + " #" + std::to_string(choice + 1);
-    if (ImGui::BeginCombo("Graphe à éditer", label.c_str())) {
-        if (ImGui::Selectable("Nouveau graphe", choice < 0))
+    auto label = choice < 0 ? "New Graph"
+                            : chain[choice].graph["name"].S("DSP Graph") + " #" + std::to_string(choice + 1);
+    if (ImGui::BeginCombo("Graph to Edit", label.c_str())) {
+        if (ImGui::Selectable("New Graph", choice < 0))
             choice = -1;
         for (int i = 0; i < int(chain.size()); ++i)
             if (chain[i].id == "cydaw.graph") {
-                auto name = chain[i].graph["name"].S("Graphe DSP") + " #" + std::to_string(i + 1);
+                auto name = chain[i].graph["name"].S("DSP Graph") + " #" + std::to_string(i + 1);
                 if (ImGui::Selectable(name.c_str(), choice == i))
                     choice = i;
             }
         ImGui::EndCombo();
     }
     bool requested = openDspNext && target["scope"].S() == mixScope && target["target"].U() == mixTarget;
-    if (ImGui::Button("Graphe DSP : éditer / importer…") || requested) {
+    if (ImGui::Button("DSP Graph: Edit / Import...") || requested) {
         openDspNext = false;
         index = choice;
         auto graph = index >= 0 ? chain[index].graph : Json::Object();
@@ -2674,14 +2935,14 @@ bool Editor::dspGraphEditor(Json target, const std::vector<Effect> &chain) {
         }
         dspCanvas.open(graph);
         draft = graph.Dump(2);
-        ImGui::OpenPopup("Éditeur DSP v2");
+        ImGui::OpenPopup("DSP Editor v2");
     }
     ImGui::SetNextWindowSize({1040, 650}, ImGuiCond_Appearing);
-    if (ImGui::BeginPopup("Éditeur DSP v2")) {
-        ImGui::TextWrapped("0 = entrée/sortie ; nœuds à identité stable, processeurs cydaw.*, somme sf.sum. "
-                           "Les connexions sont validées par CyDAW v2.");
+    if (ImGui::BeginPopup("DSP Editor v2")) {
+        ImGui::TextWrapped("0 = input/output; stable node IDs, cydaw.* processors, sf.sum summation. "
+                           "Connections are validated by CyDAW v2.");
         if (ImGui::BeginTabBar("dspTabs")) {
-            if (ImGui::BeginTabItem("Graphe")) {
+            if (ImGui::BeginTabItem("Graph")) {
                 if (dspCanvas.draw(s.time))
                     draft = dspCanvas.document().Dump(2);
                 ImGui::EndTabItem();
@@ -2703,12 +2964,12 @@ bool Editor::dspGraphEditor(Json target, const std::vector<Effect> &chain) {
             }
             ImGui::EndTabBar();
         }
-        if (ImGui::Button("Importer JSON")) {
-            auto path = dialog(false, L"Graphe DSP\0*.json\0\0", L"json");
+        if (ImGui::Button("Import JSON")) {
+            auto path = dialog(false, L"DSP graph\0*.json\0\0", L"json");
             if (!path.empty()) {
                 std::string text;
                 if (!sx::ReadTextFile(path, text))
-                    error = "Graphe illisible";
+                    error = "Cannot read graph";
                 else {
                     Json graph;
                     std::string failure;
@@ -2726,8 +2987,8 @@ bool Editor::dspGraphEditor(Json target, const std::vector<Effect> &chain) {
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Exporter JSON")) {
-            auto path = dialog(true, L"Graphe DSP\0*.json\0\0", L"json");
+        if (ImGui::Button("Export JSON")) {
+            auto path = dialog(true, L"DSP graph\0*.json\0\0", L"json");
             if (!path.empty())
                 try {
                     AtomicFile output(path);
@@ -2735,14 +2996,14 @@ bool Editor::dspGraphEditor(Json target, const std::vector<Effect> &chain) {
                     file << draft;
                     file.close();
                     if (!file)
-                        throw std::runtime_error("Écriture du graphe échouée");
+                        throw std::runtime_error("Graph write failed");
                     output.commit();
                 } catch (const std::exception &e) {
                     error = e.what();
                 }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Compiler et appliquer")) {
+        if (ImGui::Button("Compile and Apply")) {
             applied = true;
             Json graph;
             std::string failure;
@@ -2761,7 +3022,7 @@ bool Editor::dspGraphEditor(Json target, const std::vector<Effect> &chain) {
     return applied;
 }
 void Editor::mixer() {
-    if (!panels["Mixeur & graphe audio"] || !beginPanel("Mixeur & graphe audio"))
+    if (!panels["Mixer & Audio Graph"] || !beginPanel("Mixer & Audio Graph"))
         return;
     if (ImGui::BeginTabBar("audioTabs")) {
         if (ImGui::BeginTabItem("Bandeaux CyDAW")) {
@@ -2830,7 +3091,7 @@ void Editor::mixer() {
             ImGui::EndChild();
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Mixeur", nullptr,
+        if (ImGui::BeginTabItem("Mixer", nullptr,
                                 openDspNext ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None)) {
             if ((mixScope == "track" && (!s.project.findTrack(mixTarget) ||
                                          s.project.findTrack(mixTarget)->kind != TrackKind::Audio)) ||
@@ -2838,9 +3099,9 @@ void Editor::mixer() {
                 mixScope = "master";
                 mixTarget = 0;
             }
-            bool addBus = ImGui::Button("+ Bus stéréo");
+            bool addBus = ImGui::Button("+ Stereo Bus");
             ImGui::SameLine();
-            ImGui::TextDisabled("Sélectionner un canal pour ses envois, DSP et animations");
+            ImGui::TextDisabled("Select a channel to edit its sends, DSP and animation");
             ImGui::BeginChild("channels", {220, 0}, true);
             auto row = [&](const char *scope, Id id, const std::string &name) {
                 ImGui::PushID(scope);
@@ -2880,29 +3141,29 @@ void Editor::mixer() {
                 ImGui::PopID();
                 ImGui::PopID();
             };
-            ImGui::SeparatorText("PISTES");
+            ImGui::SeparatorText("TRACKS");
             for (auto &track : s.project.tracks)
                 if (track.kind == TrackKind::Audio)
                     row("track", track.id, track.name);
             ImGui::SeparatorText("BUS");
             for (auto &bus : s.project.buses)
                 row("bus", bus.id, bus.name);
-            ImGui::SeparatorText("SORTIE");
+            ImGui::SeparatorText("OUTPUT");
             row("master", 0, "MASTER");
             ImGui::TextDisabled("M %.1f LUFS", s.media.loudness.momentary());
             ImGui::TextDisabled("S %.1f LUFS · TP %.1f dBTP", s.media.loudness.shortTerm(),
                                 s.media.loudness.truePeak());
             ImGui::TextDisabled("I %.1f LUFS", s.media.loudness.integrated());
-            ImGui::TextDisabled("Latence compensée : %u samples", s.media.latencySamples);
+            ImGui::TextDisabled("Compensated Latency: %u samples", s.media.latencySamples);
             ImGui::EndChild();
             ImGui::SameLine();
             ImGui::BeginChild("channelDetails", {0, 0}, true);
             auto *track = mixScope == "track" ? s.project.findTrack(mixTarget) : nullptr;
             auto *bus = mixScope == "bus" ? s.project.findBus(mixTarget) : nullptr;
             bool locked = track ? track->locked : bus ? bus->locked : false;
-            std::string label = track ? track->name : bus ? bus->name : "MASTER / 48 kHz stéréo";
+            std::string label = track ? track->name : bus ? bus->name : "MASTER / Stereo 48 kHz";
             ImGui::SeparatorText(label.c_str());
-            bool toggleLock = (track || bus) && ImGui::Checkbox("Verrouillé", &locked);
+            bool toggleLock = (track || bus) && ImGui::Checkbox("Locked", &locked);
             if (toggleLock) {
                 Json a = Json::Object();
                 a["scope"] = mixScope;
@@ -2926,19 +3187,19 @@ void Editor::mixer() {
         }
         if (ImGui::BeginTabItem("Signal")) {
             if (s.playing) {
-                ImGui::PlotLines("Forme d'onde", audio.analysis.waveform.data(), audio.analysis.waveformCount,
+                ImGui::PlotLines("Waveform", audio.analysis.waveform.data(), audio.analysis.waveformCount,
                                  0, nullptr, -1, 1, {-1, 80});
                 float bins[128]{};
                 cydaw::engine::computeLogSpectrum(audio.analysis, 20, 20000, bins, 128);
                 ImGui::PlotHistogram("Spectre logarithmique", bins, 128, 0, nullptr, 0, 1, {-1, 95});
             } else
-                ImGui::TextWrapped("Lancez la lecture pour analyser le mix avec CyDAW 2.");
+                ImGui::TextWrapped("Start playback to analyze the mix with CyDAW 2.");
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Graphe")) {
+        if (ImGui::BeginTabItem("Graph")) {
             try {
                 auto graph = audioGraph(s.project);
-                ImGui::TextDisabled("CYDAW 2 / %zu nœuds · %zu câbles stéréo validés", graph.nodes.size(),
+                ImGui::TextDisabled("CYDAW 2 / %zu nodes - %zu validated stereo cables", graph.nodes.size(),
                                     graph.connections.size());
                 ImGui::BeginChild("routingGraph", {0, 0}, true, ImGuiWindowFlags_HorizontalScrollbar);
                 std::map<uint64_t, int> depth;
@@ -2999,30 +3260,30 @@ void Editor::integrations() {
     if (!panels["Plugins & MCP"] || !beginPanel("Plugins & MCP"))
         return;
     ImGui::SeparatorText("Plugins HLSL · API 1 / 2");
-    ImGui::TextWrapped("Les paquets dans plugins/ déclarent leurs effets via plugin.json. Le code est "
-                       "embarqué dans le projet pour stabiliser les rendus.");
-    if (ImGui::Button("Recharger les plugins"))
+    ImGui::TextWrapped("Packages in plugins/ declare effects in plugin.json. Code is "
+                       "embedded in the project for consistent rendering.");
+    if (ImGui::Button("Reload Plugins"))
         s.renderer.library.scan(root);
     for (auto &d : s.renderer.library.definitions)
         if (d.origin.starts_with("Plugin"))
             ImGui::BulletText("%s", d.name.c_str());
     for (auto &e : s.renderer.library.diagnostics)
         ImGui::TextWrapped("%s", e.c_str());
-    ImGui::SeparatorText("MCP natif · stdio");
+    ImGui::SeparatorText("Native MCP · stdio");
     ImGui::TextWrapped(
-        "Démarrage : ShaderixFrame.exe --mcp\nLe client MCP et la fenêtre de ce processus partagent la "
-        "séquence. Montage, animations, graphes, effets et export sont accessibles aux outils.");
-    ImGui::TextDisabled("Dernière commande : %s", s.lastCommand.empty() ? "—" : s.lastCommand.c_str());
-    ImGui::SeparatorText("Séquence");
+        "Start: ShaderixFrame.exe --mcp\nThe MCP client and this process's window share the "
+        "sequence. Editing, animation, graphs, effects and exports are available to tools.");
+    ImGui::TextDisabled("Last Command: %s", s.lastCommand.empty() ? "—" : s.lastCommand.c_str());
+    ImGui::SeparatorText("Sequence");
     auto before = s.project;
-    ImGui::DragScalar("Durée (s)", ImGuiDataType_Double, &s.project.duration, .1f);
+    ImGui::DragScalar("Duration (s)", ImGuiDataType_Double, &s.project.duration, .1f);
     s.project.duration = std::clamp(s.project.duration, 0.1, 86400.);
     editCheckpoint(before);
     before = s.project;
     ImGui::SliderInt("Images/s", &s.project.fps, 1, 120);
     editCheckpoint(before);
     ImGui::TextDisabled("%d × %d pixels", s.project.width, s.project.height);
-    ImGui::TextWrapped("Raccourcis : Espace lecture, S découpe, Suppr retire, Ctrl+Z/Y annuler/rétablir.");
+    ImGui::TextWrapped("Shortcuts: Space play, S split, Delete remove, Ctrl+Z/Y undo/redo.");
     ImGui::End();
 }
 void Editor::recoveryPanel() {
@@ -3047,20 +3308,20 @@ void Editor::recoveryPanel() {
     if (!recoveryVisible)
         return;
     ImGui::SetNextWindowSize({600, 300}, ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Récupération des sessions", &recoveryVisible)) {
-        ImGui::TextWrapped("Les modifications non enregistrées sont conservées toutes les 5 secondes et "
-                           "à la fermeture. Choisissez une session à reprendre.");
+    if (ImGui::Begin("Session Recovery", &recoveryVisible)) {
+        ImGui::TextWrapped("Unsaved changes are preserved every 5 seconds and "
+                           "on exit. Choose a session to resume.");
         ImGui::Separator();
         if (recoveries.empty())
-            ImGui::TextDisabled("Aucune session interrompue à récupérer.");
+            ImGui::TextDisabled("No interrupted sessions to recover.");
         for (auto &entry : recoveries) {
             ImGui::PushID(sx::Narrow(entry.file.wstring()).c_str());
             ImGui::TextUnformatted(entry.name.c_str());
-            ImGui::TextDisabled("%s", entry.originalPath.empty() ? "Projet non enregistré"
+            ImGui::TextDisabled("%s", entry.originalPath.empty() ? "Unsaved Project"
                                                                  : entry.originalPath.c_str());
-            bool restore = ImGui::Button("Reprendre"), discard = false;
+            bool restore = ImGui::Button("Resume"), discard = false;
             ImGui::SameLine();
-            discard = ImGui::Button("Supprimer cette récupération");
+            discard = ImGui::Button("Delete This Recovery");
             ImGui::PopID();
             if (restore || discard) {
                 try {
@@ -3107,8 +3368,8 @@ void Editor::exportPanel() {
         exportsFocus = false;
     }
     if (visible) {
-        ImGui::TextWrapped("Le rendu utilise la séquence et les effets au moment du lancement. "
-                           "Vous pouvez continuer le montage ou ouvrir un autre projet.");
+        ImGui::TextWrapped("Rendering uses the sequence and effects captured when the export starts. "
+                           "You can continue editing or open another project.");
         auto &preset = exportPreset;
         auto &format = exportFormat;
         if (ImGui::BeginCombo("Preset", exportPresets()[preset].name.c_str())) {
@@ -3118,25 +3379,37 @@ void Editor::exportPanel() {
             ImGui::EndCombo();
         }
         ImGui::Combo("Format", &format,
-                     "MP4 H264 / AAC\0WAV stéréo 48 kHz\0Séquence PNG\0Rapport de sonorité JSON\0AVI RGB / "
-                     "PCM sans compression\0");
+                     "MP4 H264 / AAC\0Stereo 48 kHz WAV\0PNG Sequence\0Loudness Report JSON\0RGB AVI / "
+                     "Uncompressed PCM\0");
         if (format == 2) {
             int bits = s.project.imageFormat == "png8" ? 0 : s.project.imageFormat == "png16" ? 1 : 2;
             const char *formats[] = {"png8", "png16", "exr16"};
-            if (ImGui::Combo("Précision des images", &bits,
-                             "PNG 8 bits\0PNG 16 bits\0EXR half 16 bits HDR\0")) {
+            if (ImGui::Combo("Image Precision", &bits,
+                             "PNG 8-bit\0PNG 16-bit\0EXR half-float 16-bit HDR\0")) {
                 Json a = Json::Object();
                 a["imageFormat"] = formats[bits];
                 action("set_color_management", a);
             }
         }
-        if (ImGui::Button("Ajouter à la file")) {
+        // The work area drawn on the ruler can be the exported range.
+        ImGui::BeginDisabled(!s.project.hasWorkArea());
+        bool workOnly = exportWorkArea && s.project.hasWorkArea();
+        if (ImGui::Checkbox("Work Area Only", &workOnly))
+            exportWorkArea = workOnly;
+        ImGui::EndDisabled();
+        if (s.project.hasWorkArea()) {
+            ImGui::SameLine();
+            ImGui::TextDisabled("%s → %s", timecode(s.project.workIn, s.project.fps).c_str(),
+                                timecode(s.project.workOut, s.project.fps).c_str());
+        } else if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip("Drag the top of the timeline ruler to define a work area");
+        if (ImGui::Button("Add to Queue")) {
             auto path = dialog(true,
-                               format == 0   ? L"Vidéo MP4\0*.mp4\0\0"
+                               format == 0   ? L"MP4 Video\0*.mp4\0\0"
                                : format == 1 ? L"Audio WAV\0*.wav\0\0"
-                               : format == 3 ? L"Rapport JSON\0*.json\0\0"
-                               : format == 4 ? L"Vidéo AVI\0*.avi\0\0"
-                                             : L"Nouveau dossier de séquence\0*.*\0\0",
+                               : format == 3 ? L"JSON report\0*.json\0\0"
+                               : format == 4 ? L"AVI Video\0*.avi\0\0"
+                                             : L"New Sequence Folder\0*.*\0\0",
                                format == 0   ? L"mp4"
                                : format == 1 ? L"wav"
                                : format == 3 ? L"json"
@@ -3150,34 +3423,36 @@ void Editor::exportPanel() {
                                : format == 2              ? "images"
                                                           : "analysis";
                 args["preset"] = exportPresets()[preset].id;
+                if (workOnly)
+                    args["range"] = "work";
                 action("start_export", args);
             }
         }
         auto jobs = s.exports.list();
         if (jobs.empty())
-            ImGui::TextDisabled("Aucun export. Choisir Fichier > Exporter MP4 ou Exporter le mix WAV.");
+            ImGui::TextDisabled("No exports. Choose File > Export MP4 or Export WAV Mix.");
         for (auto &job : jobs) {
             ImGui::PushID(int(job.id));
             ImGui::Separator();
-            const char *state = job.state == ExportState::Queued       ? "En attente"
-                                : job.state == ExportState::Running    ? "Rendu en cours"
-                                : job.state == ExportState::Cancelling ? "Annulation en cours"
-                                : job.state == ExportState::Finalizing ? "Finalisation du fichier"
-                                : job.state == ExportState::Completed  ? "Terminé"
-                                : job.state == ExportState::Cancelled  ? "Annulé"
-                                                                       : "Échec";
+            const char *state = job.state == ExportState::Queued       ? "Queued"
+                                : job.state == ExportState::Running    ? "Rendering"
+                                : job.state == ExportState::Cancelling ? "Cancelling"
+                                : job.state == ExportState::Finalizing ? "Finalizing File"
+                                : job.state == ExportState::Completed  ? "Completed"
+                                : job.state == ExportState::Cancelled  ? "Canceled"
+                                                                       : "Failed";
             ImGui::Text("#%u · %s · %s", job.id,
                         job.kind == ExportKind::Video
                             ? (job.json()["format"].S() == "avi" ? "AVI / RGB · PCM" : "MP4 / H264 · AAC")
-                        : job.kind == ExportKind::Audio  ? "WAV / stéréo 48 kHz"
-                        : job.kind == ExportKind::Images ? "Séquence PNG"
-                                                         : "Rapport LUFS",
+                        : job.kind == ExportKind::Audio  ? "WAV / Stereo 48 kHz"
+                        : job.kind == ExportKind::Images ? "PNG Sequence"
+                                                         : "LUFS report",
                         state);
             ImGui::TextUnformatted(job.path.c_str());
-            ImGui::TextDisabled("%s · %.2f s · %d × %d / %d fps · temps écoulé %.1f s", job.project.c_str(),
+            ImGui::TextDisabled("%s - %.2f s - %d x %d / %d fps - elapsed %.1f s", job.project.c_str(),
                                 job.duration, job.width, job.height, job.fps, job.elapsed);
             ImGui::ProgressBar(job.progress, {-1, 18});
-            if (job.cancellable() && ImGui::Button("Annuler cet export")) {
+            if (job.cancellable() && ImGui::Button("Cancel This Export")) {
                 Json args = Json::Object();
                 args["job"] = job.id;
                 action("cancel_export", args);
@@ -3206,10 +3481,24 @@ void Editor::handleShortcuts() {
                          std::string(nav->Name).find("ShaderixelComposition") != std::string::npos ||
                          std::string(nav->Name).find("dspCanvas") != std::string::npos);
     bool localDsp = nav && std::string(nav->Name).find("dspCanvas") != std::string::npos;
+    // The source monitor has its own playback, frame steps and in/out marks.
+    bool source = nav && std::string(nav->Name).starts_with("Source");
     if (!io.WantTextInput && !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId)) {
-        if (ImGui::IsKeyPressed(ImGuiKey_Space))
-            s.playing = !s.playing;
-        if (ImGui::IsKeyPressed(ImGuiKey_S) && !io.KeyCtrl && !graph && s.selected) {
+        // Over the Composition image, Space also pans: playback then toggles on release, unless it panned.
+        if (ImGui::IsKeyPressed(ImGuiKey_Space, false) && !source && io.KeyShift)
+            playAround();
+        if (ImGui::IsKeyPressed(ImGuiKey_Space, false) && !source && !io.KeyShift) {
+            spaceOverView = compositionHovered;
+            spacePanned = false;
+            if (!spaceOverView)
+                s.playing = !s.playing;
+        }
+        if (ImGui::IsKeyReleased(ImGuiKey_Space) && spaceOverView) {
+            if (!spacePanned)
+                s.playing = !s.playing;
+            spaceOverView = false;
+        }
+        if (keymap.pressed("edit.split") && !graph && s.selected) {
             auto a = selectionArgs();
             a["time"] = s.time;
             action("split_clips", a);
@@ -3221,6 +3510,89 @@ void Editor::handleShortcuts() {
         }
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_D) && !graph && s.selected)
             action("duplicate_clips", selectionArgs());
+        // Ctrl + arrows: previous / next animation key of the selected clips (of every clip without selection).
+        if (!graph && io.KeyCtrl && !source &&
+            (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) || ImGui::IsKeyPressed(ImGuiKey_RightArrow))) {
+            bool forward = ImGui::IsKeyPressed(ImGuiKey_RightArrow);
+            double best = forward ? 1e30 : -1e30;
+            auto consider = [&](const std::map<std::string, Parameter> &params) {
+                for (auto &[key, param] : params)
+                    for (auto &k : param.keys)
+                        if (forward ? k.time > s.time + 1e-6 && k.time < best : k.time < s.time - 1e-6 && k.time > best)
+                            best = k.time;
+            };
+            for (auto &track : s.project.tracks)
+                for (auto &clip : track.clips)
+                    if (s.selection.empty() || std::find(s.selection.begin(), s.selection.end(), clip.id) != s.selection.end()) {
+                        consider(clip.params);
+                        for (auto &effect : clip.effects)
+                            consider(effect.params);
+                    }
+            if (std::abs(best) < 1e29)
+                s.time = std::clamp(best, 0., s.project.duration);
+        }
+        if (!graph && !io.KeyCtrl && !source) {
+            double frame = 1. / s.project.fps;
+            auto edit = [&](bool forward) {
+                std::vector<double> points{0, s.project.duration};
+                for (auto &track : s.project.tracks)
+                    for (auto &clip : track.clips) {
+                        points.push_back(clip.start);
+                        points.push_back(clip.start + clip.duration);
+                    }
+                for (auto &marker : s.project.markers)
+                    points.push_back(marker.time);
+                double best = forward ? s.project.duration : 0;
+                for (double point : points)
+                    if (forward ? point > s.time + 1e-6 && point < best : point < s.time - 1e-6 && point > best)
+                        best = point;
+                return best;
+            };
+            double step = io.KeyShift ? 1 : frame;
+            if (ImGui::IsKeyPressed(ImGuiKey_Home))
+                s.time = 0;
+            if (ImGui::IsKeyPressed(ImGuiKey_End))
+                s.time = s.project.duration;
+            // Alt + arrows nudge the selected clips by one frame (Shift: ten); plain arrows move the playhead.
+            bool nudge = io.KeyAlt && !s.selection.empty();
+            for (auto [key, direction] : {std::pair{ImGuiKey_LeftArrow, -1.}, std::pair{ImGuiKey_RightArrow, 1.}})
+                if (ImGui::IsKeyPressed(key)) {
+                    if (nudge) {
+                        double delta = direction * frame * (io.KeyShift ? 10 : 1), earliest = 1e18;
+                        for (auto id : s.project.selection(s.selection, false))
+                            if (auto *clip = s.project.findClip(id))
+                                earliest = std::min(earliest, clip->start);
+                        auto a = selectionArgs();
+                        a["delta"] = std::max(delta, -earliest); // never before the sequence start
+                        if (std::abs(a["delta"].Num()) > 1e-9)
+                            action("move_clips", a);
+                    } else
+                        s.time = std::clamp(std::round((s.time + direction * step) / frame) * frame, 0.,
+                                            s.project.duration);
+                }
+            if (ImGui::IsKeyPressed(ImGuiKey_UpArrow))
+                s.time = edit(false);
+            if (ImGui::IsKeyPressed(ImGuiKey_DownArrow))
+                s.time = edit(true);
+            if (keymap.pressed("loop.toggle", false))
+                loop = !loop;
+            if (keymap.pressed("shuttle.forward", false))
+                shuttleStep(1);
+            bool curves = nav && std::string(nav->Name).starts_with("Animation");
+            if (keymap.pressed("shuttle.back", false))
+                shuttleStep(-1);
+            if (keymap.pressed("shuttle.stop", false) && !curves) {
+                s.playing = false;
+                shuttleRate = 1;
+            }
+            if (keymap.pressed("marker.add", false)) {
+                Json a = Json::Object();
+                a["time"] = s.time;
+                action("add_marker", a);
+            }
+            if (keymap.pressed("area.in", false) || keymap.pressed("area.out", false))
+                workAreaEdge(keymap.pressed("area.in", false));
+        }
         if (io.KeyCtrl && !localDsp && ImGui::IsKeyPressed(ImGuiKey_Z) &&
             !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId))
             action("undo");
@@ -3229,31 +3601,19 @@ void Editor::handleShortcuts() {
             action("redo");
         if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_N))
             action("new_project");
-        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S)) {
-            auto path = s.projectPath.empty() ? dialog(true, L"ShaderixFrame\0*.sframe\0\0", L"sframe")
-                                              : s.projectPath;
-            if (!path.empty()) {
-                Json a = Json::Object();
-                a["path"] = path;
-                action("save_project", a);
-            }
-        }
-        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_O)) {
-            auto path = dialog(false, L"ShaderixFrame\0*.sframe\0\0", L"sframe");
-            if (!path.empty()) {
-                Json a = Json::Object();
-                a["path"] = path;
-                action("open_project", a);
-            }
-        }
-        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_I)) {
-            auto path = dialog(false, L"Médias\0*.*\0\0", nullptr);
-            if (!path.empty())
-                drop(path);
-        }
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S))
+            saveCommand();
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_O))
+            openCommand();
+        if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_I))
+            importCommand();
+        if (keymap.pressed("view.palette", false))
+            openPalette();
     }
 }
 void Editor::draw() {
+    if (panelSuffix.empty() && !modesReady)
+        setMode(mode);
     panelSettings();
     try {
         s.syncPluginEditors();
@@ -3271,7 +3631,9 @@ void Editor::draw() {
             Json args = Json::Object();
             args["path"] = it->path;
             args["start"] = it->time;
-            action("import_media", args);
+            args["proxy"] = autoProxies;
+            if (action("import_media", args) && actionResult.Has("proxy_job"))
+                say("Large video: preparing a 720p preview proxy");
         } catch (const std::exception &failure) {
             error = failure.what();
         }
@@ -3280,8 +3642,40 @@ void Editor::draw() {
     s.tidySelection();
     keyboardOwner()->handleShortcuts();
     bool sought = std::abs(s.time - lastTransport) > 1e-7;
-    if (s.playing) {
-        if (!wasPlaying || sought) {
+    pollLoudness();
+    pollAnalysis();
+    if (playAroundEnd >= 0 && (!s.playing || s.time >= playAroundEnd - 1e-6)) {
+        if (s.playing || s.time >= playAroundEnd - 1e-6)
+            s.time = playAroundReturn;
+        s.playing = false;
+        playAroundEnd = -1;
+        sought = true;
+    }
+    if (ImGui::GetTime() >= offlineChecked) {
+        offlineChecked = ImGui::GetTime() + 3;
+        offlineMedia = 0;
+        for (auto &path : s.project.mediaPaths()) {
+            std::error_code missing;
+            offlineMedia += !std::filesystem::exists(sx::Utf8Path(path), missing);
+        }
+    }
+    if (!s.playing)
+        shuttleRate = 1;
+    bool rateChanged = anchoredRate != shuttleRate;
+    anchoredRate = shuttleRate;
+    if (s.playing && shuttleRate != 1) {
+        // Away from ×1 the picture follows the clock alone, backwards too; the sound is silent.
+        if (!wasPlaying || sought || rateChanged) {
+            audio.stop();
+            shuttleOrigin = s.time;
+            shuttleWall = ImGui::GetTime();
+        }
+        double next = shuttleOrigin + (ImGui::GetTime() - shuttleWall) * shuttleRate;
+        s.time = std::clamp(next, 0., s.project.duration);
+        if (next <= 0 || next >= s.project.duration)
+            s.playing = false;
+    } else if (s.playing) {
+        if (!wasPlaying || sought || rateChanged) {
             s.media.resetAudio();
             audio.start(s.time);
             wallTime = ImGui::GetTime() - s.time;
@@ -3293,14 +3687,17 @@ void Editor::draw() {
             error = e.what();
             s.playing = false;
         }
-        if (s.time >= s.project.duration) {
-            s.time = loop ? 0 : s.project.duration;
+        // The loop plays the work area when one is set, as CyDAW's loop range.
+        bool area = loop && s.project.hasWorkArea();
+        double end = area ? s.project.workOut : s.project.duration, begin = area ? s.project.workIn : 0;
+        if (s.time >= end) {
+            s.time = loop ? begin : s.project.duration;
             s.playing = loop;
             audio.stop();
             if (loop) {
                 s.media.resetAudio();
-                audio.start(0);
-                wallTime = ImGui::GetTime();
+                audio.start(begin);
+                wallTime = ImGui::GetTime() - begin;
             }
             wasPlaying = false;
         }
@@ -3309,7 +3706,23 @@ void Editor::draw() {
     wasPlaying = s.playing;
     lastTransport = s.time;
     try {
-        float scale = std::min(1.f, std::min(1280.f / s.project.width, 720.f / s.project.height));
+        // A pre-rendered frame stands for the render during playback while the document matches it;
+        // the signature is checked a few times a second and at once after an undoable change.
+        cachedView = nullptr;
+        if (!renderCache.empty()) {
+            std::size_t history = s.history.undoSteps().size() * 4096 + s.history.redoSteps().size();
+            if (ImGui::GetTime() >= renderCacheChecked || history != renderCacheHistory) {
+                renderCacheChecked = ImGui::GetTime() + .5;
+                renderCacheHistory = history;
+                if (renderSignature() != renderCache.signature())
+                    renderCache.clear();
+            }
+            if (!renderCache.empty() && s.playing && !gradeComparison && !gradeMatte && !gradePick)
+                cachedView = renderCache.frame(s.time, s.renderer.gpu());
+        }
+        // 720p for the fitted view, more when the Composition view is zoomed in.
+        float scale = previewScale();
+        scale = std::clamp(std::max(scale, compositionDetail), .05f, 1.f);
         if (gradeComparison == 3) {
             if (!gradeBefore) {
                 gradeBefore = std::make_unique<Renderer>();
@@ -3321,9 +3734,10 @@ void Editor::draw() {
         }
         s.renderer.captureGradeClip = gradePick ? s.selected : 0;
         s.renderer.captureGradeEffect = selectedEffect;
-        s.renderer.render(s.project, s.media, s.time, unsigned(s.project.width * scale),
-                          unsigned(s.project.height * scale), gradeComparison == 1,
-                          gradeMatte ? s.selected : 0, selectedEffect);
+        if (!cachedView)
+            s.renderer.render(s.project, s.media, s.time, unsigned(s.project.width * scale),
+                              unsigned(s.project.height * scale), gradeComparison == 1,
+                              gradeMatte ? s.selected : 0, selectedEffect);
         if (gradeScopesVisible && ImGui::GetTime() >= gradeScopesNext) {
             gradeScopes = videoScopes(s.renderer.readbackFloat(), s.project.toneMap, s.project.exposure);
             gradeScopesNext = ImGui::GetTime() + .25;
@@ -3332,6 +3746,13 @@ void Editor::draw() {
         error = e.what();
     }
     menu();
+    modeBar();
+    if (!ImGui::GetIO().WantTextInput && !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId)) {
+        constexpr ImGuiKey keys[] = {ImGuiKey_F1, ImGuiKey_F2, ImGuiKey_F3, ImGuiKey_F4, ImGuiKey_F5, ImGuiKey_F6};
+        for (int m = 0; m < modeCount; ++m)
+            if (ImGui::IsKeyPressed(keys[m], false))
+                setMode(Mode(m));
+    }
     auto *vp = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(vp->WorkPos);
     ImGui::SetNextWindowSize({vp->WorkSize.x, vp->WorkSize.y - 28});
@@ -3346,35 +3767,11 @@ void Editor::draw() {
     ImGui::PopStyleVar();
     if (!layoutReady) {
         layoutReady = true;
-        if (!ImGui::DockBuilderGetNode(dock) || !ImGui::DockBuilderGetNode(dock)->IsSplitNode()) {
-            ImGui::DockBuilderRemoveNode(dock);
-            ImGui::DockBuilderAddNode(dock, ImGuiDockNodeFlags_DockSpace);
-            ImGui::DockBuilderSetNodeSize(dock, vp->WorkSize);
-            ImGuiID center = dock, left, right, bottom, upperRight;
-            ImGui::DockBuilderSplitNode(center, ImGuiDir_Left, .18f, &left, &center);
-            ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, .27f, &right, &center);
-            ImGui::DockBuilderSplitNode(center, ImGuiDir_Down, .44f, &bottom, &center);
-            ImGui::DockBuilderSplitNode(right, ImGuiDir_Up, .30f, &upperRight, &right);
-            ImGui::DockBuilderDockWindow("Médias & effets", left);
-            ImGui::DockBuilderDockWindow("Composition", center);
-            ImGui::DockBuilderDockWindow("Calques", upperRight);
-            ImGui::DockBuilderDockWindow("Propriétés", right);
-            ImGui::DockBuilderDockWindow("Scopes vidéo", right);
-            ImGui::DockBuilderDockWindow("Timeline", bottom);
-            ImGui::DockBuilderDockWindow("Éditeur de clip", center);
-            ImGui::DockBuilderDockWindow("Graphe DSP", bottom);
-            ImGui::DockBuilderDockWindow("Motion design", bottom);
-            ImGui::DockBuilderDockWindow("Bibliothèque Shaderixel", left);
-            ImGui::DockBuilderDockWindow("Animations", bottom);
-            ImGui::DockBuilderDockWindow("Étalonnage", bottom);
-            ImGui::DockBuilderDockWindow("Graphe VFX", bottom);
-            ImGui::DockBuilderDockWindow("Graphe des calques", bottom);
-            ImGui::DockBuilderDockWindow("HLSL", bottom);
-            ImGui::DockBuilderDockWindow("Mixeur & graphe audio", bottom);
-            ImGui::DockBuilderDockWindow("Exports", bottom);
-            ImGui::DockBuilderDockWindow("Plugins & MCP", left);
-            ImGui::DockBuilderFinish(dock);
-        }
+        bool restored = layoutRestore && !layoutForce && restoreModeLayout(dock, vp->WorkSize);
+        if (!restored &&
+            (layoutRestore || layoutForce || !ImGui::DockBuilderGetNode(dock) || !ImGui::DockBuilderGetNode(dock)->IsSplitNode()))
+            buildLayout(dock, vp->WorkSize);
+        layoutForce = layoutRestore = false;
     }
     ImGui::End();
     clipEditor();
@@ -3383,6 +3780,14 @@ void Editor::draw() {
     dspPanel();
     library();
     preview();
+    sourcePanel();
+    markersPanel();
+    historyPanel();
+    subtitlesPanel();
+    anglesPanel();
+    shortcutsPanel();
+    if (paletteOpen)
+        commandPalette();
     layers();
     inspector();
     timeline();
@@ -3400,6 +3805,8 @@ void Editor::draw() {
         ImGui::SetWindowFocus(pendingPanelFocus.c_str());
         pendingPanelFocus.clear();
     }
+    if (panelSuffix.empty())
+        trackDetachedPanels();
     ImGui::SetNextWindowPos({vp->WorkPos.x, vp->WorkPos.y + vp->WorkSize.y - 28});
     ImGui::SetNextWindowSize({vp->WorkSize.x, 28});
     ImGui::SetNextWindowViewport(vp->ID);
@@ -3407,7 +3814,7 @@ void Editor::draw() {
                  ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings);
     auto jobs = s.exports.list();
     if (s.media.pending()) {
-        ImGui::TextDisabled("Préparation des médias…");
+        ImGui::TextDisabled("Preparing media...");
         ImGui::SameLine();
     }
     auto active = std::find_if(jobs.begin(), jobs.end(), [](const auto &job) { return job.active(); });
@@ -3416,7 +3823,7 @@ void Editor::draw() {
         ImGui::ProgressBar(job.progress, {150, 16});
         ImGui::SameLine();
         ImGui::BeginDisabled(!job.cancellable());
-        if (ImGui::SmallButton("Annuler export")) {
+        if (ImGui::SmallButton("Cancel Export")) {
             Json args = Json::Object();
             args["job"] = job.id;
             action("cancel_export", args);
@@ -3424,10 +3831,27 @@ void Editor::draw() {
         ImGui::EndDisabled();
         ImGui::SameLine();
     }
+    if (analysis && !analysis->finished) {
+        float progress = analysis->progress;
+        ImGui::ProgressBar(progress >= 0 ? progress : -float(ImGui::GetTime()), {150, 16}, analysis->label.c_str());
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Cancel Analysis"))
+            analysis->cancelled = true;
+        ImGui::SameLine();
+    }
+    if (loudnessJob && !loudnessJob->finished) {
+        ImGui::ProgressBar(loudnessJob->progress, {150, 16}, "Loudness");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Cancel Measurement"))
+            loudnessJob->cancelled = true;
+        ImGui::SameLine();
+    }
     if (!error.empty()) {
         ImGui::TextColored(ImVec4(1, .65f, .3f, 1), "%s", error.c_str());
+    } else if (!notice.empty() && ImGui::GetTime() < noticeUntil) {
+        ImGui::TextColored(ImVec4(.36f, .82f, .43f, 1), "%s", notice.c_str());
     } else {
-        ImGui::TextDisabled("%s   /   %zu pistes   /   HLSL GPU   /   espace : lecture",
+        ImGui::TextDisabled("%s / %zu tracks / HLSL GPU / playback workspace",
                             s.project.name.c_str(), s.project.tracks.size());
     }
     ImGui::End();

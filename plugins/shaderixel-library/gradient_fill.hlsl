@@ -24,26 +24,26 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Dégradé
-//@category Générateurs
+//@name Gradient
+//@category Generators
 //@generator
-//@param sx_colorA color 0 0 0 1 "Couleur A"
-//@param sx_colorB color 1 1 1 1 "Couleur B"
+//@param sx_colorA color 0 0 0 1 "Color A"
+//@param sx_colorB color 1 1 1 1 "Color B"
 //@param sx_shape int 0 0 4 "Style"
 //@param sx_angle float 90 -180 180 "Angle"
-//@param sx_scale float 1 0.05 4 "Échelle"
-//@param sx_center float2 0.5 0.5 0 1 "Centre"
+//@param sx_scale float 1 0.05 4 "Scale"
+//@param sx_center float2 0.5 0.5 0 1 "Center"
 float4 Effect(EffectContext ctx)
 {
     float aspect = ctx.size.x / ctx.size.y;

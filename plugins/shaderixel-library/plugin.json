@@ -3,45 +3,105 @@
   "name": "Shaderixel",
   "effects": [
     {
+      "id": "shaderixel.art_crosshatch_shading",
+      "name": "Crosshatch Shading",
+      "category": "Shaderixel / Illustration and Print",
+      "shader": "art_crosshatch_shading.hlsl"
+    },
+    {
+      "id": "shaderixel.art_ink_bleed",
+      "name": "Ink Bleed",
+      "category": "Shaderixel / Illustration and Print",
+      "shader": "art_ink_bleed.hlsl"
+    },
+    {
+      "id": "shaderixel.art_screen_print_wear",
+      "name": "Screen Print Wear",
+      "category": "Shaderixel / Illustration and Print",
+      "shader": "art_screen_print_wear.hlsl"
+    },
+    {
+      "id": "shaderixel.art_topographic_from_height",
+      "name": "Topographic Lines from Height",
+      "category": "Shaderixel / Illustration and Print",
+      "shader": "art_topographic_from_height.hlsl"
+    },
+    {
+      "id": "shaderixel.basic_image",
+      "name": "Image Adjustments",
+      "category": "Shaderixel / Adjustments",
+      "shader": "basic_image.hlsl"
+    },
+    {
       "id": "shaderixel.black_white",
-      "name": "Noir et blanc",
-      "category": "Shaderixel / Réglages",
+      "name": "Black and White",
+      "category": "Shaderixel / Adjustments",
       "shader": "black_white.hlsl"
     },
     {
+      "id": "shaderixel.blend_depth_transition",
+      "name": "Depth Transition",
+      "category": "Shaderixel / Creative Blends",
+      "shader": "blend_depth_transition.hlsl"
+    },
+    {
+      "id": "shaderixel.blend_detail_transfer",
+      "name": "Detail Transfer",
+      "category": "Shaderixel / Creative Blends",
+      "shader": "blend_detail_transfer.hlsl"
+    },
+    {
+      "id": "shaderixel.blend_edge_reveal",
+      "name": "Edge Reveal",
+      "category": "Shaderixel / Creative Blends",
+      "shader": "blend_edge_reveal.hlsl"
+    },
+    {
+      "id": "shaderixel.blend_noise_dissolve",
+      "name": "Noise Dissolve",
+      "category": "Shaderixel / Creative Blends",
+      "shader": "blend_noise_dissolve.hlsl"
+    },
+    {
+      "id": "shaderixel.blend_protected_highlights",
+      "name": "Protected Highlights",
+      "category": "Shaderixel / Creative Blends",
+      "shader": "blend_protected_highlights.hlsl"
+    },
+    {
       "id": "shaderixel.brightness_contrast",
-      "name": "Luminosité / Contraste",
-      "category": "Shaderixel / Réglages",
+      "name": "Brightness / Contrast",
+      "category": "Shaderixel / Adjustments",
       "shader": "brightness_contrast.hlsl"
     },
     {
       "id": "shaderixel.camera_raw",
-      "name": "Camera Raw",
-      "category": "Shaderixel / Réglages",
+      "name": "Photo RAW",
+      "category": "Shaderixel / Adjustments",
       "shader": "camera_raw.hlsl"
     },
     {
       "id": "shaderixel.channel_mixer",
-      "name": "Mélangeur de couches",
-      "category": "Shaderixel / Réglages",
+      "name": "Channel Mixer",
+      "category": "Shaderixel / Adjustments",
       "shader": "channel_mixer.hlsl"
     },
     {
       "id": "shaderixel.checker",
       "name": "Damier",
-      "category": "Shaderixel / Générateurs",
+      "category": "Shaderixel / Generators",
       "shader": "checker.hlsl"
     },
     {
       "id": "shaderixel.color_balance",
-      "name": "Balance des couleurs",
-      "category": "Shaderixel / Réglages",
+      "name": "Color Balance",
+      "category": "Shaderixel / Adjustments",
       "shader": "color_balance.hlsl"
     },
     {
       "id": "shaderixel.color_lookup",
-      "name": "Correspondance de couleur",
-      "category": "Shaderixel / Réglages",
+      "name": "Color Match",
+      "category": "Shaderixel / Adjustments",
       "shader": "color_lookup.hlsl"
     },
     {
@@ -52,8 +112,8 @@
     },
     {
       "id": "shaderixel.curves",
-      "name": "Courbes",
-      "category": "Shaderixel / Réglages",
+      "name": "Curves",
+      "category": "Shaderixel / Adjustments",
       "shader": "curves.hlsl"
     },
     {
@@ -1707,21 +1767,51 @@
       "shader": "cy_mask_threshold.hlsl"
     },
     {
+      "id": "shaderixel.draw_flow_lines",
+      "name": "Flow Lines",
+      "category": "Shaderixel / Procedural Patterns",
+      "shader": "draw_flow_lines.hlsl"
+    },
+    {
+      "id": "shaderixel.draw_isometric_tiles",
+      "name": "Isometric Tiles",
+      "category": "Shaderixel / Procedural Patterns",
+      "shader": "draw_isometric_tiles.hlsl"
+    },
+    {
+      "id": "shaderixel.draw_terrazzo",
+      "name": "Terrazzo",
+      "category": "Shaderixel / Procedural Patterns",
+      "shader": "draw_terrazzo.hlsl"
+    },
+    {
+      "id": "shaderixel.draw_topographic_lines",
+      "name": "Topographic Lines",
+      "category": "Shaderixel / Procedural Patterns",
+      "shader": "draw_topographic_lines.hlsl"
+    },
+    {
+      "id": "shaderixel.draw_torn_paper",
+      "name": "Torn Paper",
+      "category": "Shaderixel / Procedural Patterns",
+      "shader": "draw_torn_paper.hlsl"
+    },
+    {
       "id": "shaderixel.edge_detect",
       "name": "Contours (Sobel)",
-      "category": "Shaderixel / Esthétiques",
+      "category": "Shaderixel / Looks",
       "shader": "edge_detect.hlsl"
     },
     {
       "id": "shaderixel.emboss",
       "name": "Estampage",
-      "category": "Shaderixel / Esthétiques",
+      "category": "Shaderixel / Looks",
       "shader": "emboss.hlsl"
     },
     {
       "id": "shaderixel.exposure",
-      "name": "Exposition",
-      "category": "Shaderixel / Réglages",
+      "name": "Exposure",
+      "category": "Shaderixel / Adjustments",
       "shader": "exposure.hlsl"
     },
     {
@@ -1732,55 +1822,235 @@
     },
     {
       "id": "shaderixel.gradient_fill",
-      "name": "Dégradé",
-      "category": "Shaderixel / Générateurs",
+      "name": "Gradient",
+      "category": "Shaderixel / Generators",
       "shader": "gradient_fill.hlsl"
     },
     {
       "id": "shaderixel.gradient_map",
-      "name": "Courbe de transfert de dégradé",
-      "category": "Shaderixel / Réglages",
+      "name": "Gradient Map",
+      "category": "Shaderixel / Adjustments",
       "shader": "gradient_map.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_draw_dot_grid",
+      "name": "Graph Dot Grid",
+      "category": "Shaderixel / Graph Layers",
+      "shader": "graph_draw_dot_grid.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_draw_glow_disc",
+      "name": "Graph Glow Disc",
+      "category": "Shaderixel / Graph Layers",
+      "shader": "graph_draw_glow_disc.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_draw_gradient",
+      "name": "Graph Linear Gradient",
+      "category": "Shaderixel / Graph Layers",
+      "shader": "graph_draw_gradient.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_draw_rings",
+      "name": "Graph Concentric Rings",
+      "category": "Shaderixel / Graph Layers",
+      "shader": "graph_draw_rings.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_draw_rounded_panel",
+      "name": "Graph Rounded Panel",
+      "category": "Shaderixel / Graph Layers",
+      "shader": "graph_draw_rounded_panel.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_draw_soft_noise",
+      "name": "Graph Soft Noise",
+      "category": "Shaderixel / Graph Layers",
+      "shader": "graph_draw_soft_noise.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_draw_stripes",
+      "name": "Graph Diagonal Stripes",
+      "category": "Shaderixel / Graph Layers",
+      "shader": "graph_draw_stripes.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_draw_woven_pattern",
+      "name": "Graph Woven Pattern",
+      "category": "Shaderixel / Graph Layers",
+      "shader": "graph_draw_woven_pattern.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_effect_channel_shift",
+      "name": "Graph RGB Channel Shift",
+      "category": "Shaderixel / Graph Effects",
+      "shader": "graph_effect_channel_shift.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_effect_color_wash",
+      "name": "Graph Color Wash",
+      "category": "Shaderixel / Graph Effects",
+      "shader": "graph_effect_color_wash.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_effect_gradient_map",
+      "name": "Graph Gradient Map",
+      "category": "Shaderixel / Graph Effects",
+      "shader": "graph_effect_gradient_map.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_effect_levels",
+      "name": "Graph Perceptual Levels",
+      "category": "Shaderixel / Graph Effects",
+      "shader": "graph_effect_levels.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_effect_luminance_mask",
+      "name": "Graph Soft Luminance Mask",
+      "category": "Shaderixel / Graph Effects",
+      "shader": "graph_effect_luminance_mask.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_effect_posterize",
+      "name": "Graph Dithered Posterize",
+      "category": "Shaderixel / Graph Effects",
+      "shader": "graph_effect_posterize.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_effect_relief",
+      "name": "Graph Directional Relief",
+      "category": "Shaderixel / Graph Effects",
+      "shader": "graph_effect_relief.hlsl"
+    },
+    {
+      "id": "shaderixel.graph_effect_wave_warp",
+      "name": "Graph Wave Warp",
+      "category": "Shaderixel / Graph Effects",
+      "shader": "graph_effect_wave_warp.hlsl"
     },
     {
       "id": "shaderixel.hue_saturation",
       "name": "Teinte / Saturation",
-      "category": "Shaderixel / Réglages",
+      "category": "Shaderixel / Adjustments",
       "shader": "hue_saturation.hlsl"
     },
     {
       "id": "shaderixel.invert",
-      "name": "Négatif",
-      "category": "Shaderixel / Réglages",
+      "name": "Invert",
+      "category": "Shaderixel / Adjustments",
       "shader": "invert.hlsl"
     },
     {
       "id": "shaderixel.lab_adjust",
-      "name": "Réglage Lab",
-      "category": "Shaderixel / Réglages",
+      "name": "Lab Adjustment",
+      "category": "Shaderixel / Adjustments",
       "shader": "lab_adjust.hlsl"
     },
     {
       "id": "shaderixel.lens_blur",
-      "name": "Flou de l'objectif",
+      "name": "Lens Blur",
       "category": "Shaderixel / Flou",
       "shader": "lens_blur.hlsl"
     },
     {
+      "id": "shaderixel.lens_profile",
+      "name": "Correction d'objectif",
+      "category": "Shaderixel / Distortion",
+      "shader": "lens_profile.hlsl"
+    },
+    {
       "id": "shaderixel.levels",
       "name": "Niveaux",
-      "category": "Shaderixel / Réglages",
+      "category": "Shaderixel / Adjustments",
       "shader": "levels.hlsl"
     },
     {
+      "id": "shaderixel.logo_alpha_bevel",
+      "name": "Logo Alpha Bevel",
+      "category": "Shaderixel / Text and Logo Styles",
+      "shader": "logo_alpha_bevel.hlsl"
+    },
+    {
+      "id": "shaderixel.logo_chrome_fill",
+      "name": "Logo Chrome Fill",
+      "category": "Shaderixel / Text and Logo Styles",
+      "shader": "logo_chrome_fill.hlsl"
+    },
+    {
+      "id": "shaderixel.logo_gradient_fill",
+      "name": "Logo Gradient Fill",
+      "category": "Shaderixel / Text and Logo Styles",
+      "shader": "logo_gradient_fill.hlsl"
+    },
+    {
+      "id": "shaderixel.logo_long_extrusion",
+      "name": "Logo Long Extrusion",
+      "category": "Shaderixel / Text and Logo Styles",
+      "shader": "logo_long_extrusion.hlsl"
+    },
+    {
+      "id": "shaderixel.logo_soft_glow",
+      "name": "Logo Soft Glow",
+      "category": "Shaderixel / Text and Logo Styles",
+      "shader": "logo_soft_glow.hlsl"
+    },
+    {
+      "id": "shaderixel.logo_soft_outline",
+      "name": "Logo Soft Outline",
+      "category": "Shaderixel / Text and Logo Styles",
+      "shader": "logo_soft_outline.hlsl"
+    },
+    {
       "id": "shaderixel.luminance_mask",
-      "name": "Masque de luminance",
+      "name": "Luminance Mask",
       "category": "Shaderixel / Composition",
       "shader": "luminance_mask.hlsl"
     },
     {
+      "id": "shaderixel.mask_apply_coverage",
+      "name": "Apply Coverage Mask",
+      "category": "Shaderixel / Masks and Compositing",
+      "shader": "mask_apply_coverage.hlsl"
+    },
+    {
+      "id": "shaderixel.mask_channel_selection",
+      "name": "Channel to Coverage Mask",
+      "category": "Shaderixel / Masks and Compositing",
+      "shader": "mask_channel_selection.hlsl"
+    },
+    {
+      "id": "shaderixel.mask_color_selection",
+      "name": "Color Range Mask",
+      "category": "Shaderixel / Masks and Compositing",
+      "shader": "mask_color_selection.hlsl"
+    },
+    {
+      "id": "shaderixel.mask_edge_despill",
+      "name": "Edge Color Despill",
+      "category": "Shaderixel / Masks and Compositing",
+      "shader": "mask_edge_despill.hlsl"
+    },
+    {
+      "id": "shaderixel.mask_feather_levels",
+      "name": "Mask Feather and Levels",
+      "category": "Shaderixel / Masks and Compositing",
+      "shader": "mask_feather_levels.hlsl"
+    },
+    {
+      "id": "shaderixel.mask_luminance_selection",
+      "name": "Luminance Range Mask",
+      "category": "Shaderixel / Masks and Compositing",
+      "shader": "mask_luminance_selection.hlsl"
+    },
+    {
+      "id": "shaderixel.mask_morphology",
+      "name": "Mask Expand and Contract",
+      "category": "Shaderixel / Masks and Compositing",
+      "shader": "mask_morphology.hlsl"
+    },
+    {
       "id": "shaderixel.mix",
-      "name": "Mélange A/B",
+      "name": "A/B Blend",
       "category": "Shaderixel / Composition",
       "shader": "mix.hlsl"
     },
@@ -1793,91 +2063,349 @@
     {
       "id": "shaderixel.noise",
       "name": "Bruit fractal",
-      "category": "Shaderixel / Générateurs",
+      "category": "Shaderixel / Generators",
       "shader": "noise.hlsl"
+    },
+    {
+      "id": "shaderixel.photo_film_finish",
+      "name": "Photo Grain and Vignette",
+      "category": "Shaderixel / Photo Essentials",
+      "shader": "photo_film_finish.hlsl"
     },
     {
       "id": "shaderixel.photo_filter",
       "name": "Filtre photo",
-      "category": "Shaderixel / Réglages",
+      "category": "Shaderixel / Adjustments",
       "shader": "photo_filter.hlsl"
     },
     {
+      "id": "shaderixel.photo_local_contrast",
+      "name": "Photo Local Contrast",
+      "category": "Shaderixel / Photo Essentials",
+      "shader": "photo_local_contrast.hlsl"
+    },
+    {
+      "id": "shaderixel.photo_masked_mix",
+      "name": "Masked Grade Mix",
+      "category": "Shaderixel / Photo Essentials",
+      "shader": "photo_masked_mix.hlsl"
+    },
+    {
+      "id": "shaderixel.photo_raw_geometry",
+      "name": "Geometry",
+      "category": "Shaderixel / Distortion",
+      "shader": "photo_raw_geometry.hlsl"
+    },
+    {
+      "id": "shaderixel.photo_raw_local",
+      "name": "Retouche locale",
+      "category": "Shaderixel / Adjustments",
+      "shader": "photo_raw_local.hlsl"
+    },
+    {
+      "id": "shaderixel.photo_split_tone",
+      "name": "Photo Split Tone",
+      "category": "Shaderixel / Photo Essentials",
+      "shader": "photo_split_tone.hlsl"
+    },
+    {
+      "id": "shaderixel.photo_tone_balance",
+      "name": "Photo Tone Balance",
+      "category": "Shaderixel / Photo Essentials",
+      "shader": "photo_tone_balance.hlsl"
+    },
+    {
+      "id": "shaderixel.photo_white_balance",
+      "name": "Photo White Balance",
+      "category": "Shaderixel / Photo Essentials",
+      "shader": "photo_white_balance.hlsl"
+    },
+    {
       "id": "shaderixel.pixelate",
-      "name": "Mosaïque",
+      "name": "Mosaic",
       "category": "Shaderixel / Pixellisation",
       "shader": "pixelate.hlsl"
     },
     {
       "id": "shaderixel.posterize",
-      "name": "Isohélie",
-      "category": "Shaderixel / Réglages",
+      "name": "Posterize",
+      "category": "Shaderixel / Adjustments",
       "shader": "posterize.hlsl"
     },
     {
+      "id": "shaderixel.print_blend_ink",
+      "name": "Print Ink Overprint",
+      "category": "Shaderixel / Print and Halftone",
+      "shader": "print_blend_ink.hlsl"
+    },
+    {
+      "id": "shaderixel.print_draw_paper",
+      "name": "Print Paper",
+      "category": "Shaderixel / Print and Halftone",
+      "shader": "print_draw_paper.hlsl"
+    },
+    {
+      "id": "shaderixel.print_duotone",
+      "name": "Print Duotone",
+      "category": "Shaderixel / Print and Halftone",
+      "shader": "print_duotone.hlsl"
+    },
+    {
+      "id": "shaderixel.print_halftone_screen",
+      "name": "Print Halftone Screen",
+      "category": "Shaderixel / Print and Halftone",
+      "shader": "print_halftone_screen.hlsl"
+    },
+    {
+      "id": "shaderixel.print_ink_plate",
+      "name": "Print Ink Plate",
+      "category": "Shaderixel / Print and Halftone",
+      "shader": "print_ink_plate.hlsl"
+    },
+    {
+      "id": "shaderixel.scan_colorize_ink",
+      "name": "Scan Colorize Ink",
+      "category": "Shaderixel / Scan and Line Art",
+      "shader": "scan_colorize_ink.hlsl"
+    },
+    {
+      "id": "shaderixel.scan_edge_coverage",
+      "name": "Scan Edge Coverage",
+      "category": "Shaderixel / Scan and Line Art",
+      "shader": "scan_edge_coverage.hlsl"
+    },
+    {
+      "id": "shaderixel.scan_ink_threshold",
+      "name": "Scan Ink Coverage",
+      "category": "Shaderixel / Scan and Line Art",
+      "shader": "scan_ink_threshold.hlsl"
+    },
+    {
+      "id": "shaderixel.scan_paper_normalize",
+      "name": "Scan Paper Normalize",
+      "category": "Shaderixel / Scan and Line Art",
+      "shader": "scan_paper_normalize.hlsl"
+    },
+    {
       "id": "shaderixel.selective_color",
-      "name": "Correction sélective",
-      "category": "Shaderixel / Réglages",
+      "name": "Selective Color",
+      "category": "Shaderixel / Adjustments",
       "shader": "selective_color.hlsl"
     },
     {
       "id": "shaderixel.sharpen",
-      "name": "Netteté (masque flou)",
-      "category": "Shaderixel / Netteté",
+      "name": "Unsharp Mask",
+      "category": "Shaderixel / Sharpness",
       "shader": "sharpen.hlsl"
     },
     {
       "id": "shaderixel.solid_color",
-      "name": "Couleur unie",
-      "category": "Shaderixel / Générateurs",
+      "name": "Solid Color",
+      "category": "Shaderixel / Generators",
       "shader": "solid_color.hlsl"
     },
     {
+      "id": "shaderixel.sprite_draw_checker",
+      "name": "Sprite Transparency Checker",
+      "category": "Shaderixel / 2D Game Art",
+      "shader": "sprite_draw_checker.hlsl"
+    },
+    {
+      "id": "shaderixel.sprite_drop_shadow",
+      "name": "Sprite Drop Shadow",
+      "category": "Shaderixel / 2D Game Art",
+      "shader": "sprite_drop_shadow.hlsl"
+    },
+    {
+      "id": "shaderixel.sprite_hit_flash",
+      "name": "Sprite Hit Flash",
+      "category": "Shaderixel / 2D Game Art",
+      "shader": "sprite_hit_flash.hlsl"
+    },
+    {
+      "id": "shaderixel.sprite_outline",
+      "name": "Sprite Outline",
+      "category": "Shaderixel / 2D Game Art",
+      "shader": "sprite_outline.hlsl"
+    },
+    {
+      "id": "shaderixel.sprite_palette_four",
+      "name": "Sprite Four-Color Palette",
+      "category": "Shaderixel / 2D Game Art",
+      "shader": "sprite_palette_four.hlsl"
+    },
+    {
+      "id": "shaderixel.sprite_pixel_grid",
+      "name": "Sprite Pixel Grid",
+      "category": "Shaderixel / 2D Game Art",
+      "shader": "sprite_pixel_grid.hlsl"
+    },
+    {
+      "id": "shaderixel.sprite_silhouette",
+      "name": "Sprite Silhouette",
+      "category": "Shaderixel / 2D Game Art",
+      "shader": "sprite_silhouette.hlsl"
+    },
+    {
       "id": "shaderixel.style_bevel",
-      "name": "Biseautage et estampage",
-      "category": "Shaderixel / Styles de calque",
+      "name": "Bevel and Emboss",
+      "category": "Shaderixel / Layer Styles",
       "shader": "style_bevel.hlsl"
     },
     {
       "id": "shaderixel.style_color_overlay",
-      "name": "Incrustation couleur",
-      "category": "Shaderixel / Styles de calque",
+      "name": "Color Overlay",
+      "category": "Shaderixel / Layer Styles",
       "shader": "style_color_overlay.hlsl"
     },
     {
       "id": "shaderixel.style_drop_shadow",
-      "name": "Ombre portée",
-      "category": "Shaderixel / Styles de calque",
+      "name": "Drop Shadow",
+      "category": "Shaderixel / Layer Styles",
       "shader": "style_drop_shadow.hlsl"
     },
     {
       "id": "shaderixel.style_gradient_overlay",
-      "name": "Incrustation en dégradé",
-      "category": "Shaderixel / Styles de calque",
+      "name": "Gradient Overlay",
+      "category": "Shaderixel / Layer Styles",
       "shader": "style_gradient_overlay.hlsl"
     },
     {
       "id": "shaderixel.style_inner_shadow",
       "name": "Ombre interne",
-      "category": "Shaderixel / Styles de calque",
+      "category": "Shaderixel / Layer Styles",
       "shader": "style_inner_shadow.hlsl"
     },
     {
       "id": "shaderixel.style_outer_glow",
       "name": "Lueur externe",
-      "category": "Shaderixel / Styles de calque",
+      "category": "Shaderixel / Layer Styles",
       "shader": "style_outer_glow.hlsl"
     },
     {
       "id": "shaderixel.style_stroke",
-      "name": "Contour",
-      "category": "Shaderixel / Styles de calque",
+      "name": "Feather",
+      "category": "Shaderixel / Layer Styles",
       "shader": "style_stroke.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_albedo_photo",
+      "name": "Albedo from Photo",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_albedo_photo.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_alpha_edge_padding",
+      "name": "Alpha Edge Padding",
+      "category": "Shaderixel / Texture Processing",
+      "shader": "texture_alpha_edge_padding.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_ao_hauteur",
+      "name": "Estimated Occlusion from Height",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_ao_hauteur.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_apercu_repetition",
+      "name": "Tiled Texture Preview",
+      "category": "Shaderixel / Texture Processing",
+      "shader": "texture_apercu_repetition.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_carte_reglage",
+      "name": "Data Map Adjustment",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_carte_reglage.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_courbure_hauteur",
+      "name": "Curvature from Height",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_courbure_hauteur.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_debruitage",
+      "name": "Edge-Preserving Texture Denoise",
+      "category": "Shaderixel / Texture Processing",
+      "shader": "texture_debruitage.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_decalage_boucle",
+      "name": "Wrapped Texture Offset",
+      "category": "Shaderixel / Texture Processing",
+      "shader": "texture_decalage_boucle.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_details",
+      "name": "Texture Detail and High Pass",
+      "category": "Shaderixel / Texture Processing",
+      "shader": "texture_details.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_draw_carte_constante",
+      "name": "Constant Data Map",
+      "category": "Shaderixel / Texture Generators",
+      "shader": "texture_draw_carte_constante.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_draw_microrelief",
+      "name": "Tileable Procedural Microrelief",
+      "category": "Shaderixel / Texture Generators",
+      "shader": "texture_draw_microrelief.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_empaquetage_pbr",
+      "name": "PBR Map Packing",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_empaquetage_pbr.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_fusion_normales",
+      "name": "Reoriented Normal Blend",
+      "category": "Shaderixel / Blends",
+      "shader": "texture_fusion_normales.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_hauteur_photo",
+      "name": "Estimated Height from Photo",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_hauteur_photo.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_normales_hauteur",
+      "name": "Normals from Height",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_normales_hauteur.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_normales_reglage",
+      "name": "Normal Adjustment and Conversion",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_normales_reglage.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_raccord_bords",
+      "name": "Texture Edge Seam Blending",
+      "category": "Shaderixel / Texture Processing",
+      "shader": "texture_raccord_bords.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_rugosite_photo",
+      "name": "Estimated Roughness from Photo",
+      "category": "Shaderixel / PBR Textures",
+      "shader": "texture_rugosite_photo.hlsl"
+    },
+    {
+      "id": "shaderixel.texture_selective_detail",
+      "name": "Selective Detail",
+      "category": "Shaderixel / Texture Processing",
+      "shader": "texture_selective_detail.hlsl"
     },
     {
       "id": "shaderixel.threshold",
       "name": "Seuil",
-      "category": "Shaderixel / Réglages",
+      "category": "Shaderixel / Adjustments",
       "shader": "threshold.hlsl"
     },
     {
@@ -1887,21 +2415,27 @@
       "shader": "transform_2d.hlsl"
     },
     {
+      "id": "shaderixel.trim_seamless",
+      "name": "Trim Seam",
+      "category": "Shaderixel / Trim sheet",
+      "shader": "trim_seamless.hlsl"
+    },
+    {
       "id": "shaderixel.twirl",
       "name": "Tourbillon",
-      "category": "Shaderixel / Déformation",
+      "category": "Shaderixel / Distortion",
       "shader": "twirl.hlsl"
     },
     {
       "id": "shaderixel.vibrance",
       "name": "Vibrance",
-      "category": "Shaderixel / Réglages",
+      "category": "Shaderixel / Adjustments",
       "shader": "vibrance.hlsl"
     },
     {
       "id": "shaderixel.wave",
       "name": "Ondulation",
-      "category": "Shaderixel / Déformation",
+      "category": "Shaderixel / Distortion",
       "shader": "wave.hlsl"
     }
   ]

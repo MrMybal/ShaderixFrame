@@ -136,11 +136,11 @@
     },
     {
       "id": 5,
-      "name": "Titre",
+      "name": "Title",
       "kind": 0,
       "clips": [
         {
-          "name": "Titre",
+          "name": "Title",
           "source": "",
           "start": 0,
           "duration": 8,

@@ -24,14 +24,14 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
@@ -71,14 +71,14 @@ float4 Custom_n3(float2 UV, float K)
 // 2,71828
 
 float Exp = 2.71828 ;
-float sx_K1 = K ;
+float sx_local_K1 = K ;
 float K2 = K ;
 float K3 = K ;
 
 float Ratio = (View.ViewSizeAndInvSize.x/View.ViewSizeAndInvSize.y);
 float2 CubicUV = float2( UV.x , ((UV.y/Ratio)+0.5) - (0.5/Ratio) );
 float R = pow( Exp , distance(CubicUV , float2(0.5,0.5) ) );
-float Kcal = (sx_K1*pow(R,2)) + (K2*pow(R,4)) + (K3*pow(R,6)) ;
+float Kcal = (sx_local_K1*pow(R,2)) + (K2*pow(R,4)) + (K3*pow(R,6)) ;
 
 return SXRet( UV - ( (UV - 0.5 ) * Kcal ) );
 }

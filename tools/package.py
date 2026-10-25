@@ -1,8 +1,13 @@
 """Package an already tested Release build without touching the source applications."""
+import argparse
 import shutil
 import re
 import tempfile
 from pathlib import Path
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--archive-only', action='store_true', help='Build the ZIP without updating an open portable installation')
+args = parser.parse_args()
 
 ROOT = Path(__file__).resolve().parents[1]
 version = re.search(r'project\(ShaderixFrame VERSION ([\d.]+)', (ROOT / 'CMakeLists.txt').read_text('utf-8')).group(1)
@@ -25,12 +30,13 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=ROOT / 'dist') as tempor
     shutil.copy2(ROOT / 'vendor/openfx/LICENSE.md', package / 'OPENFX-LICENSE.txt')
     shutil.copytree(ROOT / 'vendor/openfx/include', package / 'sdk/openfx')
     shutil.make_archive(str(ROOT / f'dist/ShaderixFrame-{version}-windows-x64'), 'zip', staging, 'ShaderixFrame')
-    # Update the launchable folder while preserving personal projects and recoveries.
-    shutil.copytree(package, destination, dirs_exist_ok=True)
-    # Remove only unchanged internal reports from earlier packages; keep edited files.
-    for report in (destination / 'docs').glob('VALIDATION_*.md'):
-        original = ROOT / 'docs' / report.name
-        assert report.resolve().is_relative_to(destination.resolve())
-        if original.is_file() and report.read_bytes() == original.read_bytes():
-            report.unlink()
-print(destination / 'ShaderixFrame.exe')
+    if not args.archive_only:
+        # Update the launchable folder while preserving personal projects and recoveries.
+        shutil.copytree(package, destination, dirs_exist_ok=True)
+        # Remove only unchanged internal reports from earlier packages; keep edited files.
+        for report in (destination / 'docs').glob('VALIDATION_*.md'):
+            original = ROOT / 'docs' / report.name
+            assert report.resolve().is_relative_to(destination.resolve())
+            if original.is_file() and report.read_bytes() == original.read_bytes():
+                report.unlink()
+print(ROOT / f'dist/ShaderixFrame-{version}-windows-x64.zip' if args.archive_only else destination / 'ShaderixFrame.exe')

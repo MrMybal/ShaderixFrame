@@ -6,11 +6,14 @@
 
 namespace sf {
 const std::vector<ExportPreset> &exportPresets() {
-    static const std::vector<ExportPreset> presets = {{"project", "Format du projet"},
-                                                      {"preview720", "Aperçu 720p", 1280, 720, 30},
+    static const std::vector<ExportPreset> presets = {{"project", "Project Format"},
+                                                      {"preview720", "720p Preview", 1280, 720, 30},
                                                       {"web1080", "Web 1080p", 1920, 1080, 30},
                                                       {"portrait1080", "Portrait 1080p", 1080, 1920, 30},
-                                                      {"cinema24", "Cinéma 1080p", 1920, 1080, 24}};
+                                                      {"cinema24", "1080p Cinema", 1920, 1080, 24},
+                                                      {"portrait1080_60", "Vertical 1080p 60 i/s (Shorts, Reels, TikTok)", 1080, 1920, 60},
+                                                      {"square1080", "1080 Square (Instagram)", 1080, 1080, 30},
+                                                      {"uhd4k", "4K UHD", 3840, 2160, 30}};
     return presets;
 }
 using Clock = std::chrono::steady_clock;
@@ -75,6 +78,7 @@ struct ExportJobs::Job {
     Clock::time_point began = Clock::now();
     Project document;
     EffectLibrary effects;
+    ExportRange range;
     ExportInfo read() const {
         std::lock_guard lock(mutex);
         auto copy = info;
@@ -111,10 +115,10 @@ ExportJobs::~ExportJobs() {
     shutdown();
 }
 Id ExportJobs::start(const Project &snapshot, const EffectLibrary &library, ExportKind kind,
-                     const std::string &path, const std::string &preset) {
+                     const std::string &path, const std::string &preset, ExportRange range) {
     snapshot.validate();
     if (path.empty())
-        throw std::runtime_error("Chemin de sortie requis");
+        throw std::runtime_error("Output path required");
     auto destination = std::filesystem::absolute(sx::Utf8Path(path)).lexically_normal();
     auto extension = destination.extension().wstring();
     std::transform(extension.begin(), extension.end(), extension.begin(), ::towlower);
@@ -123,20 +127,20 @@ Id ExportJobs::start(const Project &snapshot, const EffectLibrary &library, Expo
                       : kind == ExportKind::Audio ? L".wav"
                                                   : L".json"))
         throw std::runtime_error(
-            "Extension attendue : .mp4/.avi pour la vidéo, .wav pour l'audio, .json pour l'analyse");
+            "Expected extension: .mp4/.avi for video, .wav for audio, .json for analysis");
     // Prepare copies before registering the job; allocation errors leave the catalogue intact.
     Project document = snapshot;
     auto selected = std::find_if(exportPresets().begin(), exportPresets().end(),
                                  [&](const auto &item) { return item.id == preset; });
     if (selected == exportPresets().end())
-        throw std::runtime_error("Preset d'export inconnu");
+        throw std::runtime_error("Unknown export preset");
     if (selected->width && kind != ExportKind::Audio) {
         document.width = selected->width;
         document.height = selected->height;
         document.fps = selected->fps;
     }
     if (kind == ExportKind::Images && std::filesystem::exists(destination))
-        throw std::runtime_error("La séquence PNG exige un nouveau dossier de destination");
+        throw std::runtime_error("A PNG sequence requires a new destination folder");
     EffectLibrary effects = library;
     auto job = std::make_shared<Job>();
     job->info.kind = kind;
@@ -147,22 +151,23 @@ Id ExportJobs::start(const Project &snapshot, const EffectLibrary &library, Expo
     job->info.width = document.width;
     job->info.height = document.height;
     job->info.fps = document.fps;
-    job->info.duration = snapshot.duration;
+    job->info.duration = range.to(snapshot) - range.from(snapshot);
+    job->range = range;
     std::lock_guard lock(mutex);
     if (stopped)
-        throw std::runtime_error("Le gestionnaire d'exports est fermé");
+        throw std::runtime_error("Export manager is closed");
     size_t active = 0;
     for (auto &previous : jobs) {
         if (previous->read().active()) {
             ++active;
             if (_wcsicmp(sx::Widen(previous->info.path).c_str(), destination.c_str()) == 0)
-                throw std::runtime_error("Cette destination est déjà dans la file de rendus");
+                throw std::runtime_error("This destination is already in the render queue");
         }
     }
     if (active >= 32)
-        throw std::runtime_error("32 rendus maximum dans la file");
+        throw std::runtime_error("32 renders maximum in the queue");
     if (nextId > 2147483647)
-        throw std::runtime_error("Trop d'exports dans cette session");
+        throw std::runtime_error("Too many exports in this session");
     job->info.id = nextId;
     job->document = std::move(document);
     job->effects = std::move(effects);
@@ -184,7 +189,7 @@ ExportInfo ExportJobs::status(Id id) const {
     for (auto &job : jobs)
         if (job->info.id == id)
             return job->read();
-    throw std::runtime_error("Export introuvable dans la file ou les huit derniers rendus terminés");
+    throw std::runtime_error("Export not found in the queue or the eight most recent completed renders");
 }
 std::vector<ExportInfo> ExportJobs::list() const {
     std::lock_guard lock(mutex);
@@ -207,7 +212,7 @@ bool ExportJobs::cancel(Id id) {
             wake.notify_all();
             return accepted;
         }
-    throw std::runtime_error("Export introuvable dans les huit derniers rendus");
+    throw std::runtime_error("Export not found among the eight most recent renders");
 }
 void ExportJobs::prune() {
     // Keep every active job and the eight newest terminal jobs.
@@ -250,11 +255,11 @@ void ExportJobs::run() {
         try {
             if (!job->advance(0))
                 throw ExportCancelled();
-            check(CoInitializeEx(nullptr, COINIT_MULTITHREADED), "Initialisation COM du rendu");
+            check(CoInitializeEx(nullptr, COINIT_MULTITHREADED), "Render COM initialization");
             struct ComRuntime {
                 ~ComRuntime() { CoUninitialize(); }
             } com;
-            check(MFStartup(MF_VERSION), "Initialisation média du rendu");
+            check(MFStartup(MF_VERSION), "Render media initialization");
             struct MediaRuntime {
                 ~MediaRuntime() { MFShutdown(); }
             } mediaRuntime;
@@ -264,12 +269,13 @@ void ExportJobs::run() {
             media.configureDiskCache(std::filesystem::path(executable).parent_path() / "cache/audio");
             auto progress = [job](float value) { return job->advance(value); };
             if (job->info.kind == ExportKind::Analysis) {
-                uint64_t total = uint64_t(job->document.duration * 48000);
+                double from = job->range.from(job->document);
+                uint64_t total = uint64_t((job->range.to(job->document) - from) * 48000);
                 std::vector<float> data;
                 for (uint64_t at = 0; at < total; at += 4096) {
                     if (!progress(float(double(at) / total)))
                         throw ExportCancelled();
-                    media.mix(job->document, at / 48000., unsigned(std::min(uint64_t(4096), total - at)),
+                    media.mix(job->document, from + at / 48000., unsigned(std::min(uint64_t(4096), total - at)),
                               data);
                 }
                 AtomicFile output(job->info.path);
@@ -277,7 +283,7 @@ void ExportJobs::run() {
                 file << media.loudness.json().Dump(2);
                 file.close();
                 if (!file)
-                    throw std::runtime_error("Rapport de sonorité illisible");
+                    throw std::runtime_error("Unable to read the loudness report");
                 if (!progress(1))
                     throw ExportCancelled();
                 output.commit();
@@ -286,11 +292,11 @@ void ExportJobs::run() {
                 renderer.initialize();
                 renderer.library = job->effects;
                 if (job->info.kind == ExportKind::Video)
-                    exportVideo(job->document, media, renderer, job->info.path, progress);
+                    exportVideo(job->document, media, renderer, job->info.path, progress, job->range);
                 else
-                    exportImages(job->document, media, renderer, job->info.path, progress);
+                    exportImages(job->document, media, renderer, job->info.path, progress, job->range);
             } else
-                exportWav(job->document, media, job->info.path, progress);
+                exportWav(job->document, media, job->info.path, progress, job->range);
         } catch (const ExportCancelled &) {
             state = ExportState::Cancelled;
         } catch (const std::exception &error) {
@@ -298,7 +304,7 @@ void ExportJobs::run() {
             failure = error.what();
         } catch (...) {
             state = ExportState::Failed;
-            failure = "Erreur de rendu inconnue";
+            failure = "Unknown rendering error";
         }
         job->finish(state, std::move(failure));
         // Release potentially large snapshots after completion, retaining only metadata.

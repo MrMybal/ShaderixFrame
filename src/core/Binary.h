@@ -12,11 +12,11 @@ inline std::string encodeBase64(std::span<const unsigned char> bytes) {
     DWORD size = 0;
     if (!CryptBinaryToStringA(bytes.data(), DWORD(bytes.size()), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
                               nullptr, &size))
-        throw std::runtime_error("Encodage d'état plugin échoué");
+        throw std::runtime_error("Unable to encode plugin state");
     std::string result(size, '\0');
     if (!CryptBinaryToStringA(bytes.data(), DWORD(bytes.size()), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
                               result.data(), &size))
-        throw std::runtime_error("Encodage d'état plugin échoué");
+        throw std::runtime_error("Unable to encode plugin state");
     result.resize(size);
     if (!result.empty() && result.back() == '\0')
         result.pop_back();
@@ -26,20 +26,20 @@ inline std::vector<unsigned char> decodeBase64(const std::string &text, size_t m
     if (text.empty())
         return {};
     if (text.size() > 4 * ((maximum + 2) / 3) || text.size() % 4)
-        throw std::runtime_error("État plugin base64 invalide ou trop grand");
+        throw std::runtime_error("Invalid or oversized base64 plugin state");
     for (char c : text)
         if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '+' ||
               c == '/' || c == '='))
-            throw std::runtime_error("État plugin base64 invalide");
+            throw std::runtime_error("Invalid base64 plugin state");
     DWORD count = 0;
     if (!CryptStringToBinaryA(text.data(), DWORD(text.size()), CRYPT_STRING_BASE64 | CRYPT_STRING_STRICT,
                               nullptr, &count, nullptr, nullptr) ||
         count > maximum)
-        throw std::runtime_error("État plugin base64 invalide");
+        throw std::runtime_error("Invalid base64 plugin state");
     std::vector<unsigned char> bytes(count);
     if (!CryptStringToBinaryA(text.data(), DWORD(text.size()), CRYPT_STRING_BASE64 | CRYPT_STRING_STRICT,
                               bytes.data(), &count, nullptr, nullptr))
-        throw std::runtime_error("Décodage d'état plugin échoué");
+        throw std::runtime_error("Unable to decode plugin state");
     return bytes;
 }
 } // namespace sf

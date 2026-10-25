@@ -7,24 +7,24 @@ Effect &pluginEffect(Project &p, const Json &target, bool editable) {
     if (scope == "clip") {
         auto *clip = p.findClip(target["clip"].U());
         if (!clip || p.owner(clip->id)->kind != TrackKind::Audio || (editable && p.owner(clip->id)->locked))
-            throw std::runtime_error("Clip audio absent/verrouillé");
+            throw std::runtime_error("Audio clip missing or locked");
         chain = &clip->effects;
     } else if (scope == "master")
         chain = &p.masterMix.effects;
     else if (scope == "track") {
         auto *track = p.findTrack(target["target"].U());
         if (!track || track->kind != TrackKind::Audio || (editable && track->locked))
-            throw std::runtime_error("Piste audio absente/verrouillée");
+            throw std::runtime_error("Audio track missing or locked");
         chain = &track->mix.effects;
     } else if (scope == "bus") {
         auto *bus = p.findBus(target["target"].U());
         if (!bus || (editable && bus->locked))
-            throw std::runtime_error("Bus absent/verrouillé");
+            throw std::runtime_error("Bus missing or locked");
         chain = &bus->mix.effects;
     }
     int index = target["effect"].I(-1);
     if (!chain || index < 0 || index >= int(chain->size()) || (*chain)[index].id != "vst3")
-        throw std::runtime_error("Effet VST3 requis");
+        throw std::runtime_error("VST3 effect required");
     return (*chain)[index];
 }
 static std::string key(const Json &a) {

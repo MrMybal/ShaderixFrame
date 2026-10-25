@@ -24,24 +24,24 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
 //@name Tourbillon
-//@category Déformation
+//@category Distortion
 //@halo full
 //@premultiplied
 //@param sx_angle float 180 -999 999 "Angle"
-//@param sx_radius float 0.5 0.01 1.5 "Rayon"
-//@param sx_center float2 0.5 0.5 0 1 "Centre"
+//@param sx_radius float 0.5 0.01 1.5 "Radius"
+//@param sx_center float2 0.5 0.5 0 1 "Center"
 float4 Effect(EffectContext ctx)
 {
     float aspect = ctx.size.x / ctx.size.y;

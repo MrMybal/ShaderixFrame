@@ -24,7 +24,7 @@ with zipfile.ZipFile(archive) as zipped:
                      'JUCE-LICENSE.md', 'sdk/ShaderixFramePlugin.h', 'examples/VfxStudy.sframe',
                      'examples/ParallelEQ.json', 'examples/GradingStudy.sframe', 'examples/LayerGraphStudy.sframe',
                      'examples/MotionStudy.sframe', 'examples/ClipStudy.sframe', 'docs/BUILDING.md',
-                     'docs/RELEASE_0.12.md', 'plugins/shaderixel-library/plugin.json', 'sdk/openfx/ofxImageEffect.h'):
+                     'docs/RELEASE_0.13.md', 'plugins/shaderixel-library/plugin.json', 'sdk/openfx/ofxImageEffect.h'):
         assert 'ShaderixFrame/' + required in names
     zipped.extractall(target)
 exe = target / 'ShaderixFrame/ShaderixFrame.exe'

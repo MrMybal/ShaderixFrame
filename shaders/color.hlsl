@@ -1,6 +1,6 @@
-//@param exposure float 0 -5 5 "Exposition"
+//@param exposure float 0 -5 5 "Exposure"
 //@param saturation float 1 0 2 "Saturation"
-//@param contrast float 1 0 2 "Contraste"
+//@param contrast float 1 0 2 "Contrast"
 float4 Effect(EffectContext ctx) {
     float4 c=InputUV(0,ctx.uv);
     c.rgb*=exp2(exposure);

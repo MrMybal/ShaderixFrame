@@ -24,38 +24,42 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
 //@name Shadows Highlights
 //@category Traitements
-//@graph {"name":"Shadows Highlights","category":"Traitements","inputs":1,"premultiplied":false,"nextId":10,"nodes":[{"id":1,"op":"texture","pos":[40,40],"in":[],"value":[0,0,0,0],"index":0,"name":"CyInput"},{"id":2,"op":"uv","pos":[40,150],"in":[],"value":[0,0,0,0]},{"id":3,"op":"canvassize","pos":[40,240],"in":[],"value":[0,0,0,0]},{"id":4,"op":"param","pos":[40,330],"in":[],"value":[0.25,0.0,0.0,0.0],"name":"ShadowAmount","text":"Shadow Amount","index":1,"min":0.0,"max":2.0},{"id":5,"op":"param","pos":[40,440],"in":[],"value":[0.25,0.0,0.0,0.0],"name":"HighlightAmount","text":"Highlight Amount","index":1,"min":0.0,"max":2.0},{"id":6,"op":"param","pos":[40,550],"in":[],"value":[2.0,0.0,0.0,0.0],"name":"Radius","text":"Radius","index":1,"min":0.00999999978,"max":8.0},{"id":7,"op":"param","pos":[40,660],"in":[],"value":[1.0,0.0,0.0,0.0],"name":"Strength","text":"Strength","index":1},{"id":8,"op":"custom","pos":[420,40],"in":[[1,0],[2,0],[3,0],[4,0],[5,0],[6,0],[7,0]],"value":[0,0,0,0],"name":"Shadows Highlights","text":"    float4 s=Texture2DSample(CyInput,CyInputSampler,UV); float l=max(dot(s.rgb,float3(.2126,.7152,.0722)),0.0); float shadow=pow(saturate(1.0-l),max(Radius,0.01))*ShadowAmount; float highlight=pow(saturate(l),max(Radius,0.01))*HighlightAmount; float3 v=s.rgb*(1.0+shadow)/(1.0+highlight*max(l,0.0)); return float4(lerp(s.rgb,v,saturate(Strength)),s.a);","pins":[["CyInput",5],["UV",2],["CyCanvasSize",4],["ShadowAmount",1],["HighlightAmount",1],["Radius",1],["Strength",1]],"outs":[["Resultat",4]]},{"id":9,"op":"output","pos":[780,40],"in":[[8,0],[0,0],[0,0]],"value":[0,0,0,0]}]}
+//@graph {"category":"Traitements","inputs":1,"name":"Shadows Highlights","nextId":10,"nodes":[{"id":1,"in":[],"name":"CyInput","op":"texture","pos":[40, 40],"value":[0, 0, 0, 0]},{"id":2,"in":[],"op":"uv","pos":[40, 150],"value":[0, 0, 0, 0]},{"id":3,"in":[],"op":"canvassize","pos":[40, 240],"value":[0, 0, 0, 0]},{"id":4,"in":[],"index":1,"max":2,"min":0,"name":"ShadowAmount","op":"param","pos":[40, 330],"text":"Shadow Amount","value":[0.25, 0, 0, 0]},{"id":5,"in":[],"index":1,"max":2,"min":0,"name":"HighlightAmount","op":"param","pos":[40, 440],"text":"Highlight Amount","value":[0.25, 0, 0, 0]},{"id":6,"in":[],"index":1,"max":8,"min":0.00999999978,"name":"Radius","op":"param","pos":[40, 550],"text":"Radius","value":[2, 0, 0, 0]},{"id":7,"in":[],"index":1,"name":"Strength","op":"param","pos":[40, 660],"text":"Strength","value":[1, 0, 0, 0]},{"id":8,"in":[[1, 0],[2, 0],[3, 0],[4, 0],[5, 0],[6, 0],[7, 0]],"name":"Shadows Highlights","op":"custom","outs":[["Resultat",4]],"pins":[["CyInput",5],["UV",2],["CyCanvasSize",4],["ShadowAmount",1],["HighlightAmount",1],["Radius",1],["Strength",1]],"pos":[420, 40],"text":"    float4 s = Texture2DSample(CyInput, CyInputSampler, UV);\n    float l = max(dot(s.rgb, float3(.2126, .7152, .0722)), 0.0);\n    float shadow = pow(saturate(1.0 - l), max(Radius, 0.01)) * ShadowAmount;\n    float highlight = pow(saturate(l), max(Radius, 0.01)) * HighlightAmount;\n    float3 v = s.rgb * (1.0 + shadow) / (1.0 + highlight * max(l, 0.0));\n    return float4(lerp(s.rgb, v, saturate(Strength)), s.a);","value":[0, 0, 0, 0]},{"id":9,"in":[[8, 0],[0, 0],[0, 0]],"op":"output","pos":[780, 40],"value":[0, 0, 0, 0]}],"premultiplied":false}
 //@input Image
 //@halo 0
 //@param sx_ShadowAmount float 0.25 0 2 "Shadow Amount"
 //@param sx_HighlightAmount float 0.25 0 2 "Highlight Amount"
 //@param sx_Radius float 2 0.01 8 "Radius"
 //@param sx_Strength float 1 0 1 "Strength"
-
 // Imported preset (Effect / Color & Tone): Recovers shadows and compresses highlights while retaining HDR detail.
 // Unreal Custom-node code kept as written; Texture2DSample reads the effect inputs.
-float4 CyTex(uint i, float2 uv) { return HasInput(i) ? InputUV(i, uv) : float4(1.0, 1.0, 1.0, 1.0); }
+float4 CyTex(uint i, float2 uv) {
+    return HasInput(i) ? InputUV(i, uv) : float4(1.0, 1.0, 1.0, 1.0);
+}
 #define Texture2DSample(T, S, UVS) CyTex(T, UVS)
 static const uint CyInput = 0;
-
 float4 CyPreset(float2 UV, float4 CyCanvasSize, float sx_arg_ShadowAmount, float sx_arg_HighlightAmount, float sx_arg_Radius, float sx_arg_Strength)
 {
-    float4 s=Texture2DSample(CyInput,CyInputSampler,UV); float l=max(dot(s.rgb,float3(.2126,.7152,.0722)),0.0); float shadow=pow(saturate(1.0-l),max(sx_arg_Radius,0.01))*sx_arg_ShadowAmount; float highlight=pow(saturate(l),max(sx_arg_Radius,0.01))*sx_arg_HighlightAmount; float3 v=s.rgb*(1.0+shadow)/(1.0+highlight*max(l,0.0)); return float4(lerp(s.rgb,v,saturate(sx_arg_Strength)),s.a);
+    float4 s = Texture2DSample(CyInput, CyInputSampler, UV);
+    float l = max(dot(s.rgb, float3(.2126, .7152, .0722)), 0.0);
+    float shadow = pow(saturate(1.0 - l), max(sx_arg_Radius, 0.01)) * sx_arg_ShadowAmount;
+    float highlight = pow(saturate(l), max(sx_arg_Radius, 0.01)) * sx_arg_HighlightAmount;
+    float3 v = s.rgb * (1.0 + shadow) / (1.0 + highlight * max(l, 0.0));
+    return float4(lerp(s.rgb, v, saturate(sx_arg_Strength)), s.a);
 }
-
 float4 Effect(EffectContext ctx)
 {
     return CyPreset(ctx.uv, float4(ctx.size, ctx.texel), sx_ShadowAmount, sx_HighlightAmount, sx_Radius, sx_Strength);

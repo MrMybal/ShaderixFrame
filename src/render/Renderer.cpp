@@ -70,17 +70,17 @@ float4 Effect(EffectContext ctx){float ratio=(ctx.size.x/ctx.size.y)/(ctx.source
 )";
 static const char *compose = R"(
 //@param widget_enabled bool 0 "Motion"
-//@param widget_rect float4 0 0 1 1 -1024 1024 "Rectangle motion"
-//@param widget_clip float4 0 0 1 1 -1024 1024 "Découpe motion"
-//@param mask_mode int 0 0 3 "Forme du masque"
-//@param mask_invert bool 0 "Inversion"
-//@param mask_x float 0 -2 2 "Centre X"
-//@param mask_y float 0 -2 2 "Centre Y"
-//@param mask_width float 1 0.001 4 "Largeur"
-//@param mask_height float 1 0.001 4 "Hauteur"
+//@param widget_rect float4 0 0 1 1 -1024 1024 "Motion rectangle"
+//@param widget_clip float4 0 0 1 1 -1024 1024 "Motion clip"
+//@param mask_mode int 0 0 3 "Mask shape"
+//@param mask_invert bool 0 "Invert"
+//@param mask_x float 0 -2 2 "Center X"
+//@param mask_y float 0 -2 2 "Center Y"
+//@param mask_width float 1 0.001 4 "Width"
+//@param mask_height float 1 0.001 4 "Height"
 //@param mask_rotation float 0 -36000 36000 "Rotation"
-//@param mask_feather float 0 0 1024 "Contour"
-//@param mask_pixel_scale float 0.001388889 0 1 "Échelle pixel"
+//@param mask_feather float 0 0 1024 "Outline"
+//@param mask_pixel_scale float 0.001388889 0 1 "Pixel scale"
 float4 Effect(EffectContext ctx){
     float4 bg=Unpremultiply(sfBackground.SampleLevel(sLinearClamp,ctx.uv,0));
     float2 p=(ctx.uv-0.5-transform.xy)*float2(ctx.size.x/ctx.size.y,1);float a=transform.w;
@@ -133,9 +133,9 @@ float4 Effect(EffectContext ctx){
 }
 )";
 static const char *displayCode = R"(
-//@param space int 0 0 2 "Espace"
+//@param space int 0 0 2 "Space"
 //@param tone int 0 0 2 "Tone mapping"
-//@param exposure float 0 -20 20 "Exposition"
+//@param exposure float 0 -20 20 "Exposure"
 float3 Decode(float3 c){return float3(c.x<=.04045?c.x/12.92:pow((c.x+.055)/1.055,2.4),c.y<=.04045?c.y/12.92:pow((c.y+.055)/1.055,2.4),c.z<=.04045?c.z/12.92:pow((c.z+.055)/1.055,2.4));}
 float3 Encode(float3 c){return float3(c.x<=.0031308?c.x*12.92:1.055*pow(c.x,1/2.4)-.055,c.y<=.0031308?c.y*12.92:1.055*pow(c.y,1/2.4)-.055,c.z<=.0031308?c.z*12.92:1.055*pow(c.z,1/2.4)-.055);}
 float4 Effect(EffectContext ctx){float4 c=Input(0,ctx.px);if(space==0 && tone==0 && exposure==0)return c;
@@ -158,7 +158,7 @@ static Com<ID3DBlob> blob(const std::string &text, const char *profile) {
     if (FAILED(hr))
         throw std::runtime_error(
             e ? std::string(static_cast<const char *>(e->GetBufferPointer()), e->GetBufferSize())
-              : "Compilation HLSL échouée");
+              : "HLSL compilation failed");
     {
         std::lock_guard lock(mutex);
         if (cache.size() >= 256)
@@ -181,7 +181,7 @@ void Renderer::initialize(ID3D11Device *d, ID3D11DeviceContext *c) {
         if (FAILED(hr))
             check(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, 0, nullptr, 0, D3D11_SDK_VERSION,
                                     &device, &level, &context),
-                  "Initialisation Direct3D");
+                  "Direct3D initialization");
     }
     auto v = blob(vertexSource, "vs_5_0");
     check(device->CreateVertexShader(v->GetBufferPointer(), v->GetBufferSize(), nullptr, &vertex),
@@ -190,11 +190,11 @@ void Renderer::initialize(ID3D11Device *d, ID3D11DeviceContext *c) {
     b.ByteWidth = 80;
     b.Usage = D3D11_USAGE_DEFAULT;
     b.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    check(device->CreateBuffer(&b, nullptr, &constants), "Constantes vidéo");
+    check(device->CreateBuffer(&b, nullptr, &constants), "Video constants");
     b.ByteWidth = 64 * 16;
-    check(device->CreateBuffer(&b, nullptr, &parameters), "Paramètres vidéo");
+    check(device->CreateBuffer(&b, nullptr, &parameters), "Video parameters");
     b.ByteWidth = 33 * 16;
-    check(device->CreateBuffer(&b, nullptr, &maskConstants), "Masque Bézier");
+    check(device->CreateBuffer(&b, nullptr, &maskConstants), "Bezier mask");
     D3D11_SAMPLER_DESC s{};
     s.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     s.AddressU = s.AddressV = s.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -226,9 +226,9 @@ void Renderer::createTarget(Target &t, DXGI_FORMAT format) {
     d.Format = format;
     d.SampleDesc.Count = 1;
     d.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    check(device->CreateTexture2D(&d, nullptr, &t.texture), "Texture vidéo");
-    check(device->CreateRenderTargetView(t.texture.Get(), nullptr, &t.rtv), "Cible vidéo");
-    check(device->CreateShaderResourceView(t.texture.Get(), nullptr, &t.srv), "Vue vidéo");
+    check(device->CreateTexture2D(&d, nullptr, &t.texture), "Video texture");
+    check(device->CreateRenderTargetView(t.texture.Get(), nullptr, &t.rtv), "Video render target");
+    check(device->CreateShaderResourceView(t.texture.Get(), nullptr, &t.srv), "Video view");
 }
 Renderer::Shader &Renderer::compile(const std::string &code) {
     auto i = shaders.find(code);
@@ -381,7 +381,7 @@ void Renderer::bindGradeLut(const Effect &e) {
         d.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         Com<ID3D11Texture3D> t;
         check(device->CreateTexture3D(&d, &upload, &t), "Texture LUT 3D");
-        check(device->CreateShaderResourceView(t.Get(), nullptr, &gradeLut), "Vue LUT 3D");
+        check(device->CreateShaderResourceView(t.Get(), nullptr, &gradeLut), "3D LUT view");
     } else {
         D3D11_TEXTURE1D_DESC d{};
         d.Width = n;
@@ -391,7 +391,7 @@ void Renderer::bindGradeLut(const Effect &e) {
         d.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         Com<ID3D11Texture1D> t;
         check(device->CreateTexture1D(&d, &upload, &t), "Texture LUT 1D");
-        check(device->CreateShaderResourceView(t.Get(), nullptr, &gradeLut1), "Vue LUT 1D");
+        check(device->CreateShaderResourceView(t.Get(), nullptr, &gradeLut1), "1D LUT view");
     }
     if (gradeLuts.size() >= 8)
         gradeLuts.clear();
@@ -441,7 +441,7 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
     if (nodal) {
         auto decoded = decodeLayerGraph(compositionDocument, p);
         if (uint64_t(w) * h * 8 * (decoded.graph.nodes.size() + p.tracks.size() + 4) > 512ull * 1024 * 1024)
-            throw std::runtime_error("Graphe vidéo : budget GPU de 512 Mio dépassé");
+            throw std::runtime_error("Video graph: 512 MiB GPU budget exceeded");
         createTarget(graphBackground);
         context->CopyResource(graphBackground.texture.Get(), composite.texture.Get());
         createTarget(automaticBelow);
@@ -461,7 +461,7 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
                          [](const Clip *a, const Clip *b) { return a->start < b->start; });
         for (auto *item : ordered) {
             auto &c = *item;
-            if (!c.active(time))
+            if (!c.live(time))
                 continue;
             WidgetRect layout;
             bool widget = !c.widget.IsNull();
@@ -472,7 +472,12 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
             }
             Com<ID3D11ShaderResourceView> source;
             unsigned sw = w, sh = h;
-            if (!c.composition.IsNull()) {
+            if (c.adjustment) {
+                // Adjustment layer: the picture of the tracks below (automatic layer graph) runs through its effects.
+                if (!p.layerGraph.IsNull())
+                    continue;
+                source = automaticBelow.srv;
+            } else if (!c.composition.IsNull()) {
                 auto &entry = nested[c.id];
                 auto identity = c.composition.Dump(0);
                 if (!entry.renderer) {
@@ -530,7 +535,7 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
                 }
                 D3D11_SUBRESOURCE_DATA data{pixels.data(), sw * 16, 0};
                 Com<ID3D11Texture2D> texture;
-                check(device->CreateTexture2D(&d, &data, &texture), "Upload vidéo");
+                check(device->CreateTexture2D(&d, &data, &texture), "Video upload");
                 device->CreateShaderResourceView(texture.Get(), nullptr, &source);
             }
             std::string sourceCopy = copy;
@@ -572,7 +577,7 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
                     auto identity = e.code + "|" + e.graph["identifier"].S();
                     auto key = std::make_pair(c.id, index);
                     if (!ofx.contains(key) && ofx.size() >= 16)
-                        throw std::runtime_error("16 instances OFX maximum par rendu");
+                        throw std::runtime_error("16 OFX instances maximum per render");
                     auto &entry = ofx[key];
                     if (entry.identity != identity || entry.width != w || entry.height != h) {
                         entry.process =
@@ -591,7 +596,7 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
                 if (code.empty()) {
                     auto *d = library.find(e.id);
                     if (!d)
-                        throw std::runtime_error("Effet manquant: " + e.id);
+                        throw std::runtime_error("Missing effect: " + e.id);
                     code = d->code;
                 }
                 context->CopyResource(originalInput.texture.Get(), working[current].texture.Get());
@@ -615,7 +620,7 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
             if (temporal) {
                 if (!history.contains(c.id) &&
                     (history.size() >= 16 || uint64_t(w) * h * 16 * (history.size() + 1) > 256 * 1024 * 1024))
-                    throw std::runtime_error("Historique vidéo : 16 calques ou 256 Mio maximum");
+                    throw std::runtime_error("Video history: 16 layers or 256 MiB maximum");
                 auto &saved = history[c.id];
                 if (!saved.current.texture)
                     createTarget(saved.current);
@@ -655,7 +660,7 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
             if (p.layerGraph.IsNull()) {
                 Clip mix;
                 for (auto &clip : ti->clips)
-                    if (clip.active(time))
+                    if (clip.live(time))
                         mix.params["blend"] = {clip.param("blend", time, 0)};
                 draw(alternateComposite, compose, source.srv.Get(), {}, time, time, w, h, &mix,
                      automaticBelow.srv.Get());
@@ -673,7 +678,7 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
                                               [&](auto &t) { return t.id == source->surface; });
                     if (track != p.tracks.end())
                         for (auto &clip : track->clips)
-                            if (clip.active(time)) {
+                            if (clip.live(time)) {
                                 int mode =
                                     int(std::clamp(std::round(clip.param("blend", time, 0)), 0.f, 3.f));
                                 node.blend = sx::BlendMode(mode == 1 ? 4 : mode == 2 ? 1 : mode == 3 ? 2 : 0);
@@ -763,16 +768,16 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
 
     std::erase_if(history, [&](const auto &entry) {
         auto *clip = p.findClip(entry.first);
-        return !clip || !clip->active(time);
+        return !clip || !clip->live(time);
     });
     std::erase_if(nested, [&](const auto &entry) {
         auto *clip = p.findClip(entry.first);
-        return !clip || !clip->active(time) || clip->composition.IsNull();
+        return !clip || !clip->live(time) || clip->composition.IsNull();
     });
     previousTime = time;
     std::erase_if(ofx, [&](const auto &item) {
         auto *c = p.findClip(item.first.first);
-        return !c || !c->active(time) || item.first.second >= c->effects.size() ||
+        return !c || !c->live(time) || item.first.second >= c->effects.size() ||
                c->effects[item.first.second].id != "ofx" || !c->effects[item.first.second].enabled;
     });
     draw(display, displayCode, composite.srv.Get(),
@@ -798,7 +803,7 @@ Image Renderer::readback() {
     d.Usage = D3D11_USAGE_STAGING;
     d.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     Com<ID3D11Texture2D> stage;
-    check(device->CreateTexture2D(&d, nullptr, &stage), "Lecture GPU");
+    check(device->CreateTexture2D(&d, nullptr, &stage), "GPU readback");
     context->CopyResource(stage.Get(), display.texture.Get());
     D3D11_MAPPED_SUBRESOURCE data;
     check(context->Map(stage.Get(), 0, D3D11_MAP_READ, 0, &data), "Mapping GPU");
@@ -816,7 +821,7 @@ FloatImage Renderer::readTarget(const Target &target) {
     d.Usage = D3D11_USAGE_STAGING;
     d.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     Com<ID3D11Texture2D> stage;
-    check(device->CreateTexture2D(&d, nullptr, &stage), "Lecture GPU16F");
+    check(device->CreateTexture2D(&d, nullptr, &stage), "GPU16F readback");
     context->CopyResource(stage.Get(), target.texture.Get());
     D3D11_MAPPED_SUBRESOURCE data{};
     check(context->Map(stage.Get(), 0, D3D11_MAP_READ, 0, &data), "Mapping GPU16F");

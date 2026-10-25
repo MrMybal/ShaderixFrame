@@ -19,16 +19,29 @@ void check(HRESULT hr, const char *what) {
 }
 static Com<IMFSourceReader> makeReader(const std::string &p) {
     Com<IMFAttributes> a;
-    check(MFCreateAttributes(&a, 2), "Attributs média");
+    check(MFCreateAttributes(&a, 2), "Media attributes");
     a->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
     Com<IMFSourceReader> r;
-    check(MFCreateSourceReaderFromURL(sx::Widen(p).c_str(), a.Get(), &r), "Ouverture média");
+    check(MFCreateSourceReaderFromURL(sx::Widen(p).c_str(), a.Get(), &r), "Open media");
     return r;
+}
+static void videoArea(IMFMediaType *type, MediaAsset &asset);
+// The first video stream decoded as RGB32, the other streams off.
+static void selectVideo(IMFSourceReader *reader, MediaAsset &asset) {
+    reader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
+    Com<IMFMediaType> type;
+    MFCreateMediaType(&type);
+    type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+    type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32);
+    check(reader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, type.Get()), "RGB32 decoding");
+    reader->SetStreamSelection(MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE);
+    reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, &type);
+    videoArea(type.Get(), asset);
 }
 static Com<IWICImagingFactory> wic() {
     Com<IWICImagingFactory> f;
     check(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&f)),
-          "Initialisation WIC");
+          "WIC initialization");
     return f;
 }
 PcmMapping::~PcmMapping() {
@@ -73,6 +86,7 @@ static std::unique_ptr<PcmMapping> mapPcm(const std::filesystem::path &path, uin
     result->data = reinterpret_cast<const float *>(header + 3);
     return result;
 }
+static void videoArea(IMFMediaType *type, MediaAsset &asset);
 void MediaAsset::open(const std::string &source, const std::filesystem::path &cacheDirectory,
                       bool decodeAudio) {
     path = source;
@@ -91,7 +105,7 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
         Com<IWICBitmapDecoder> d;
         check(f->CreateDecoderFromFilename(sx::Widen(path).c_str(), nullptr, GENERIC_READ,
                                            WICDecodeMetadataCacheOnLoad, &d),
-              "Lecture image");
+              "Read image");
         Com<IWICBitmapFrameDecode> b;
         check(d->GetFrame(0, &b), "Image");
         Com<IWICFormatConverter> c;
@@ -101,7 +115,7 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
               "Format image");
         c->GetSize(&frame.width, &frame.height);
         if (!frame.width || !frame.height || uint64_t(frame.width) * frame.height > 67108864)
-            throw std::runtime_error("Image trop grande (64 mégapixels maximum)");
+            throw std::runtime_error("Image is too large (64 megapixels maximum)");
         frame.pixels.resize(size_t(frame.width) * frame.height * 4);
         check(c->CopyPixels(nullptr, frame.width * 4, UINT(frame.pixels.size()), frame.pixels.data()),
               "Pixels image");
@@ -113,14 +127,14 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
         if (SUCCEEDED(f->CreateComponentInfo(sourceFormat, &info)) && SUCCEEDED(info.As(&pixelInfo)) &&
             SUCCEEDED(pixelInfo->GetBitsPerPixel(&bits)) && bits > 32) {
             Com<IWICFormatConverter> precise;
-            check(f->CreateFormatConverter(&precise), "Conversion précise");
+            check(f->CreateFormatConverter(&precise), "High-precision conversion");
             check(precise->Initialize(b.Get(), GUID_WICPixelFormat128bppRGBAFloat, WICBitmapDitherTypeNone,
                                       nullptr, 0, WICBitmapPaletteTypeCustom),
                   "RGBA float source");
             frame.rgba.resize(size_t(frame.width) * frame.height * 4);
             check(precise->CopyPixels(nullptr, frame.width * 16, UINT(frame.rgba.size() * 4),
                                       reinterpret_cast<BYTE *>(frame.rgba.data())),
-                  "Pixels haute précision");
+                  "High-precision pixels");
         }
         video = true;
         duration = 6;
@@ -138,17 +152,9 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
     hasAudio = SUCCEEDED(reader->GetNativeMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &native));
     reader->SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, FALSE);
     if (video) {
-        Com<IMFMediaType> type;
-        MFCreateMediaType(&type);
-        type->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
-        type->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32);
-        check(reader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, nullptr, type.Get()),
-              "Décodage RGB32");
-        reader->SetStreamSelection(MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE);
-        reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, &type);
-        MFGetAttributeSize(type.Get(), MF_MT_FRAME_SIZE, &frame.width, &frame.height);
-        if (!frame.width || !frame.height || uint64_t(frame.width) * frame.height > 67108864)
-            throw std::runtime_error("Dimensions vidéo non prises en charge");
+        selectVideo(reader.Get(), *this);
+        if (!frame.width || !frame.height || uint64_t(codedWidth) * codedHeight > 67108864)
+            throw std::runtime_error("Unsupported video dimensions");
     }
     if (hasAudio && decodeAudio) {
         std::filesystem::path cachePath;
@@ -169,17 +175,17 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
                 uint64_t header[] = {0x314d43504653ull, fingerprint, 0};
                 cacheStream.write(reinterpret_cast<const char *>(header), sizeof(header));
                 if (!cacheStream)
-                    throw std::runtime_error("Création du cache PCM échouée");
+                    throw std::runtime_error("PCM cache creation failed");
             }
             auto store = [&](const float *data, size_t count) {
                 if (cacheOutput) {
                     cacheStream.write(reinterpret_cast<const char *>(data), count * 4);
                     cachedSamples += count;
                     if (!cacheStream)
-                        throw std::runtime_error("Écriture du cache PCM échouée");
+                        throw std::runtime_error("PCM cache write failed");
                 } else {
                     if (pcm.size() + count > 128 * 1024 * 1024)
-                        throw std::runtime_error("Cache RAM PCM supérieur à 512 Mio");
+                        throw std::runtime_error("PCM RAM cache exceeds 512 MiB");
                     pcm.insert(pcm.end(), data, data + count);
                 }
             };
@@ -198,14 +204,14 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
                 type->SetUINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8);
                 type->SetUINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 384000);
                 check(ar->SetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, nullptr, type.Get()),
-                      "Décodage audio stéréo 48 kHz");
+                      "Stereo 48 kHz audio decoding");
                 for (;;) {
                     DWORD flags = 0;
                     Com<IMFSample> sample;
                     LONGLONG time = 0;
                     check(ar->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, nullptr, &flags, &time,
                                          &sample),
-                          "Lecture audio");
+                          "Read audio");
                     if (sample) {
                         Com<IMFMediaBuffer> b;
                         sample->ConvertToContiguousBuffer(&b);
@@ -215,7 +221,7 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
                         if (!cacheOutput && pcm.size() + bytes / 4 > 128 * 1024 * 1024) {
                             b->Unlock();
                             throw std::runtime_error(
-                                "Audio trop long pour le cache actuel (512 Mio maximum par média)");
+                                "Audio is too long for the current cache (512 MiB maximum per source)");
                         }
                         if (cacheOutput) {
                             cacheStream.write(reinterpret_cast<const char *>(data), bytes);
@@ -227,7 +233,7 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
                         }
                         b->Unlock();
                         if (cacheOutput && !cacheStream)
-                            throw std::runtime_error("Écriture du cache PCM échouée");
+                            throw std::runtime_error("PCM cache write failed");
                     }
                     if (flags & MF_SOURCE_READERF_ENDOFSTREAM)
                         break;
@@ -238,11 +244,11 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
                 cacheStream.write(reinterpret_cast<const char *>(&cachedSamples), 8);
                 cacheStream.close();
                 if (!cacheStream)
-                    throw std::runtime_error("Finalisation du cache PCM échouée");
+                    throw std::runtime_error("PCM cache finalization failed");
                 cacheOutput->commit();
                 diskPcm = mapPcm(cachePath, fingerprint);
                 if (!diskPcm)
-                    throw std::runtime_error("Cache PCM invalide après écriture");
+                    throw std::runtime_error("Invalid PCM cache after writing");
             }
         }
         peaks.resize((samples() / 2 + 479) / 480);
@@ -255,7 +261,26 @@ void MediaAsset::open(const std::string &source, const std::filesystem::path &ca
             duration = samples() / 96000.;
     }
     if (!video && !hasAudio)
-        throw std::runtime_error("Aucune piste vidéo ou audio décodable");
+        throw std::runtime_error("No decodable video or audio track");
+}
+// Coded size and display aperture of a decoded video type; the frame takes the aperture.
+static void videoArea(IMFMediaType *type, MediaAsset &asset) {
+    MFGetAttributeSize(type, MF_MT_FRAME_SIZE, &asset.codedWidth, &asset.codedHeight);
+    asset.frame.width = asset.codedWidth;
+    asset.frame.height = asset.codedHeight;
+    asset.cropX = asset.cropY = 0;
+    MFVideoArea area{};
+    if (SUCCEEDED(type->GetBlob(MF_MT_MINIMUM_DISPLAY_APERTURE, reinterpret_cast<UINT8 *>(&area), sizeof(area),
+                                nullptr))) {
+        long x = area.OffsetX.value, y = area.OffsetY.value;
+        if (x >= 0 && y >= 0 && area.Area.cx > 0 && area.Area.cy > 0 &&
+            x + area.Area.cx <= long(asset.codedWidth) && y + area.Area.cy <= long(asset.codedHeight)) {
+            asset.cropX = unsigned(x);
+            asset.cropY = unsigned(y);
+            asset.frame.width = unsigned(area.Area.cx);
+            asset.frame.height = unsigned(area.Area.cy);
+        }
+    }
 }
 const Image &MediaAsset::at(double seconds) {
     if (image || !video)
@@ -263,39 +288,57 @@ const Image &MediaAsset::at(double seconds) {
     seconds = std::max(0., seconds);
     if (lastTime >= 0 && std::abs(seconds - lastTime) < 1. / 120)
         return frame;
-    if (lastTime < 0 || seconds < lastTime - 0.04 || seconds > lastTime + 0.25) {
+    bool reopened = false;
+    // Reading on only moves forward: time going back since the last request (a reversed clip, one frame at a
+    // time) needs a seek, while slow motion asking just before the decoded frame keeps reading.
+    bool backward = lastRequest >= 0 && seconds < lastRequest - 1e-3 && seconds < lastTime - 1e-3;
+    lastRequest = seconds;
+    if (lastTime < 0 || backward || seconds < lastTime - 0.04 || seconds > lastTime + 0.25) {
         PROPVARIANT pos;
         PropVariantInit(&pos);
         pos.vt = VT_I8;
         pos.hVal.QuadPart = LONGLONG(seconds * 1e7);
-        check(reader->SetCurrentPosition(GUID_NULL, pos), "Recherche vidéo");
-        lastTime = -1;
+        // Some files refuse to seek: reading on still reaches a later frame; to go back, a new reader
+        // starts from the beginning and reads up to the frame.
+        HRESULT sought = reader->SetCurrentPosition(GUID_NULL, pos);
+        ++seeks;
+        if (FAILED(sought) && (lastTime < 0 || seconds < lastTime)) {
+            reader = makeReader(path);
+            selectVideo(reader.Get(), *this);
+            reopened = true;
+        }
+        if (SUCCEEDED(sought) || reopened)
+            lastTime = -1;
     }
-    for (int attempts = 0; attempts < 1000; ++attempts) {
+    // The decoded frame already reaches the time asked (slow motion asks several times per frame): it stays.
+    if (lastTime >= 0 && seconds <= lastTime + 1e-3)
+        return frame;
+    int limit = reopened ? std::max(1000, int(seconds * 240) + 240) : 1000;
+    for (int attempts = 0; attempts < limit; ++attempts) {
         DWORD flags = 0;
         LONGLONG timestamp = 0;
         Com<IMFSample> s;
         check(reader->ReadSample(MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, nullptr, &flags, &timestamp, &s),
-              "Lecture vidéo");
+              "Read video");
         if (flags & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED) {
             Com<IMFMediaType> type;
             reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, &type);
-            MFGetAttributeSize(type.Get(), MF_MT_FRAME_SIZE, &frame.width, &frame.height);
+            videoArea(type.Get(), *this);
         }
         if (s) {
             Com<IMFMediaBuffer> b;
-            check(s->ConvertToContiguousBuffer(&b), "Image décodée");
+            check(s->ConvertToContiguousBuffer(&b), "Decoded image");
             Com<IMF2DBuffer> two;
             b.As(&two);
             BYTE *data = nullptr;
-            LONG pitch = LONG(frame.width * 4);
+            LONG pitch = LONG(std::max(codedWidth, frame.width) * 4);
             DWORD bytes = 0;
             HRESULT lock = two ? two->Lock2D(&data, &pitch) : b->Lock(&data, nullptr, &bytes);
-            check(lock, "Pixels vidéo");
+            check(lock, "Video pixels");
             frame.pixels.resize(size_t(frame.width) * frame.height * 4);
             for (unsigned y = 0; y < frame.height; ++y) {
                 auto *row = frame.pixels.data() + size_t(y) * frame.width * 4;
-                memcpy(row, data + ptrdiff_t(y) * pitch, frame.width * 4);
+                memcpy(row, data + ptrdiff_t(y + cropY) * pitch + ptrdiff_t(cropX) * 4, frame.width * 4);
                 for (unsigned x = 0; x < frame.width; ++x)
                     row[x * 4 + 3] = 255;
             }
@@ -384,7 +427,7 @@ void MediaCache::mixEngine(const Project &p, double time, unsigned frames, std::
     }
     latencySamples = incomingLatency[0] + effects.latency(0, p.masterMix.effects);
     if (latencySamples > 480000)
-        throw std::runtime_error("Latence totale supérieure à 10 secondes");
+        throw std::runtime_error("Total latency exceeds 10 seconds");
     mixPeaks.clear();
     mixRms.clear();
     using Buffer = std::vector<float>;
@@ -395,7 +438,7 @@ void MediaCache::mixEngine(const Project &p, double time, unsigned frames, std::
     auto sum = [&](Id destination, const Buffer &data, Id source, bool sendRoute = false) {
         auto it = inputs.find(destination);
         if (it == inputs.end())
-            throw std::runtime_error("Sortie de mixage introuvable");
+            throw std::runtime_error("Mix output not found");
         Buffer aligned = data;
         delays[{source, destination, sendRoute ? 1 : 0}].apply(aligned, incomingLatency[destination] -
                                                                             channelLatency[source]);
@@ -462,18 +505,22 @@ void MediaCache::mixEngine(const Project &p, double time, unsigned frames, std::
         }
         Buffer trackData(size_t(frames) * 2, 0);
         for (auto &c : t.clips) {
-            if (c.source.empty() || time + frames / 48000. <= c.start ||
+            if (c.source.empty() || c.hold || time + frames / 48000. <= c.start ||
                 time >= c.start + c.duration + incomingLatency[t.id] / 48000.)
                 continue;
             auto &a = get(c.source);
             Buffer clipData(size_t(frames) * 2, 0);
+            bool ramped = c.ramped();
+            unsigned rampBlock = ~0u;
+            double rampFrom = 0, rampTo = 0;
             for (unsigned f = 0; f < frames; ++f) {
                 double now = time + f / 48000.;
-                if (!c.active(now))
+                if (!c.live(now))
                     continue;
                 int mode = int(std::lround(
                     c.param("stretch_mode", now, c.param("preserve_pitch", now, 0) > .5f ? 1 : 0)));
-                if (mode > 0 && std::abs(c.speed - 1) > 1e-7) {
+                // Reversed or ramped, each sample is read at its own source time; no grain stretching.
+                if (mode > 0 && std::abs(c.speed - 1) > 1e-7 && !c.reverse && !ramped) {
                     // WSOLA: align overlapping unit-speed grains by waveform correlation.
                     // Grain sizes follow CyDAW v2 tonal/beats/texture modes (80/28/180 ms).
                     double sourceBegin = c.in * 48000,
@@ -565,7 +612,19 @@ void MediaCache::mixEngine(const Project &p, double time, unsigned frames, std::
                             clipData[f * 2 + channel] /= float(weightSum);
                     continue;
                 }
-                double at = c.sourceTime(now) * 48000;
+                double at;
+                if (ramped) {
+                    // A ramp is integrated every 64 samples, the source time interpolated in between.
+                    unsigned block = f / 64;
+                    if (block != rampBlock) {
+                        rampBlock = block;
+                        double t0 = time + block * 64 / 48000.;
+                        rampFrom = c.sourceTime(t0);
+                        rampTo = c.sourceTime(t0 + 64 / 48000.);
+                    }
+                    at = (rampFrom + (rampTo - rampFrom) * ((f % 64) / 64.)) * 48000;
+                } else
+                    at = c.sourceTime(now) * 48000;
                 auto index = size_t(at);
                 if (index * 2 + 3 >= a.samples())
                     continue;
@@ -577,7 +636,7 @@ void MediaCache::mixEngine(const Project &p, double time, unsigned frames, std::
             delays[{c.id, t.id, 2}].apply(clipData, incomingLatency[t.id] - clipLatency[c.id]);
             for (unsigned f = 0; f < frames; ++f) {
                 double now = time + f / 48000. - incomingLatency[t.id] / 48000.;
-                if (!c.active(now))
+                if (!c.live(now))
                     continue;
                 float gain = std::pow(10.f, c.param("gain", now, 0) / 20) * c.envelope(now);
                 float pan = std::clamp(t.mix.param("pan", now, t.pan) + c.param("pan", now, 0), -1.f, 1.f);
@@ -635,7 +694,7 @@ void MediaCache::mixEngine(const Project &p, double time, unsigned frames, std::
                 }
                 for (unsigned f = first; f < frames; ++f) {
                     double now = time + f / 48000.;
-                    if (!clip.active(now))
+                    if (!clip.live(now))
                         continue;
                     double pos = phase + (f - first) * clip.speed;
                     auto at = size_t(pos);
@@ -720,10 +779,10 @@ void AudioOutput::pump(const Project &p, MediaCache &m) {
         b.header.lpData = reinterpret_cast<LPSTR>(b.samples.data());
         b.header.dwBufferLength = sizeof(b.samples);
         if (waveOutPrepareHeader(device, &b.header, sizeof(WAVEHDR)) != MMSYSERR_NOERROR)
-            throw std::runtime_error("Préparation de la sortie audio échouée");
+            throw std::runtime_error("Unable to prepare audio output");
         b.prepared = true;
         if (waveOutWrite(device, &b.header, sizeof(WAVEHDR)) != MMSYSERR_NOERROR)
-            throw std::runtime_error("Sortie audio échouée");
+            throw std::runtime_error("Audio output failed");
         queued += blockFrames;
         analysis.channelCount = 2;
         analysis.waveformCount = blockFrames;
@@ -746,7 +805,7 @@ static void putSample(IMFSinkWriter *w, DWORD stream, const BYTE *data, DWORD by
     Com<IMFMediaBuffer> b;
     check(MFCreateMemoryBuffer(bytes, &b), "Buffer export");
     BYTE *ptr;
-    check(b->Lock(&ptr, nullptr, nullptr), "Écriture export");
+    check(b->Lock(&ptr, nullptr, nullptr), "Export write");
     memcpy(ptr, data, bytes);
     b->Unlock();
     b->SetCurrentLength(bytes);
@@ -755,14 +814,14 @@ static void putSample(IMFSinkWriter *w, DWORD stream, const BYTE *data, DWORD by
     s->AddBuffer(b.Get());
     s->SetSampleTime(time);
     s->SetSampleDuration(duration);
-    check(w->WriteSample(stream, s.Get()), "Encodage média");
+    check(w->WriteSample(stream, s.Get()), "Media encoding");
 }
 void exportVideo(const Project &p, MediaCache &m, Renderer &r, const std::string &path,
-                 const std::function<bool(float)> &progress) {
+                 const std::function<bool(float)> &progress, ExportRange range) {
     auto extension = sx::Utf8Path(path).extension().wstring();
     std::transform(extension.begin(), extension.end(), extension.begin(), ::towlower);
     if (extension == L".avi") {
-        exportAvi(p, m, r, path, progress);
+        exportAvi(p, m, r, path, progress, range);
         return;
     }
     m.resetAudio();
@@ -775,7 +834,7 @@ void exportVideo(const Project &p, MediaCache &m, Renderer &r, const std::string
     MFCreateAttributes(&attrs, 2);
     attrs->SetUINT32(MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, TRUE);
     attrs->SetUINT32(MF_SINK_WRITER_DISABLE_THROTTLING, TRUE);
-    check(MFCreateSinkWriterFromURL(output.path().c_str(), nullptr, attrs.Get(), &w), "Création MP4");
+    check(MFCreateSinkWriterFromURL(output.path().c_str(), nullptr, attrs.Get(), &w), "Create MP4");
     Com<IMFMediaType> v;
     MFCreateMediaType(&v);
     v->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
@@ -786,13 +845,13 @@ void exportVideo(const Project &p, MediaCache &m, Renderer &r, const std::string
     MFSetAttributeRatio(v.Get(), MF_MT_FRAME_RATE, p.fps, 1);
     MFSetAttributeRatio(v.Get(), MF_MT_PIXEL_ASPECT_RATIO, 1, 1);
     DWORD video;
-    check(w->AddStream(v.Get(), &video), "Piste H264");
+    check(w->AddStream(v.Get(), &video), "H264 track");
     Com<IMFMediaType> vin;
     MFCreateMediaType(&vin);
     v->CopyAllItems(vin.Get());
     vin->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32);
     vin->SetUINT32(MF_MT_DEFAULT_STRIDE, p.width * 4);
-    check(w->SetInputMediaType(video, vin.Get(), nullptr), "Entrée vidéo");
+    check(w->SetInputMediaType(video, vin.Get(), nullptr), "Video input");
     Com<IMFMediaType> a;
     MFCreateMediaType(&a);
     a->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
@@ -802,29 +861,30 @@ void exportVideo(const Project &p, MediaCache &m, Renderer &r, const std::string
     a->SetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
     a->SetUINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 24000);
     DWORD audio;
-    check(w->AddStream(a.Get(), &audio), "Piste AAC");
+    check(w->AddStream(a.Get(), &audio), "AAC track");
     Com<IMFMediaType> ain;
     MFCreateMediaType(&ain);
     a->CopyAllItems(ain.Get());
     ain->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM);
     ain->SetUINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4);
     ain->SetUINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 192000);
-    check(w->SetInputMediaType(audio, ain.Get(), nullptr), "Entrée audio");
-    check(w->BeginWriting(), "Début export");
-    const int total = int(std::ceil(p.duration * p.fps));
+    check(w->SetInputMediaType(audio, ain.Get(), nullptr), "Audio input");
+    check(w->BeginWriting(), "Begin export");
+    const double from = range.from(p);
+    const int total = std::max(1, int(std::ceil((range.to(p) - from) * p.fps - 1e-6)));
     uint64_t previous = 0;
     try {
         for (int f = 0; f < total; ++f) {
             if (progress && !progress(float(f) / total))
                 throw ExportCancelled();
-            double t = double(f) / p.fps;
+            double t = from + double(f) / p.fps;
             r.render(p, m, t, p.width, p.height);
             auto frame = r.readback();
             LONGLONG begin = LONGLONG(f) * 10000000 / p.fps, end = LONGLONG(f + 1) * 10000000 / p.fps;
             putSample(w.Get(), video, frame.pixels.data(), DWORD(frame.pixels.size()), begin, end - begin);
             uint64_t next = uint64_t(f + 1) * 48000 / p.fps;
             std::vector<float> mix;
-            m.mix(p, previous / 48000., unsigned(next - previous), mix);
+            m.mix(p, from + previous / 48000., unsigned(next - previous), mix);
             std::vector<short> pcm(mix.size());
             for (size_t i = 0; i < mix.size(); ++i)
                 pcm[i] = short(mix[i] * 32767);
@@ -832,7 +892,7 @@ void exportVideo(const Project &p, MediaCache &m, Renderer &r, const std::string
                       previous * 10000000 / 48000, (next - previous) * 10000000 / 48000);
             previous = next;
         }
-        check(w->Finalize(), "Finalisation MP4");
+        check(w->Finalize(), "MP4 finalization");
     } catch (...) {
         w->Finalize();
         throw;
@@ -844,18 +904,19 @@ void exportVideo(const Project &p, MediaCache &m, Renderer &r, const std::string
     output.commit();
 }
 void exportWav(const Project &p, MediaCache &m, const std::string &path,
-               const std::function<bool(float)> &progress) {
+               const std::function<bool(float)> &progress, ExportRange range) {
     m.resetAudio();
     p.validate();
-    uint64_t frames = uint64_t(p.duration * 48000);
+    const double from = range.from(p);
+    uint64_t frames = uint64_t((range.to(p) - from) * 48000 + .5);
     if (frames * 4 > 0xffffffff - 36)
-        throw std::runtime_error("WAV trop long pour RIFF 32 bits");
+        throw std::runtime_error("WAV exceeds the 32-bit RIFF size limit");
     if (progress && !progress(0))
         throw ExportCancelled();
     AtomicFile output(path);
     std::ofstream file(output.path(), std::ios::binary);
     if (!file)
-        throw std::runtime_error("Création WAV échouée");
+        throw std::runtime_error("WAV creation failed");
     auto u32 = [&](uint32_t n) { file.write(reinterpret_cast<char *>(&n), 4); };
     auto u16 = [&](uint16_t n) { file.write(reinterpret_cast<char *>(&n), 2); };
     file.write("RIFF", 4);
@@ -874,7 +935,7 @@ void exportWav(const Project &p, MediaCache &m, const std::string &path,
         if (progress && !progress(float(double(at) / frames)))
             throw ExportCancelled();
         std::vector<float> mix;
-        m.mix(p, at / 48000., unsigned(std::min<uint64_t>(4096, frames - at)), mix);
+        m.mix(p, from + at / 48000., unsigned(std::min<uint64_t>(4096, frames - at)), mix);
         std::vector<short> pcm(mix.size());
         for (size_t i = 0; i < mix.size(); ++i)
             pcm[i] = short(mix[i] * 32767);
@@ -882,33 +943,34 @@ void exportWav(const Project &p, MediaCache &m, const std::string &path,
     }
     file.flush();
     if (!file)
-        throw std::runtime_error("Écriture WAV échouée");
+        throw std::runtime_error("WAV write failed");
     file.close();
     if (!file)
-        throw std::runtime_error("Fermeture WAV échouée");
+        throw std::runtime_error("WAV close failed");
     if (progress && !progress(1))
         throw ExportCancelled();
     output.commit();
 }
 void exportImages(const Project &p, MediaCache &media, Renderer &renderer, const std::string &directory,
-                  const std::function<bool(float)> &progress) {
+                  const std::function<bool(float)> &progress, ExportRange range) {
     p.validate();
     auto destination = std::filesystem::absolute(sx::Utf8Path(directory)).lexically_normal();
     if (std::filesystem::exists(destination))
-        throw std::runtime_error("Le dossier de séquence existe déjà");
+        throw std::runtime_error("Sequence folder already exists");
     auto staging = destination;
     staging +=
         L".pending-" + std::to_wstring(GetCurrentProcessId()) + L"-" + std::to_wstring(GetTickCount64());
     if (!std::filesystem::create_directory(staging))
-        throw std::runtime_error("Création du dossier PNG échouée");
+        throw std::runtime_error("PNG folder creation failed");
     // Only files created in this unique staging directory are removed on failure.
     std::vector<std::filesystem::path> created;
     try {
-        int frames = int(std::ceil(p.duration * p.fps));
+        const double from = range.from(p);
+        int frames = std::max(1, int(std::ceil((range.to(p) - from) * p.fps - 1e-6)));
         for (int frame = 0; frame < frames; ++frame) {
             if (progress && !progress(float(frame) / frames))
                 throw ExportCancelled();
-            renderer.render(p, media, double(frame) / p.fps, p.width, p.height);
+            renderer.render(p, media, from + double(frame) / p.fps, p.width, p.height);
             char name[32];
             snprintf(name, sizeof(name), p.imageFormat == "exr16" ? "frame-%08d.exr" : "frame-%08d.png",
                      frame);
@@ -924,6 +986,7 @@ void exportImages(const Project &p, MediaCache &media, Renderer &renderer, const
         Json manifest = Json::Object();
         manifest["fps"] = p.fps;
         manifest["frames"] = frames;
+        manifest["start"] = from;
         manifest["width"] = p.width;
         manifest["height"] = p.height;
         manifest["project"] = p.name;
@@ -936,7 +999,7 @@ void exportImages(const Project &p, MediaCache &media, Renderer &renderer, const
         file << manifest.Dump(2);
         file.close();
         if (!file)
-            throw std::runtime_error("Écriture de l'index PNG échouée");
+            throw std::runtime_error("PNG index write failed");
         if (progress && !progress(1))
             throw ExportCancelled();
         std::filesystem::rename(staging, destination);
@@ -953,10 +1016,10 @@ void writePng(const Image &i, const std::string &path) {
     auto f = wic();
     Com<IWICStream> s;
     f->CreateStream(&s);
-    check(s->InitializeFromFilename(output.path().c_str(), GENERIC_WRITE), "Fichier PNG");
+    check(s->InitializeFromFilename(output.path().c_str(), GENERIC_WRITE), "PNG file");
     Com<IWICBitmapEncoder> e;
     f->CreateEncoder(GUID_ContainerFormatPng, nullptr, &e);
-    check(e->Initialize(s.Get(), WICBitmapEncoderNoCache), "Encodeur PNG");
+    check(e->Initialize(s.Get(), WICBitmapEncoderNoCache), "PNG encoder");
     Com<IWICBitmapFrameEncode> frame;
     Com<IPropertyBag2> props;
     e->CreateNewFrame(&frame, &props);
@@ -968,10 +1031,298 @@ void writePng(const Image &i, const std::string &path) {
         frame->WritePixels(i.height, i.width * 4, UINT(i.pixels.size()), const_cast<BYTE *>(i.pixels.data())),
         "Pixels PNG");
     check(frame->Commit(), "Image PNG");
-    check(e->Commit(), "Finalisation PNG");
+    check(e->Commit(), "PNG finalization");
     frame.Reset();
     e.Reset();
     s.Reset();
     output.commit();
+}
+void exportGif(const Project &p, MediaCache &media, Renderer &renderer, const std::string &path, ExportRange range,
+               unsigned width, int fps, const std::function<bool(float)> &progress) {
+    width = std::clamp(width, 16u, 1920u) / 2 * 2;
+    unsigned height = std::max(2u, unsigned(std::lround(double(width) * p.height / p.width)) / 2 * 2);
+    fps = std::clamp(fps, 1, 50);
+    double from = range.from(p), to = range.to(p);
+    int frames = std::max(1, int(std::floor((to - from) * fps + 1e-6)));
+    if (frames > 3000)
+        throw std::runtime_error("GIF is too long: 3000 frames maximum");
+    AtomicFile output(path);
+    auto factory = wic();
+    Com<IWICStream> stream;
+    factory->CreateStream(&stream);
+    check(stream->InitializeFromFilename(output.path().c_str(), GENERIC_WRITE), "GIF file");
+    Com<IWICBitmapEncoder> encoder;
+    check(factory->CreateEncoder(GUID_ContainerFormatGif, nullptr, &encoder), "GIF encoder");
+    check(encoder->Initialize(stream.Get(), WICBitmapEncoderNoCache), "GIF encoder");
+    {
+        // NETSCAPE2.0 application block: loop forever.
+        Com<IWICMetadataQueryWriter> global;
+        if (SUCCEEDED(encoder->GetMetadataQueryWriter(&global))) {
+            static unsigned char application[] = {'N', 'E', 'T', 'S', 'C', 'A', 'P', 'E', '2', '.', '0'};
+            static unsigned char loop[] = {3, 1, 0, 0, 0};
+            PROPVARIANT value;
+            PropVariantInit(&value);
+            value.vt = VT_UI1 | VT_VECTOR;
+            value.caub = {sizeof(application), application};
+            global->SetMetadataByName(L"/appext/application", &value);
+            value.caub = {sizeof(loop), loop};
+            global->SetMetadataByName(L"/appext/data", &value);
+        }
+    }
+    for (int index = 0; index < frames; ++index) {
+        if (progress && !progress(float(index) / frames))
+            throw ExportCancelled();
+        renderer.render(p, media, from + double(index) / fps, width, height);
+        auto image = renderer.readback();
+        Com<IWICBitmap> bitmap;
+        check(factory->CreateBitmapFromMemory(image.width, image.height, GUID_WICPixelFormat32bppBGRA, image.width * 4,
+                                              UINT(image.pixels.size()), image.pixels.data(), &bitmap),
+              "Image GIF");
+        Com<IWICPalette> palette;
+        factory->CreatePalette(&palette);
+        check(palette->InitializeFromBitmap(bitmap.Get(), 256, FALSE), "Palette GIF");
+        Com<IWICFormatConverter> indexed;
+        factory->CreateFormatConverter(&indexed);
+        check(indexed->Initialize(bitmap.Get(), GUID_WICPixelFormat8bppIndexed, WICBitmapDitherTypeErrorDiffusion,
+                                  palette.Get(), 0, WICBitmapPaletteTypeCustom),
+              "GIF colors");
+        Com<IWICBitmapFrameEncode> frame;
+        Com<IPropertyBag2> props;
+        check(encoder->CreateNewFrame(&frame, &props), "Image GIF");
+        check(frame->Initialize(props.Get()), "Image GIF");
+        frame->SetSize(width, height);
+        WICPixelFormatGUID format = GUID_WICPixelFormat8bppIndexed;
+        frame->SetPixelFormat(&format);
+        frame->SetPalette(palette.Get());
+        Com<IWICMetadataQueryWriter> meta;
+        if (SUCCEEDED(frame->GetMetadataQueryWriter(&meta))) {
+            // Delay in hundredths of a second.
+            PROPVARIANT delay;
+            PropVariantInit(&delay);
+            delay.vt = VT_UI2;
+            delay.uiVal = USHORT(std::lround(100. / fps));
+            meta->SetMetadataByName(L"/grctlext/Delay", &delay);
+        }
+        check(frame->WriteSource(indexed.Get(), nullptr), "Pixels GIF");
+        check(frame->Commit(), "Image GIF");
+    }
+    check(encoder->Commit(), "GIF finalization");
+    encoder.Reset();
+    stream.Reset();
+    output.commit();
+    if (progress)
+        progress(1);
+}
+std::vector<std::pair<double, double>> detectSilences(const MediaAsset &asset, double begin, double end,
+                                                      float thresholdDb, double minLength) {
+    constexpr size_t window = 480;
+    size_t frames = asset.samples() / 2;
+    size_t first = std::min(frames, size_t(std::max(0., begin) * 48000));
+    size_t last = std::min(frames, size_t(std::max(0., end) * 48000));
+    double threshold = std::pow(10., thresholdDb / 20);
+    std::vector<std::pair<double, double>> spans;
+    double quietFrom = -1;
+    auto close = [&](double at) {
+        if (quietFrom >= 0 && at - quietFrom >= minLength - 1e-9)
+            spans.push_back({quietFrom, at});
+        quietFrom = -1;
+    };
+    for (size_t at = first; at < last; at += window) {
+        size_t to = std::min(last, at + window);
+        double sum = 0;
+        for (size_t f = at; f < to; ++f) {
+            double mono = .5 * (asset.sample(f * 2) + asset.sample(f * 2 + 1));
+            sum += mono * mono;
+        }
+        bool quiet = std::sqrt(sum / double(std::max<size_t>(1, to - at))) < threshold;
+        double time = double(at) / 48000;
+        if (quiet && quietFrom < 0)
+            quietFrom = time;
+        else if (!quiet)
+            close(time);
+    }
+    // A medium shorter than the span is silent after its end.
+    if (quietFrom < 0 && end > double(last) / 48000)
+        quietFrom = double(last) / 48000;
+    close(std::max(double(last) / 48000, end));
+    return spans;
+}
+double soundOffset(const MediaAsset &reference, double referenceIn, double referenceLength, const MediaAsset &moved,
+                   double movedIn, double movedLength, double maxLag, double &confidence) {
+    constexpr size_t window = 480; // 10 ms
+    auto envelope = [&](const MediaAsset &asset, double in, double length) {
+        std::vector<double> values;
+        size_t frames = asset.samples() / 2;
+        size_t first = std::min(frames, size_t(std::max(0., in) * 48000));
+        size_t last = std::min(frames, first + size_t(std::max(0., length) * 48000));
+        for (size_t at = first; at + window <= last; at += window) {
+            double sum = 0;
+            for (size_t f = at; f < at + window; ++f) {
+                double mono = .5 * (asset.sample(f * 2) + asset.sample(f * 2 + 1));
+                sum += mono * mono;
+            }
+            values.push_back(std::sqrt(sum / window));
+        }
+        // Centred and scaled, so loud and quiet recordings of one scene compare.
+        double mean = 0, energy = 0;
+        for (double v : values)
+            mean += v;
+        mean /= double(std::max<size_t>(1, values.size()));
+        for (auto &v : values) {
+            v -= mean;
+            energy += v * v;
+        }
+        double scale = energy > 1e-12 ? 1 / std::sqrt(energy) : 0;
+        for (auto &v : values)
+            v *= scale;
+        return values;
+    };
+    auto a = envelope(reference, referenceIn, referenceLength), b = envelope(moved, movedIn, movedLength);
+    confidence = 0;
+    if (a.size() < 50 || b.size() < 50)
+        throw std::runtime_error("Audio is too short to synchronize (at least half a second required)");
+    int lagMax = int(maxLag * 100);
+    double best = -2;
+    int bestLag = 0;
+    // b[i] lines up with a[i + lag]: lag > 0 when the moved sound starts later in the scene.
+    for (int lag = -lagMax; lag <= lagMax; ++lag) {
+        double sum = 0;
+        for (size_t i = 0; i < b.size(); ++i) {
+            long j = long(i) + lag;
+            if (j >= 0 && j < long(a.size()))
+                sum += b[i] * a[size_t(j)];
+        }
+        if (sum > best) {
+            best = sum;
+            bestLag = lag;
+        }
+    }
+    confidence = std::clamp(best, 0., 1.);
+    return bestLag / 100.;
+}
+std::vector<std::pair<double, double>> silenceSpans(const Clip &c, const MediaAsset &asset, float thresholdDb,
+                                                    double minLength, double padding, int fps) {
+    std::vector<std::pair<double, double>> spans;
+    double clipEnd = c.start + c.duration;
+    for (auto [from, to] : detectSilences(asset, c.in, c.in + c.duration * c.speed, thresholdDb, minLength)) {
+        double a = std::max(c.start, c.start + (from - c.in) / c.speed + padding);
+        double b = std::min(clipEnd, c.start + (to - c.in) / c.speed - padding);
+        a = std::round(a * fps) / fps;
+        b = std::round(b * fps) / fps;
+        if (b - a >= 1. / fps)
+            spans.push_back({a, b});
+    }
+    return spans;
+}
+std::vector<double> detectScenes(MediaAsset &asset, double begin, double end, double step, float threshold,
+                                 const std::function<bool(float)> &progress) {
+    std::vector<double> cuts;
+    if (!asset.video || asset.image || step <= 0)
+        return cuts;
+    std::vector<std::array<float, 32>> histograms;
+    std::vector<std::array<float, 144>> cells; // mean luminance on a 16 x 9 grid
+    std::vector<double> times;
+    for (double t = std::max(0., begin); t < end - 1e-9; t += step) {
+        if (progress && !progress(float((t - begin) / std::max(1e-9, end - begin))))
+            return {};
+        auto &image = asset.at(t);
+        std::array<float, 32> histogram{};
+        std::array<float, 144> grid{}, gridCount{};
+        unsigned stride = std::max(1u, image.width / 64), rows = std::max(1u, image.height / 36);
+        float count = 0;
+        for (unsigned y = 0; y < image.height; y += rows)
+            for (unsigned x = 0; x < image.width; x += stride) {
+                auto *px = image.pixels.data() + (size_t(y) * image.width + x) * 4;
+                float luma = .0722f * px[0] + .7152f * px[1] + .2126f * px[2];
+                histogram[std::min(31, int(luma / 8))] += 1;
+                size_t cell = size_t(std::min(8u, y * 9 / std::max(1u, image.height))) * 16 +
+                              std::min(15u, x * 16 / std::max(1u, image.width));
+                grid[cell] += luma;
+                gridCount[cell] += 1;
+                ++count;
+            }
+        for (auto &bin : histogram)
+            bin /= std::max(1.f, count);
+        for (size_t cell = 0; cell < grid.size(); ++cell)
+            grid[cell] /= std::max(1.f, gridCount[cell]);
+        histograms.push_back(histogram);
+        cells.push_back(grid);
+        times.push_back(t);
+    }
+    std::vector<float> distance(histograms.size(), 0);
+    for (size_t n = 1; n < histograms.size(); ++n) {
+        // Tones (histogram) or layout (grid): a cut between two dark shots changes the second.
+        float d = 0, moved = 0;
+        for (int b = 0; b < 32; ++b)
+            d += std::abs(histograms[n][size_t(b)] - histograms[n - 1][size_t(b)]);
+        for (size_t cell = 0; cell < 144; ++cell)
+            moved += std::abs(cells[n][cell] - cells[n - 1][cell]);
+        distance[n] = std::max(d * .5f, std::min(1.f, moved / 144 / 24));
+    }
+    for (size_t n = 1; n < distance.size(); ++n) {
+        // A cut stands out from the motion around it; a fade spreads over many frames and does not.
+        size_t from = n > 6 ? n - 6 : 1, to = std::min(distance.size(), n + 7);
+        float around = 0;
+        int samples = 0;
+        for (size_t k = from; k < to; ++k)
+            if (k != n) {
+                around += distance[k];
+                ++samples;
+            }
+        around /= float(std::max(1, samples));
+        if (distance[n] >= threshold && distance[n] > around * 3 && distance[n] >= distance[n - 1] &&
+            (n + 1 >= distance.size() || distance[n] >= distance[n + 1]))
+            cuts.push_back(times[n]);
+    }
+    return cuts;
+}
+std::vector<double> detectOnsets(const MediaAsset &asset, double begin, double end, float sensitivity,
+                                 double minGap) {
+    constexpr size_t hop = 512;
+    size_t frames = asset.samples() / 2;
+    size_t first = std::min(frames, size_t(std::max(0., begin) * 48000));
+    size_t last = std::min(frames, size_t(std::max(0., end) * 48000));
+    std::vector<double> onsets;
+    if (last <= first + hop * 4)
+        return onsets;
+    // Energy of the first difference (transients stand out from sustained tones), log-compressed per hop.
+    std::vector<float> energy;
+    float previous = 0;
+    for (size_t at = first; at + hop <= last; at += hop) {
+        double sum = 0;
+        for (size_t f = at; f < at + hop; ++f) {
+            float mono = .5f * (asset.sample(f * 2) + asset.sample(f * 2 + 1));
+            float rise = mono - previous;
+            previous = mono;
+            sum += double(rise) * rise;
+        }
+        energy.push_back(float(std::log1p(1000 * sum / hop)));
+    }
+    std::vector<float> flux(energy.size(), 0);
+    for (size_t n = 1; n < energy.size(); ++n)
+        flux[n] = std::max(0.f, energy[n] - energy[n - 1]);
+    float scale = 0;
+    for (float value : flux)
+        scale = std::max(scale, value);
+    if (scale <= 1e-6f)
+        return onsets;
+    float factor = 2.2f - 1.6f * std::clamp(sensitivity, 0.f, 1.f), floor = scale * (.3f - .25f * sensitivity);
+    double lastOnset = -1e9;
+    for (size_t n = 1; n + 1 < flux.size(); ++n) {
+        // Local peak above both an absolute floor and the mean of its neighbourhood.
+        size_t from = n > 12 ? n - 12 : 0, to = std::min(flux.size(), n + 13);
+        double mean = 0;
+        for (size_t k = from; k < to; ++k)
+            mean += flux[k];
+        mean /= double(to - from);
+        if (flux[n] < flux[n - 1] || flux[n] < flux[n + 1] || flux[n] < floor || flux[n] < mean * factor)
+            continue;
+        double time = double(first + n * hop) / 48000;
+        if (time - lastOnset < minGap)
+            continue;
+        onsets.push_back(time);
+        lastOnset = time;
+    }
+    return onsets;
 }
 } // namespace sf

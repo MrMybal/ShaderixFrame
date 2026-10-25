@@ -42,12 +42,35 @@ float Parameter::at(double t) const {
 }
 void Parameter::setKey(Keyframe k) {
     if (!std::isfinite(k.time) || !std::isfinite(k.value) || !std::isfinite(k.shape))
-        throw std::runtime_error("Point d'animation invalide");
+        throw std::runtime_error("Invalid animation point");
     auto i = std::lower_bound(keys.begin(), keys.end(), k.time, [](auto &a, double t) { return a.time < t; });
     if (i != keys.end() && std::abs(i->time - k.time) < 1e-7)
         *i = k;
     else
         keys.insert(i, k);
+}
+bool Clip::ramped() const {
+    auto it = params.find("speed_ramp");
+    return it != params.end() && !it->second.keys.empty();
+}
+double Clip::sourceTime(double time) const {
+    if (hold)
+        return in;
+    double from = reverse ? time : start, to = reverse ? start + duration : time;
+    double elapsed = to - from;
+    if (auto it = params.find("speed_ramp"); it != params.end() && !it->second.keys.empty() && elapsed > 0) {
+        // Trapezoids at 240 per second at most; the ramp cannot run the source backwards.
+        auto &ramp = it->second;
+        int steps = std::clamp(int(std::ceil(elapsed * 240)), 1, 4096);
+        double h = elapsed / steps, sum = 0, previous = std::max(0.f, ramp.at(from));
+        for (int i = 1; i <= steps; ++i) {
+            double next = std::max(0.f, ramp.at(from + h * i));
+            sum += (previous + next) * .5 * h;
+            previous = next;
+        }
+        elapsed = sum;
+    }
+    return reverse ? in + std::max(0., elapsed * speed - 1e-4) : in + elapsed * speed;
 }
 float Clip::param(const std::string &k, double t, float f) const {
     auto i = params.find(k);
@@ -84,13 +107,13 @@ float Clip::transitionProgress(double time) const {
 std::vector<Id> Project::linked(Id id, bool editable) const {
     auto *selected = findClip(id);
     if (!selected)
-        throw std::runtime_error("Clip introuvable");
+        throw std::runtime_error("Clip not found");
     std::vector<Id> ids;
     for (auto &track : tracks)
         for (auto &clip : track.clips)
             if (clip.id == id || (selected->link && clip.link == selected->link)) {
                 if (editable && track.locked)
-                    throw std::runtime_error("Une piste du groupe lié est verrouillée");
+                    throw std::runtime_error("A track in the linked group is locked");
                 ids.push_back(clip.id);
             }
     return ids;
@@ -118,7 +141,7 @@ std::vector<Id> Project::selection(const std::vector<Id> &clips, bool editable) 
 void Project::moveClips(const std::vector<Id> &clips, double delta) {
     auto ids = selection(clips);
     if (ids.empty() || !std::isfinite(delta))
-        throw std::runtime_error("Sélection ou déplacement invalide");
+        throw std::runtime_error("Invalid selection or movement");
     auto candidate = *this;
     for (auto id : ids) {
         auto &c = *candidate.findClip(id);
@@ -131,10 +154,28 @@ void Project::moveClips(const std::vector<Id> &clips, double delta) {
         *findClip(id) = *candidate.findClip(id);
     duration = candidate.duration;
 }
+// Markers follow a closed span: those inside it gather at its start, the later ones move back; a
+// region loses the part of its length inside the span.
+static void closeMarkers(std::vector<Marker> &markers, double begin, double end) {
+    auto closed = [&](double t) { return t >= end - 1e-7 ? t - (end - begin) : t > begin ? begin : t; };
+    for (auto &marker : markers) {
+        double last = closed(marker.end());
+        marker.time = closed(marker.time);
+        marker.duration = marker.duration > 0 ? std::max(0., last - marker.time) : 0;
+    }
+}
+// Markers follow an opened span: the later ones move on, a region across it grows.
+static void openMarkers(std::vector<Marker> &markers, double at, double length) {
+    for (auto &marker : markers)
+        if (marker.time >= at - 1e-7)
+            marker.time += length;
+        else if (marker.duration > 0 && marker.end() > at + 1e-7)
+            marker.duration += length;
+}
 void Project::removeClips(const std::vector<Id> &clips, bool ripple) {
     auto ids = selection(clips);
     if (ids.empty())
-        throw std::runtime_error("Sélection vide");
+        throw std::runtime_error("Empty selection");
     std::set<Id> removed(ids.begin(), ids.end());
     std::vector<std::pair<double, double>> intervals;
     if (ripple) {
@@ -162,25 +203,27 @@ void Project::removeClips(const std::vector<Id> &clips, bool ripple) {
             double shift = 0;
             for (auto [begin, end] : intervals) {
                 if (c.start < end - 1e-7 && c.start + c.duration > begin + 1e-7)
-                    throw std::runtime_error("Un clip non sélectionné traverse l'espace à fermer : " +
+                    throw std::runtime_error("An unselected clip crosses the gap to close: " +
                                              c.name);
                 if (c.start >= end - 1e-7)
                     shift -= end - begin;
             }
             if (shift != 0 && track.locked)
-                throw std::runtime_error("Une piste à déplacer est verrouillée : " + track.name);
+                throw std::runtime_error("A track to move is locked: " + track.name);
             if (c.link) {
                 auto [entry, inserted] = groupOffsets.emplace(c.link, shift);
                 if (!inserted && std::abs(entry->second - shift) > 1e-7)
-                    throw std::runtime_error("Un groupe lié traverse l'espace à fermer");
+                    throw std::runtime_error("A linked group crosses the gap to close");
             }
             c.start = std::max(0., c.start + shift);
             shiftKeys(c, shift);
         }
         std::erase_if(track.clips, [&](const Clip &c) { return removed.contains(c.id); });
     }
-    for (auto [begin, end] : intervals)
-        candidate.duration -= end - begin;
+    for (auto it = intervals.rbegin(); it != intervals.rend(); ++it) {
+        candidate.duration -= it->second - it->first;
+        closeMarkers(candidate.markers, it->first, it->second);
+    }
     candidate.duration = std::max(1. / fps, candidate.duration);
     candidate.validate();
     *this = std::move(candidate);
@@ -188,7 +231,7 @@ void Project::removeClips(const std::vector<Id> &clips, bool ripple) {
 std::vector<Id> Project::duplicateClips(const std::vector<Id> &clips) {
     auto ids = selection(clips);
     if (ids.empty())
-        throw std::runtime_error("Sélection vide");
+        throw std::runtime_error("Empty selection");
     double begin = std::numeric_limits<double>::infinity(), end = 0;
     for (auto id : ids) {
         auto &c = *findClip(id);
@@ -229,7 +272,7 @@ std::vector<Id> Project::duplicateClips(const std::vector<Id> &clips) {
 void Project::splitClips(const std::vector<Id> &clips, double time) {
     auto ids = selection(clips, false);
     if (ids.empty() || !std::isfinite(time))
-        throw std::runtime_error("Sélection ou temps invalide");
+        throw std::runtime_error("Invalid selection or time");
     auto candidate = *this;
     std::set<Id> processed;
     bool cut = false;
@@ -249,14 +292,14 @@ void Project::splitClips(const std::vector<Id> &clips, double time) {
         }
     }
     if (!cut)
-        throw std::runtime_error("Aucun clip sélectionné ne traverse la tête de lecture");
+        throw std::runtime_error("No selected clip crosses the playhead");
     candidate.validate();
     *this = std::move(candidate);
 }
 void Project::linkClips(Id id, Id other) {
     auto ids = linked(id), others = linked(other);
     if (id == other)
-        throw std::runtime_error("Choisir deux clips distincts");
+        throw std::runtime_error("Choose two different clips");
     Id group = findClip(id)->link;
     if (!group)
         group = allocate();
@@ -293,7 +336,7 @@ void Project::setTiming(Id id, double start, double length, double in, double sp
 }
 void Project::rippleTrim(Id id, double delta, bool left) {
     if (!std::isfinite(delta))
-        throw std::runtime_error("Trim invalide");
+        throw std::runtime_error("Invalid trim");
     auto members = linked(id);
     auto candidate = *this;
     auto original = *findClip(id);
@@ -302,7 +345,7 @@ void Project::rippleTrim(Id id, double delta, bool left) {
     for (auto member : members) {
         auto &clip = *candidate.findClip(member);
         if (std::abs(clip.start + clip.duration - boundary) > 1e-6)
-            throw std::runtime_error("Les fins du groupe lié doivent être alignées pour un trim ripple");
+            throw std::runtime_error("Linked clips must have aligned ends for a ripple trim");
         clip.duration += delta;
         if (left)
             clip.in -= delta * clip.speed;
@@ -317,31 +360,627 @@ void Project::rippleTrim(Id id, double delta, bool left) {
                 continue;
             double shift = clip.start >= boundary - 1e-7 ? delta : 0;
             if (clip.start < boundary - 1e-7 && clip.start + clip.duration > boundary + 1e-7)
-                throw std::runtime_error("Un clip traverse le point ripple ; le découper au préalable");
+                throw std::runtime_error("A clip crosses the ripple point; split it first");
             if (shift && track.locked)
-                throw std::runtime_error("Piste verrouillée dans le déplacement ripple");
+                throw std::runtime_error("A track affected by the ripple move is locked");
             if (clip.link) {
                 auto [it, added] = shifts.emplace(clip.link, shift);
                 if (!added && std::abs(it->second - shift) > 1e-7)
-                    throw std::runtime_error("Le groupe lié traverse le point ripple");
+                    throw std::runtime_error("The linked group crosses the ripple point");
             }
             clip.start += shift;
             shiftKeys(clip, shift);
         }
     candidate.duration = std::max(1. / fps, candidate.duration + delta);
+    if (delta < 0)
+        closeMarkers(candidate.markers, boundary + delta, boundary);
+    else
+        openMarkers(candidate.markers, boundary, delta);
+    candidate.validate();
+    *this = std::move(candidate);
+}
+void Project::trimClip(Id id, double time, bool head, bool ripple) {
+    auto *found = findClip(id);
+    if (!found || !std::isfinite(time))
+        throw std::runtime_error("Invalid trim");
+    auto c = *found;
+    if (time <= c.start + 1e-7 || time >= c.start + c.duration - 1e-7)
+        throw std::runtime_error("Time must be inside the clip");
+    if (owner(id)->locked)
+        throw std::runtime_error("Track is locked");
+    double cut = head ? time - c.start : c.start + c.duration - time;
+    if (!ripple) {
+        setTiming(id, head ? time : c.start, c.duration - cut, c.in, c.speed, false);
+        return;
+    }
+    auto candidate = *this;
+    candidate.rippleTrim(id, -cut, head);
+    if (head)
+        for (auto member : candidate.linked(id))
+            shiftKeys(*candidate.findClip(member), -cut);
+    *this = std::move(candidate);
+}
+std::vector<std::string> Project::renameClips(const std::vector<Id> &clips, const std::string &pattern,
+                                              int first) {
+    if (pattern.empty() || pattern.size() > 200)
+        throw std::runtime_error("Invalid name template");
+    std::vector<std::pair<std::pair<double, int>, Id>> order;
+    for (int t = 0; t < int(tracks.size()); ++t)
+        for (auto &clip : tracks[size_t(t)].clips)
+            if (std::find(clips.begin(), clips.end(), clip.id) != clips.end())
+                order.push_back({{clip.start, t}, clip.id});
+    if (order.empty())
+        throw std::runtime_error("Empty selection");
+    std::sort(order.begin(), order.end());
+    auto candidate = *this;
+    std::vector<std::string> names;
+    int number = first;
+    for (auto &[place, id] : order) {
+        auto &clip = *candidate.findClip(id);
+        std::string name;
+        for (size_t i = 0; i < pattern.size();) {
+            if (pattern[i] == '#') {
+                size_t run = pattern.find_first_not_of('#', i);
+                size_t width = (run == std::string::npos ? pattern.size() : run) - i;
+                auto digits = std::to_string(number);
+                name += std::string(width > digits.size() ? width - digits.size() : 0, '0') + digits;
+                i += width;
+            } else if (pattern.compare(i, 5, "{nom}") == 0) {
+                name += clip.name;
+                i += 5;
+            } else
+                name += pattern[i++];
+        }
+        clip.name = name.substr(0, 256);
+        names.push_back(clip.name);
+        ++number;
+    }
+    candidate.validate();
+    *this = std::move(candidate);
+    return names;
+}
+std::vector<Subtitle> parseSrt(const std::string &source) {
+    auto text = source;
+    if (text.starts_with("\xEF\xBB\xBF"))
+        text.erase(0, 3);
+    std::erase(text, '\r');
+    auto stamp = [](const std::string &value, double &seconds) {
+        int h = 0, m = 0, s = 0, ms = 0;
+        char separator = 0;
+        if (sscanf(value.c_str(), " %d:%d:%d%c%d", &h, &m, &s, &separator, &ms) != 5 ||
+            (separator != ',' && separator != '.'))
+            return false;
+        seconds = h * 3600. + m * 60. + s + ms / 1000.;
+        return true;
+    };
+    std::vector<Subtitle> cues;
+    std::vector<std::string> lines;
+    size_t at = 0;
+    while (at <= text.size()) {
+        size_t end = text.find('\n', at);
+        lines.push_back(text.substr(at, end == std::string::npos ? std::string::npos : end - at));
+        if (end == std::string::npos)
+            break;
+        at = end + 1;
+    }
+    for (size_t i = 0; i < lines.size(); ++i) {
+        auto arrow = lines[i].find("-->");
+        if (arrow == std::string::npos)
+            continue;
+        Subtitle cue;
+        if (!stamp(lines[i].substr(0, arrow), cue.start) || !stamp(lines[i].substr(arrow + 3), cue.end))
+            continue;
+        // Text until the blank line; simple tags such as <i> are dropped.
+        for (++i; i < lines.size() && !lines[i].empty(); ++i) {
+            std::string line;
+            bool tag = false;
+            for (char c : lines[i]) {
+                if (c == '<' || c == '{')
+                    tag = true;
+                else if (c == '>' || c == '}')
+                    tag = false;
+                else if (!tag)
+                    line += c;
+            }
+            cue.text += (cue.text.empty() ? "" : "\n") + line;
+        }
+        if (cue.end > cue.start && !cue.text.empty())
+            cues.push_back(std::move(cue));
+    }
+    std::stable_sort(cues.begin(), cues.end(), [](const Subtitle &a, const Subtitle &b) { return a.start < b.start; });
+    return cues;
+}
+// The subtitle look: low in the frame, outlined, regular weight.
+static Clip subtitleClip(Id id, const std::string &text) {
+    Clip c;
+    c.id = id;
+    c.title.enabled = true;
+    c.title.text = text.substr(0, 4096);
+    c.title.bold = false;
+    c.name = c.title.text.substr(0, c.title.text.find('\n')).substr(0, 48);
+    c.params["font_size"] = {40};
+    c.params["y"] = {.38f};
+    c.params["text_outline"] = {2};
+    for (auto key : {"text_r", "text_g", "text_b", "text_a"})
+        c.params[key] = {1};
+    return c;
+}
+Id Project::addSubtitle(Id trackId, double start, double length, const std::string &text) {
+    auto *track = findTrack(trackId);
+    if (!track || track->kind != TrackKind::Video || track->locked)
+        throw std::runtime_error("Choose an available video track for subtitles");
+    if (!std::isfinite(start) || !std::isfinite(length) || start < 0 || length <= 0)
+        throw std::runtime_error("Invalid subtitle cue");
+    start = std::round(start * fps) / fps;
+    const Clip *before = nullptr;
+    double next = 1e30;
+    for (auto &clip : track->clips) {
+        if (start >= clip.start - 1e-7 && start < clip.start + clip.duration - 1e-7)
+            throw std::runtime_error("A subtitle cue already occupies this time");
+        if (clip.start > start)
+            next = std::min(next, clip.start);
+        else if (clip.title.enabled && (!before || clip.start > before->start))
+            before = &clip;
+    }
+    double end = std::min(start + length, next);
+    auto candidate = *this;
+    Clip c = subtitleClip(candidate.allocate(), text.empty() ? "Subtitle cue" : text);
+    if (before) {
+        // The look of the cue before: font, weight and the text parameters.
+        c.title.font = before->title.font;
+        c.title.bold = before->title.bold;
+        c.title.italic = before->title.italic;
+        c.title.alignment = before->title.alignment;
+        for (auto &[key, param] : before->params)
+            if (key == "font_size" || key == "x" || key == "y" || key.starts_with("text_"))
+                c.params[key] = Parameter{param.value};
+    }
+    c.start = start;
+    c.duration = std::max(1. / fps, std::round(end * fps) / fps - start);
+    Id id = c.id;
+    candidate.findTrack(trackId)->clips.push_back(std::move(c));
+    candidate.duration = std::max(candidate.duration, start + length);
+    candidate.validate();
+    *this = std::move(candidate);
+    return id;
+}
+int Project::setSubtitleStyle(Id trackId, const std::map<std::string, float> &values) {
+    auto *track = findTrack(trackId);
+    if (!track)
+        throw std::runtime_error("Track not found");
+    auto candidate = *this;
+    int count = 0;
+    for (auto &clip : candidate.findTrack(trackId)->clips)
+        if (clip.title.enabled) {
+            for (auto &[key, value] : values)
+                clip.params[key] = Parameter{value};
+            ++count;
+        }
+    if (!count)
+        throw std::runtime_error("No title clips on this track");
+    candidate.validate();
+    *this = std::move(candidate);
+    return count;
+}
+Id Project::importSubtitles(const std::vector<Subtitle> &cues, const std::string &trackName) {
+    if (cues.empty())
+        throw std::runtime_error("No readable subtitles");
+    auto candidate = *this;
+    auto &track = candidate.addTrack(TrackKind::Video);
+    track.name = trackName;
+    Id trackId = track.id;
+    for (size_t i = 0; i < cues.size(); ++i) {
+        // A cue that runs into the next one stops there: one track holds no overlap.
+        double end = i + 1 < cues.size() ? std::min(cues[i].end, cues[i + 1].start) : cues[i].end;
+        double start = std::round(cues[i].start * fps) / fps;
+        double length = std::round(end * fps) / fps - start;
+        if (length < 1. / fps)
+            continue;
+        Clip c = subtitleClip(candidate.allocate(), cues[i].text);
+        c.start = start;
+        c.duration = length;
+        candidate.findTrack(trackId)->clips.push_back(std::move(c));
+        candidate.duration = std::max(candidate.duration, start + length);
+    }
+    appendLayerSurface(candidate, trackId, trackName);
+    std::rotate(candidate.tracks.begin(), candidate.tracks.end() - 1, candidate.tracks.end());
+    candidate.validate();
+    *this = std::move(candidate);
+    return trackId;
+}
+std::string Project::subtitlesSrt(Id trackId) const {
+    std::vector<const Clip *> titles;
+    for (auto &track : tracks)
+        if (!trackId || track.id == trackId)
+            for (auto &clip : track.clips)
+                if (clip.title.enabled && clip.enabled)
+                    titles.push_back(&clip);
+    std::stable_sort(titles.begin(), titles.end(), [](const Clip *a, const Clip *b) { return a->start < b->start; });
+    auto stamp = [](double seconds) {
+        long ms = long(std::llround(std::max(0., seconds) * 1000));
+        char text[32];
+        snprintf(text, sizeof(text), "%02ld:%02ld:%02ld,%03ld", ms / 3600000, ms / 60000 % 60, ms / 1000 % 60, ms % 1000);
+        return std::string(text);
+    };
+    std::string out;
+    int index = 0;
+    for (auto *clip : titles)
+        out += std::to_string(++index) + "\n" + stamp(clip->start) + " --> " + stamp(clip->start + clip->duration) +
+               "\n" + clip->title.text + "\n\n";
+    return out;
+}
+std::vector<std::string> Project::mediaPaths() const {
+    std::vector<std::string> paths = bin;
+    for (auto &track : tracks)
+        for (auto &clip : track.clips)
+            if (!clip.source.empty() && std::find(paths.begin(), paths.end(), clip.source) == paths.end())
+                paths.push_back(clip.source);
+    return paths;
+}
+int Project::relinkMedia(const std::map<std::string, std::string> &moves) {
+    int changed = 0;
+    auto candidate = *this;
+    for (auto &path : candidate.bin)
+        if (auto it = moves.find(path); it != moves.end())
+            path = it->second;
+    for (auto &track : candidate.tracks)
+        for (auto &clip : track.clips)
+            if (auto it = moves.find(clip.source); it != moves.end()) {
+                clip.source = it->second;
+                ++changed;
+            }
+    candidate.validate();
+    *this = std::move(candidate);
+    return changed;
+}
+int Project::pasteAttributes(const Clip &source, TrackKind sourceKind, const std::vector<Id> &targets,
+                             const AttributeChoice &choice) {
+    auto candidate = *this;
+    int pasted = 0;
+    auto shifted = [](Parameter param, double delta) {
+        for (auto &key : param.keys)
+            key.time += delta;
+        return param;
+    };
+    for (auto id : targets) {
+        auto *target = candidate.findClip(id);
+        if (!target || id == source.id || candidate.owner(id)->locked)
+            continue;
+        bool sameKind = candidate.owner(id)->kind == sourceKind;
+        double delta = target->start - source.start;
+        // A parameter the source does not set returns to its default on the target.
+        auto carry = [&](const std::string &key) {
+            if (auto it = source.params.find(key); it != source.params.end())
+                target->params[key] = shifted(it->second, delta);
+            else
+                target->params.erase(key);
+        };
+        if (choice.transform && sameKind && sourceKind == TrackKind::Video)
+            for (auto key : {"x", "y", "scale", "rotation"})
+                carry(key);
+        if (choice.opacity && sameKind && sourceKind == TrackKind::Video)
+            carry("opacity");
+        if (choice.audio && sameKind && sourceKind == TrackKind::Audio)
+            for (auto key : {"gain", "pan"})
+                carry(key);
+        if (choice.mask && sameKind && sourceKind == TrackKind::Video) {
+            target->mask = source.mask;
+            std::erase_if(target->params, [](const auto &entry) { return entry.first.starts_with("mask_"); });
+            for (auto &[key, param] : source.params)
+                if (key.starts_with("mask_"))
+                    target->params[key] = shifted(param, delta);
+        }
+        if (choice.effects && sameKind) {
+            if (choice.replaceEffects)
+                target->effects.clear();
+            for (auto effect : source.effects) {
+                for (auto &[key, param] : effect.params)
+                    param = shifted(param, delta);
+                target->effects.push_back(std::move(effect));
+            }
+        }
+        ++pasted;
+    }
+    if (!pasted)
+        throw std::runtime_error("No editable clips in the selection");
+    candidate.validate();
+    *this = std::move(candidate);
+    return pasted;
+}
+std::vector<Id> Project::anglesAt(double time) const {
+    std::vector<Id> angles;
+    for (auto &track : tracks) {
+        if (track.kind != TrackKind::Video || track.locked)
+            continue;
+        for (auto &clip : track.clips)
+            if (clip.active(time) && !clip.title.enabled && !clip.adjustment) {
+                angles.push_back(clip.id);
+                break;
+            }
+    }
+    return angles;
+}
+void Project::switchAngle(double time, int angle, bool followSound) {
+    auto angles = anglesAt(time);
+    if (angle < 1 || angle > int(angles.size()))
+        throw std::runtime_error("Angle " + std::to_string(angle) + " missing: " + std::to_string(angles.size()) +
+                                 " angle(s) at the playhead");
+    auto candidate = *this;
+    for (int index = 0; index < int(angles.size()); ++index) {
+        Id trackId = candidate.owner(angles[size_t(index)])->id;
+        if (auto *clip = candidate.findClip(angles[size_t(index)]); clip->start < time - 1e-6)
+            candidate.splitClips({clip->id}, time);
+        // The piece that starts at the time carries the switch until the next one.
+        Id started = 0;
+        for (auto &piece : candidate.findTrack(trackId)->clips)
+            if (std::abs(piece.start - time) < 1e-6 && !piece.title.enabled && !piece.adjustment) {
+                piece.enabled = index + 1 == angle;
+                started = piece.id;
+            }
+        // The cut also split the linked sound; its piece from the time follows the picture.
+        if (followSound && started)
+            for (auto member : candidate.linked(started))
+                if (auto *sound = candidate.findClip(member); sound && member != started)
+                    sound->enabled = index + 1 == angle;
+    }
+    candidate.validate();
+    *this = std::move(candidate);
+}
+int Project::closeGaps(Id id) {
+    if (!id) {
+        // Spans where no track has a clip, closed from the last one so the earlier stay in place.
+        std::vector<std::pair<double, double>> spans, gaps;
+        for (auto &track : tracks)
+            for (auto &clip : track.clips)
+                spans.push_back({clip.start, clip.start + clip.duration});
+        std::sort(spans.begin(), spans.end());
+        double reach = 0;
+        for (auto [begin, end] : spans) {
+            if (begin > reach + 1e-6)
+                gaps.push_back({reach, begin});
+            reach = std::max(reach, end);
+        }
+        if (gaps.empty())
+            return 0;
+        auto candidate = *this;
+        for (auto it = gaps.rbegin(); it != gaps.rend(); ++it)
+            candidate.removeRange(it->first, it->second);
+        *this = std::move(candidate);
+        return int(gaps.size());
+    }
+    auto *track = findTrack(id);
+    if (!track)
+        throw std::runtime_error("Track not found");
+    if (track->locked)
+        throw std::runtime_error("The track is locked");
+    std::vector<const Clip *> order;
+    for (auto &clip : track->clips)
+        order.push_back(&clip);
+    std::sort(order.begin(), order.end(), [](auto *a, auto *b) { return a->start < b->start; });
+    // Each clip moves by the sum of the gaps before it; its linked members move by the same amount.
+    std::map<Id, double> moves;
+    double reach = 0, shift = 0;
+    int gaps = 0;
+    for (auto *clip : order) {
+        double start = clip->start + shift;
+        if (start > reach + 1e-6) {
+            shift -= start - reach;
+            start = reach;
+            ++gaps;
+        }
+        if (shift < 0)
+            for (auto member : linked(clip->id)) {
+                auto [it, inserted] = moves.emplace(member, shift);
+                if (!inserted && std::abs(it->second - shift) > 1e-7)
+                    throw std::runtime_error("Two clips in the same linked group cannot have different offsets");
+            }
+        reach = std::max(reach, start + clip->duration);
+    }
+    if (!gaps)
+        return 0;
+    auto candidate = *this;
+    for (auto &[member, delta] : moves) {
+        auto &clip = *candidate.findClip(member);
+        clip.start += delta;
+        shiftKeys(clip, delta);
+    }
+    for (auto &other : candidate.tracks) {
+        if (other.id == id)
+            continue;
+        for (auto &moved : other.clips)
+            if (moves.contains(moved.id))
+                for (auto &still : other.clips)
+                    if (!moves.contains(still.id) && still.start < moved.start + moved.duration - 1e-6 &&
+                        still.start + still.duration > moved.start + 1e-6)
+                        throw std::runtime_error("A linked clip would overlap ' " + still.name + " ' on its track");
+    }
+    candidate.validate();
+    *this = std::move(candidate);
+    return gaps;
+}
+int Project::fitToMarkers(const std::vector<Id> &clips, const std::function<double(const Clip &)> &available) {
+    std::vector<const Clip *> chosen;
+    for (auto id : clips)
+        if (auto *clip = findClip(id))
+            chosen.push_back(clip);
+    if (chosen.empty())
+        throw std::runtime_error("Choose clips");
+    auto earliest = *std::min_element(chosen.begin(), chosen.end(),
+                                      [](auto *a, auto *b) { return a->start < b->start; });
+    Id track = owner(earliest->id)->id;
+    std::erase_if(chosen, [&](auto *clip) { return owner(clip->id)->id != track; });
+    std::sort(chosen.begin(), chosen.end(), [](auto *a, auto *b) { return a->start < b->start; });
+    double first = chosen.front()->start;
+    std::vector<double> beats{first};
+    for (auto &marker : markers)
+        if (marker.time > first + 1e-6)
+            beats.push_back(marker.time);
+    std::sort(beats.begin() + 1, beats.end());
+    if (beats.size() < 2)
+        throw std::runtime_error("No markers after the first clip");
+    auto candidate = *this;
+    std::set<Id> moved;
+    double cursor = first;
+    for (size_t i = 0; i < chosen.size(); ++i) {
+        auto original = *chosen[i];
+        double start = i < beats.size() ? beats[i] : cursor;
+        double length = i + 1 < beats.size() ? beats[i + 1] - start : original.duration;
+        length = std::min(length, available(original));
+        if (!(length > 1e-6))
+            throw std::runtime_error("The source of ' " + original.name + " » is too short");
+        cursor = start + length;
+        candidate.duration = std::max(candidate.duration, cursor);
+        candidate.setTiming(original.id, start, length, original.in, original.speed);
+        for (auto member : candidate.linked(original.id))
+            moved.insert(member);
+    }
+    for (auto &t : candidate.tracks)
+        for (auto &clip : t.clips)
+            if (moved.contains(clip.id))
+                for (auto &still : t.clips)
+                    if (!moved.contains(still.id) && still.start < clip.start + clip.duration - 1e-6 &&
+                        still.start + still.duration > clip.start + 1e-6)
+                        throw std::runtime_error("« " + still.name + " ' occupies this space: select it too or move it");
+    candidate.validate();
+    *this = std::move(candidate);
+    return int(chosen.size());
+}
+int Project::splitAtMarkers(const std::vector<Id> &clips) {
+    auto candidate = *this;
+    std::set<Id> targets;
+    if (clips.empty()) {
+        for (auto &track : candidate.tracks)
+            if (!track.locked)
+                for (auto &clip : track.clips)
+                    targets.insert(clip.id);
+    } else
+        for (auto id : candidate.selection(clips))
+            targets.insert(id);
+    int cuts = 0;
+    for (auto &marker : markers) {
+        std::vector<Id> across;
+        std::set<Id> existing;
+        for (auto &track : candidate.tracks)
+            for (auto &clip : track.clips) {
+                existing.insert(clip.id);
+                if (targets.contains(clip.id) && !track.locked && clip.start + 1e-5 < marker.time &&
+                    clip.start + clip.duration - 1e-5 > marker.time)
+                    across.push_back(clip.id);
+            }
+        if (across.empty())
+            continue;
+        candidate.splitClips(across, marker.time);
+        ++cuts;
+        // The pieces after the cut are new clips: they are cut again at the following markers.
+        for (auto &track : candidate.tracks)
+            for (auto &clip : track.clips)
+                if (!existing.contains(clip.id))
+                    targets.insert(clip.id);
+    }
+    candidate.validate();
+    *this = std::move(candidate);
+    return cuts;
+}
+void Project::insertGap(double time, double length) {
+    if (!std::isfinite(time) || !std::isfinite(length) || time < 0 || time > duration || length <= 0 ||
+        duration + length > 86400)
+        throw std::runtime_error("Invalid gap to insert");
+    for (auto &track : tracks)
+        if (track.locked)
+            for (auto &clip : track.clips)
+                if (clip.start + clip.duration > time + 1e-7)
+                    throw std::runtime_error("A locked track has clips after this point");
+    auto candidate = *this;
+    std::vector<Id> across;
+    for (auto &track : candidate.tracks)
+        for (auto &clip : track.clips)
+            if (clip.start + 1e-5 < time && clip.start + clip.duration - 1e-5 > time)
+                across.push_back(clip.id);
+    if (!across.empty())
+        candidate.splitClips(across, time);
+    for (auto &track : candidate.tracks)
+        for (auto &clip : track.clips)
+            if (clip.start >= time - 1e-7) {
+                clip.start += length;
+                shiftKeys(clip, length);
+            }
+    openMarkers(candidate.markers, time, length);
+    candidate.duration += length;
+    candidate.validate();
+    *this = std::move(candidate);
+}
+Id Project::freezeFrame(Id id, double time, double length) {
+    auto *found = findClip(id);
+    if (!found || owner(id)->kind != TrackKind::Video)
+        throw std::runtime_error("Choose a video clip");
+    auto original = *found;
+    if (time < original.start - 1e-7 || time >= original.start + original.duration - 1e-7)
+        throw std::runtime_error("The playhead must be on the clip");
+    Id track = owner(id)->id;
+    auto candidate = *this;
+    candidate.insertGap(time, length);
+    Clip held = original;
+    held.id = candidate.allocate();
+    held.name = original.name + " (freeze)";
+    held.link = 0;
+    held.start = time;
+    held.duration = length;
+    held.in = original.sourceTime(time);
+    held.speed = 1;
+    held.hold = true;
+    held.fadeIn = held.fadeOut = 0;
+    held.transition.enabled = false;
+    auto freeze = [&](std::map<std::string, Parameter> &params) {
+        for (auto &[key, param] : params) {
+            param.value = param.at(time);
+            param.keys.clear();
+        }
+    };
+    freeze(held.params);
+    for (auto &effect : held.effects)
+        freeze(effect.params);
+    auto &clips = candidate.findTrack(track)->clips;
+    auto at = std::find_if(clips.begin(), clips.end(), [&](const Clip &c) { return c.start > time; });
+    Id heldId = held.id;
+    clips.insert(at, std::move(held));
+    candidate.validate();
+    *this = std::move(candidate);
+    return heldId;
+}
+void Project::replaceSource(Id id, const std::string &path, double in, double mediaLength, bool hasVideo,
+                            bool hasAudio) {
+    auto *found = findClip(id);
+    if (!found || found->source.empty() || path.empty() || !std::isfinite(in) || in < 0)
+        throw std::runtime_error("Invalid replacement");
+    if (owner(id)->locked)
+        throw std::runtime_error("Track is locked");
+    auto original = found->source;
+    auto name = sx::Narrow(sx::Utf8Path(path).stem().wstring());
+    auto candidate = *this;
+    for (auto member : linked(id)) {
+        auto &clip = *candidate.findClip(member);
+        bool video = candidate.owner(member)->kind == TrackKind::Video;
+        if (clip.source != original || (video ? !hasVideo : !hasAudio))
+            continue;
+        if (mediaLength > 0 && in + clip.duration * clip.speed > mediaLength + 1e-6)
+            throw std::runtime_error("The media is too short for the clip duration from this point");
+        clip.source = path;
+        clip.in = in;
+        clip.name = name;
+    }
     candidate.validate();
     *this = std::move(candidate);
 }
 void Project::rollTrim(Id id, Id next, double delta) {
     if (!std::isfinite(delta) || id == next)
-        throw std::runtime_error("Roll invalide");
+        throw std::runtime_error("Invalid roll");
     auto outgoing = linked(id), incoming = linked(next);
     for (auto member : outgoing)
         if (std::find(incoming.begin(), incoming.end(), member) != incoming.end())
-            throw std::runtime_error("Deux groupes distincts requis");
+            throw std::runtime_error("Two different groups required");
     auto first = *findClip(id), second = *findClip(next);
     if (owner(id)->id != owner(next)->id || std::abs(first.start + first.duration - second.start) > 1e-6)
-        throw std::runtime_error("Choisir deux clips adjacents de la même piste");
+        throw std::runtime_error("Choose two adjacent clips on the same track");
     auto candidate = *this;
     candidate.setTiming(id, first.start, first.duration + delta, first.in, first.speed, false);
     candidate.setTiming(next, second.start + delta, second.duration - delta, second.in + delta * second.speed,
@@ -351,16 +990,16 @@ void Project::rollTrim(Id id, Id next, double delta) {
 }
 void Project::overlapTransition(Id id, Id next, double seconds) {
     if (!std::isfinite(seconds) || seconds <= 0)
-        throw std::runtime_error("Durée de transition invalide");
+        throw std::runtime_error("Invalid transition duration");
     auto outgoing = linked(id), incoming = linked(next);
     for (auto member : outgoing)
         if (std::find(incoming.begin(), incoming.end(), member) != incoming.end())
-            throw std::runtime_error("Deux groupes distincts requis");
+            throw std::runtime_error("Two different groups required");
     auto first = *findClip(id), second = *findClip(next);
     if (owner(id)->id != owner(next)->id || owner(id)->kind != TrackKind::Video ||
         std::abs(first.start + first.duration - second.start) > 1e-6 || seconds > first.duration)
         throw std::runtime_error(
-            "Deux clips vidéo adjacents et une durée contenue dans le premier sont requis");
+            "Two adjacent video clips and a duration within the first clip are required");
     auto candidate = *this;
     // Keep the incoming end fixed. Extend its source handle before the cut.
     for (auto member : incoming) {
@@ -386,13 +1025,13 @@ void Project::overlapTransition(Id id, Id next, double seconds) {
 }
 void Project::removeRange(double begin, double end) {
     if (!std::isfinite(begin) || !std::isfinite(end) || begin < 0 || end <= begin || end > duration)
-        throw std::runtime_error("Intervalle à fermer invalide");
+        throw std::runtime_error("Invalid range to close");
     auto candidate = *this;
     for (auto &track : tracks)
         if (track.locked)
             for (auto &clip : track.clips)
                 if (clip.start + clip.duration > begin)
-                    throw std::runtime_error("Une piste touchée par l'intervalle est verrouillée");
+                    throw std::runtime_error("A track affected by the range is locked");
     for (auto boundary : {end, begin}) {
         std::vector<Id> clips;
         for (auto &track : candidate.tracks)
@@ -412,7 +1051,7 @@ void Project::removeRange(double begin, double end) {
     for (auto id : removed)
         for (auto member : candidate.linked(id))
             if (!removed.contains(member))
-                throw std::runtime_error("Groupe lié non aligné dans l'intervalle à retirer");
+                throw std::runtime_error("A linked group is not aligned within the range to remove");
     for (auto &track : candidate.tracks) {
         std::erase_if(track.clips, [&](const auto &clip) { return removed.contains(clip.id); });
         for (auto &clip : track.clips)
@@ -422,6 +1061,7 @@ void Project::removeRange(double begin, double end) {
             }
     }
     candidate.duration = std::max(1. / fps, duration - (end - begin));
+    closeMarkers(candidate.markers, begin, end);
     candidate.validate();
     *this = std::move(candidate);
 }
@@ -446,9 +1086,451 @@ Track &Project::addTrack(TrackKind k) {
     Track t;
     t.id = allocate();
     t.kind = k;
-    t.name = (k == TrackKind::Audio ? "Audio " : "Vidéo ") + std::to_string(tracks.size() + 1);
+    t.name = (k == TrackKind::Audio ? "Audio " : "Video ") + std::to_string(tracks.size() + 1);
     tracks.push_back(t);
     return tracks.back();
+}
+void Project::removeTrack(Id id) {
+    auto it = std::find_if(tracks.begin(), tracks.end(), [&](const Track &t) { return t.id == id; });
+    if (it == tracks.end())
+        throw std::runtime_error("Track not found");
+    if (it->locked)
+        throw std::runtime_error("Track is locked");
+    std::vector<Id> partners;
+    for (auto &clip : it->clips)
+        if (clip.link)
+            for (auto &other : tracks)
+                if (&other != &*it)
+                    for (auto &candidate : other.clips)
+                        if (candidate.link == clip.link)
+                            partners.push_back(candidate.id);
+    // Le graphe des calques explicite garde ses branches : la surface retirée devient une entrée vide.
+    if (it->kind == TrackKind::Video && !layerGraph.IsNull()) {
+        std::set<Id> removed;
+        for (auto &node : layerGraph["nodes"].Elements())
+            if (node["kind"].S() == "surface" && node["surface"].U() == id)
+                removed.insert(node["id"].U());
+        auto nodes = Json::Array();
+        for (auto node : layerGraph["nodes"].Elements()) {
+            if (removed.count(node["id"].U()))
+                continue;
+            auto inputs = Json::Array();
+            for (auto &input : node["inputs"].Elements())
+                inputs.Push(removed.count(input.U()) ? Json(sx::u32(0)) : input);
+            node["inputs"] = inputs;
+            nodes.Push(node);
+        }
+        layerGraph["nodes"] = nodes;
+        if (removed.count(layerGraph["output"].U()))
+            layerGraph = Json();
+    }
+    tracks.erase(it);
+    std::erase_if(groups, [&](const TrackGroup &g) {
+        return std::none_of(tracks.begin(), tracks.end(), [&](const Track &t) { return t.group == g.id; });
+    });
+    // Un groupe lié qui n'a plus qu'un membre n'est plus un groupe.
+    for (auto partner : partners)
+        if (auto *clip = findClip(partner); clip && linked(partner, false).size() < 2)
+            clip->link = 0;
+}
+Track &Project::duplicateTrack(Id id) {
+    auto it = std::find_if(tracks.begin(), tracks.end(), [&](const Track &t) { return t.id == id; });
+    if (it == tracks.end())
+        throw std::runtime_error("Track not found");
+    auto candidate = *this;
+    Track copy = *candidate.findTrack(id);
+    copy.id = candidate.allocate();
+    copy.name = copy.name + " (copy)";
+    copy.locked = false;
+    for (auto &clip : copy.clips) {
+        clip.id = candidate.allocate();
+        clip.link = 0;
+    }
+    auto at = std::find_if(candidate.tracks.begin(), candidate.tracks.end(), [&](const Track &t) { return t.id == id; });
+    auto inserted = candidate.tracks.insert(at + 1, std::move(copy));
+    Id copyId = inserted->id;
+    if (inserted->kind == TrackKind::Video)
+        appendLayerSurface(candidate, copyId, inserted->name);
+    candidate.validate();
+    *this = std::move(candidate);
+    return *findTrack(copyId);
+}
+void Project::moveTrack(Id id, int index) {
+    auto it = std::find_if(tracks.begin(), tracks.end(), [&](const Track &t) { return t.id == id; });
+    if (it == tracks.end())
+        throw std::runtime_error("Track not found");
+    index = std::clamp(index, 0, int(tracks.size()) - 1);
+    Track moved = std::move(*it);
+    tracks.erase(it);
+    tracks.insert(tracks.begin() + index, std::move(moved));
+}
+std::string Project::markerChapters() const {
+    auto clock = [](double seconds) {
+        long total = long(std::floor(seconds + 1e-6));
+        char text[32];
+        if (total >= 3600)
+            snprintf(text, sizeof(text), "%ld:%02ld:%02ld", total / 3600, total / 60 % 60, total % 60);
+        else
+            snprintf(text, sizeof(text), "%ld:%02ld", total / 60, total % 60);
+        return std::string(text);
+    };
+    std::string text;
+    if (markers.empty() || markers.front().time >= 1)
+        text = "0:00 " + name + "\n";
+    for (auto &marker : markers)
+        text += clock(marker.time) + " " + marker.name + "\n";
+    return text;
+}
+// Timecode HH:MM:SS:FF at the project's frame rate (non drop frame).
+static std::string frameCode(double seconds, int fps) {
+    long frames = long(std::llround(std::max(0., seconds) * fps));
+    char text[32];
+    snprintf(text, sizeof(text), "%02ld:%02ld:%02ld:%02ld", frames / fps / 3600, frames / fps / 60 % 60, frames / fps % 60,
+             frames % fps);
+    return text;
+}
+std::vector<EdlEvent> parseEdl(const std::string &source, int fps) {
+    auto text = source;
+    std::erase(text, '\r');
+    auto seconds = [&](const std::string &code, double &value) {
+        int h = 0, m = 0, s = 0, f = 0;
+        char a = 0, b = 0, c = 0;
+        if (sscanf(code.c_str(), "%d%c%d%c%d%c%d", &h, &a, &m, &b, &s, &c, &f) != 7)
+            return false;
+        value = h * 3600. + m * 60. + s + double(f) / std::max(1, fps);
+        return true;
+    };
+    std::vector<EdlEvent> events;
+    size_t at = 0;
+    while (at < text.size()) {
+        size_t end = text.find('\n', at);
+        auto line = text.substr(at, end == std::string::npos ? std::string::npos : end - at);
+        at = end == std::string::npos ? text.size() : end + 1;
+        char number[16] = {}, reel[64] = {}, channels[16] = {}, kind[16] = {}, a[16] = {}, b[16] = {}, c[16] = {},
+             d[16] = {};
+        if (line.size() > 4 && std::isdigit((unsigned char)line[0]) &&
+            sscanf(line.c_str(), "%15s %63s %15s %15s %15s %15s %15s %15s", number, reel, channels, kind, a, b, c, d) == 8) {
+            // Cuts only: a dissolve line carries a duration before its timecodes, which shifts the fields.
+            EdlEvent event;
+            event.reel = reel;
+            event.channels = channels;
+            if (seconds(a, event.sourceIn) && seconds(b, event.sourceOut) && seconds(c, event.recordIn) &&
+                seconds(d, event.recordOut) && event.recordOut > event.recordIn) {
+                event.speed = std::max(.05, (event.sourceOut - event.sourceIn) / (event.recordOut - event.recordIn));
+                events.push_back(event);
+            }
+        } else if (line.starts_with("M2") && !events.empty()) {
+            // Speed in frames per second of source, for the event just above.
+            char speedReel[64] = {};
+            double framesPerSecond = 0;
+            if (sscanf(line.c_str(), "M2 %63s %lf", speedReel, &framesPerSecond) == 2 && framesPerSecond > 0)
+                events.back().speed = framesPerSecond / std::max(1, fps);
+        } else if (line.starts_with("* FROM CLIP NAME:") && !events.empty()) {
+            events.back().clipName = line.substr(17);
+            events.back().clipName.erase(0, events.back().clipName.find_first_not_of(' '));
+        } else if (line.starts_with("* SOURCE FILE:") && !events.empty()) {
+            events.back().sourceFile = line.substr(14);
+            events.back().sourceFile.erase(0, events.back().sourceFile.find_first_not_of(' '));
+        }
+    }
+    return events;
+}
+std::string Project::edl(Id trackId) const {
+    const Track *track = nullptr;
+    for (auto &t : tracks)
+        if (t.kind == TrackKind::Video && (trackId ? t.id == trackId : !t.clips.empty()) && !track)
+            track = &t;
+    if (!track)
+        throw std::runtime_error("No video track to export");
+    std::vector<const Clip *> clips;
+    for (auto &clip : track->clips)
+        if (clip.enabled)
+            clips.push_back(&clip);
+    std::sort(clips.begin(), clips.end(), [](const Clip *a, const Clip *b) { return a->start < b->start; });
+    std::string out = "TITLE: " + name + "\nFCM: NON-DROP FRAME\n\n";
+    int event = 0;
+    for (auto *clip : clips) {
+        bool black = clip->source.empty();
+        bool sounding = false;
+        for (auto member : linked(clip->id, false))
+            if (member != clip->id && owner(member)->kind == TrackKind::Audio)
+                sounding = true;
+        // Reel names stay within the eight characters CMX allows; the file name goes in a comment.
+        auto reel = black ? std::string("BL") : "AX";
+        double sourceIn = black ? 0 : clip->in, sourceOut = sourceIn + clip->duration * (black ? 1 : clip->speed);
+        char line[160];
+        snprintf(line, sizeof(line), "%03d  %-8s %-5s C        %s %s %s %s\n", ++event, reel.c_str(),
+                 sounding ? "B" : "V", frameCode(sourceIn, fps).c_str(), frameCode(sourceOut, fps).c_str(),
+                 frameCode(clip->start, fps).c_str(), frameCode(clip->start + clip->duration, fps).c_str());
+        out += line;
+        if (!black && std::abs(clip->speed - 1) > 1e-6) {
+            snprintf(line, sizeof(line), "M2   %-8s %05.1f    %s\n", reel.c_str(), clip->speed * fps,
+                     frameCode(sourceIn, fps).c_str());
+            out += line;
+        }
+        out += "* FROM CLIP NAME: " + clip->name + "\n";
+        if (!black)
+            out += "* SOURCE FILE: " + clip->source + "\n";
+        if (clip->transition.enabled)
+            out += "* TRANSITION: " + std::to_string(long(std::llround(clip->transition.duration * fps))) + " FRAMES\n";
+        out += "\n";
+    }
+    return out;
+}
+std::string Project::shotListCsv() const {
+    auto quote = [](const std::string &field) {
+        std::string out = "\"";
+        for (char c : field)
+            out += c == '"' ? std::string("\"\"") : std::string(1, c);
+        return out + "\"";
+    };
+    std::string text = "No,Track,Name,Start,End,Duration,Source,Source in,Source out,Speed %,Effects,Enabled\n";
+    int number = 0;
+    for (auto &track : tracks) {
+        std::vector<const Clip *> clips;
+        for (auto &clip : track.clips)
+            clips.push_back(&clip);
+        std::sort(clips.begin(), clips.end(), [](const Clip *a, const Clip *b) { return a->start < b->start; });
+        for (auto *clip : clips) {
+            char speed[16];
+            snprintf(speed, sizeof(speed), "%.0f", clip->speed * 100);
+            text += std::to_string(++number) + "," + quote(track.name) + "," + quote(clip->name) + "," +
+                    frameCode(clip->start, fps) + "," + frameCode(clip->start + clip->duration, fps) + "," +
+                    frameCode(clip->duration, fps) + "," + quote(clip->source) + "," +
+                    (clip->source.empty() ? "" : frameCode(clip->in, fps)) + "," +
+                    (clip->source.empty() ? "" : frameCode(clip->in + clip->duration * clip->speed, fps)) + "," +
+                    speed + "," + std::to_string(clip->effects.size()) + "," + (clip->enabled ? "oui" : "non") + "\n";
+        }
+    }
+    return text;
+}
+std::string Project::markerCsv() const {
+    auto quote = [](const std::string &field) {
+        std::string out = "\"";
+        for (char c : field)
+            out += c == '"' ? std::string("\"\"") : std::string(1, c);
+        return out + "\"";
+    };
+    std::string text = "Name,Timecode,Seconds,Color,Note,Duration\n";
+    for (auto &marker : markers) {
+        long frames = long(std::llround(marker.time * fps));
+        char code[48], seconds[32], colour[16], length[32] = "";
+        if (marker.duration > 0)
+            snprintf(length, sizeof(length), "%.3f", marker.duration);
+        snprintf(code, sizeof(code), "%02ld:%02ld:%02ld:%02ld", frames / fps / 3600, frames / fps / 60 % 60,
+                 frames / fps % 60, frames % fps);
+        snprintf(seconds, sizeof(seconds), "%.3f", marker.time);
+        snprintf(colour, sizeof(colour), "%06X", unsigned(marker.color));
+        text += quote(marker.name) + "," + code + "," + seconds + "," + (marker.color ? colour : "") + "," +
+                quote(marker.note) + "," + length + "\n";
+    }
+    return text;
+}
+Marker &Project::addMarker(double time, const std::string &label) {
+    Marker marker;
+    marker.id = allocate();
+    marker.time = time;
+    marker.name = label.empty() ? "Marker " + std::to_string(markers.size() + 1) : label;
+    auto at = std::upper_bound(markers.begin(), markers.end(), time,
+                               [](double t, const Marker &m) { return t < m.time; });
+    return *markers.insert(at, marker);
+}
+void Project::removeMarker(Id id) {
+    if (!std::erase_if(markers, [&](const Marker &m) { return m.id == id; }))
+        throw std::runtime_error("Marker not found");
+}
+TrackGroup *Project::findGroup(Id id) {
+    for (auto &group : groups)
+        if (group.id == id)
+            return &group;
+    return nullptr;
+}
+TrackGroup &Project::groupTracks(const std::vector<Id> &ids, const std::string &label) {
+    std::vector<Id> members;
+    for (auto &track : tracks)
+        if (std::find(ids.begin(), ids.end(), track.id) != ids.end())
+            members.push_back(track.id);
+    if (members.empty() || members.size() != std::set<Id>(ids.begin(), ids.end()).size())
+        throw std::runtime_error("Tracks for the group were not found");
+    TrackGroup group;
+    group.id = allocate();
+    group.name = label.empty() ? "Group " + std::to_string(groups.size() + 1) : label;
+    groups.push_back(group);
+    auto at = [&](Id id) {
+        return std::find_if(tracks.begin(), tracks.end(), [&](const Track &t) { return t.id == id; });
+    };
+    for (size_t i = 1; i < members.size(); ++i) {
+        auto it = at(members[i]);
+        Track moved = std::move(*it);
+        tracks.erase(it);
+        tracks.insert(at(members[i - 1]) + 1, std::move(moved));
+    }
+    for (auto id : members)
+        findTrack(id)->group = group.id;
+    // Groups left without members disappear.
+    std::erase_if(groups, [&](const TrackGroup &g) {
+        return std::none_of(tracks.begin(), tracks.end(), [&](const Track &t) { return t.group == g.id; });
+    });
+    return *findGroup(group.id);
+}
+std::vector<Id> Project::placeSource(const SourceEdit &edit) {
+    double span = edit.out - edit.in, length = edit.fill > 0 ? edit.fill : span;
+    if (edit.path.empty() || !std::isfinite(edit.in) || !std::isfinite(edit.out) || !std::isfinite(edit.at) ||
+        !std::isfinite(edit.fill) || edit.in < 0 || edit.at < 0 || span < 1. / fps - 1e-9 ||
+        length < 1. / fps - 1e-9 || (!edit.video && !edit.audio))
+        throw std::runtime_error("Invalid source range");
+    double speed = span / length;
+    if (speed < .05 || speed > 20)
+        throw std::runtime_error("Fit-to-fill speed is out of range (x0.05 to x20)");
+    auto candidate = *this;
+    auto &p = candidate;
+    auto target = [&](TrackKind kind, Id wanted) -> Track & {
+        if (wanted) {
+            auto *track = p.findTrack(wanted);
+            if (!track || track->kind != kind || track->locked)
+                throw std::runtime_error("Target track is missing, locked, or has a different type");
+            return *track;
+        }
+        for (auto &track : p.tracks)
+            if (track.kind == kind && !track.locked)
+                return track;
+        p.addTrack(kind);
+        if (kind != TrackKind::Video)
+            return p.tracks.back();
+        std::rotate(p.tracks.begin(), p.tracks.end() - 1, p.tracks.end()); // new picture tracks go on top
+        return p.tracks.front();
+    };
+    auto crossing = [&](double time, const std::function<bool(const Track &)> &concerned) {
+        std::vector<Id> ids;
+        for (auto &track : p.tracks)
+            if (concerned(track))
+                for (auto &clip : track.clips)
+                    if (time > clip.start + 1e-5 && time < clip.start + clip.duration - 1e-5)
+                        ids.push_back(clip.id);
+        return ids;
+    };
+    Id videoId = edit.video ? target(TrackKind::Video, edit.videoTrack).id : 0;
+    Id audioId = edit.audio ? target(TrackKind::Audio, edit.audioTrack).id : 0;
+    auto isTarget = [&](const Track &track) { return track.id == videoId || track.id == audioId; };
+    if (edit.insert) {
+        // Insert: cut everything at the edit point, then push what follows by the inserted length.
+        if (auto cut = crossing(edit.at, [](const Track &) { return true; }); !cut.empty())
+            p.splitClips(cut, edit.at);
+        std::vector<Id> later;
+        for (auto &track : p.tracks)
+            for (auto &clip : track.clips)
+                if (clip.start >= edit.at - 1e-7)
+                    later.push_back(clip.id);
+        if (!later.empty())
+            p.moveClips(later, length);
+    } else {
+        // Overwrite: the span is cleared on the target tracks only.
+        p.clearRange(edit.at, edit.at + length, isTarget);
+    }
+    std::vector<Id> placed;
+    auto name = edit.name.empty() ? sx::Narrow(sx::Utf8Path(edit.path).filename().wstring()) : edit.name;
+    for (Id track : {videoId, audioId})
+        if (track) {
+            Clip c;
+            c.id = p.allocate();
+            c.name = name;
+            c.source = edit.path;
+            c.start = edit.at;
+            c.duration = length;
+            c.in = edit.in;
+            c.speed = speed;
+            p.findTrack(track)->clips.push_back(c);
+            placed.push_back(c.id);
+        }
+    if (placed.size() == 2)
+        p.linkClips(placed[0], placed[1]);
+    p.duration = std::max(p.duration, edit.at + length);
+    if (std::find(p.bin.begin(), p.bin.end(), edit.path) == p.bin.end())
+        p.bin.push_back(edit.path);
+    p.validate();
+    *this = std::move(candidate);
+    return placed;
+}
+void Project::clearRange(double begin, double end, const std::function<bool(const Track &)> &concerned) {
+    if (!std::isfinite(begin) || !std::isfinite(end) || begin < 0 || end <= begin)
+        throw std::runtime_error("Invalid range");
+    auto candidate = *this;
+    for (auto &track : candidate.tracks)
+        if (concerned(track) && track.locked)
+            for (auto &clip : track.clips)
+                if (clip.start < end - 1e-7 && clip.start + clip.duration > begin + 1e-7)
+                    throw std::runtime_error("A track affected by the range is locked");
+    for (double boundary : {begin, end}) {
+        std::vector<Id> cut;
+        for (auto &track : candidate.tracks)
+            if (concerned(track))
+                for (auto &clip : track.clips)
+                    if (boundary > clip.start + 1e-5 && boundary < clip.start + clip.duration - 1e-5)
+                        cut.push_back(clip.id);
+        if (!cut.empty())
+            candidate.splitClips(cut, boundary);
+    }
+    std::vector<Id> partners;
+    for (auto &track : candidate.tracks)
+        if (concerned(track))
+            std::erase_if(track.clips, [&](const Clip &clip) {
+                bool inside = clip.start >= begin - 1e-7 && clip.start + clip.duration <= end + 1e-7;
+                if (inside && clip.link)
+                    partners.push_back(clip.link);
+                return inside;
+            });
+    // Links left with a single member are dissolved.
+    for (auto group : partners) {
+        std::vector<Clip *> members;
+        for (auto &track : candidate.tracks)
+            for (auto &clip : track.clips)
+                if (clip.link == group)
+                    members.push_back(&clip);
+        if (members.size() == 1)
+            members[0]->link = 0;
+    }
+    candidate.validate();
+    *this = std::move(candidate);
+}
+void Project::liftRange(double begin, double end) {
+    clearRange(begin, end, [](const Track &) { return true; });
+}
+bool Project::gapAt(Id id, double time, double &begin, double &end) const {
+    auto *track = const_cast<Project *>(this)->findTrack(id);
+    if (!track)
+        return false;
+    begin = 0;
+    end = -1;
+    for (auto &clip : track->clips) {
+        if (time >= clip.start && time < clip.start + clip.duration)
+            return false;
+        if (clip.start + clip.duration <= time + 1e-9)
+            begin = std::max(begin, clip.start + clip.duration);
+        if (clip.start >= time - 1e-9 && (end < 0 || clip.start < end))
+            end = clip.start;
+    }
+    return end > begin + 1e-6;
+}
+bool Project::spanEmpty(double begin, double end) const {
+    for (auto &track : tracks)
+        for (auto &clip : track.clips)
+            if (clip.start < end - 1e-6 && clip.start + clip.duration > begin + 1e-6)
+                return false;
+    return true;
+}
+void Project::ungroup(Id id) {
+    if (!findGroup(id))
+        throw std::runtime_error("Group not found");
+    for (auto &track : tracks)
+        if (track.group == id)
+            track.group = 0;
+    std::erase_if(groups, [&](const TrackGroup &g) { return g.id == id; });
+}
+Marker *Project::findMarker(Id id) {
+    for (auto &marker : markers)
+        if (marker.id == id)
+            return &marker;
+    return nullptr;
 }
 AudioBus &Project::addBus() {
     AudioBus bus;
@@ -480,9 +1562,9 @@ std::vector<Id> Project::audioBusOrder() const {
             return;
         auto *bus = findBus(id);
         if (!bus)
-            throw std::runtime_error("Bus audio introuvable");
+            throw std::runtime_error("Audio bus not found");
         if (state[id] == 1)
-            throw std::runtime_error("Boucle de routage audio interdite");
+            throw std::runtime_error("Audio routing loops are not allowed");
         if (state[id] == 2)
             return;
         state[id] = 1;
@@ -500,17 +1582,17 @@ std::vector<Id> Project::audioBusOrder() const {
 void Project::removeBus(Id id) {
     auto *bus = findBus(id);
     if (!bus || bus->locked)
-        throw std::runtime_error("Bus introuvable ou verrouillé");
+        throw std::runtime_error("Bus not found or locked");
     auto references = [&](const MixChannel &mix) {
         return mix.output == id || std::any_of(mix.sends.begin(), mix.sends.end(),
                                                [&](const AudioSend &send) { return send.bus == id; });
     };
     for (auto &track : tracks)
         if (references(track.mix) && track.locked)
-            throw std::runtime_error("Une piste raccordée est verrouillée");
+            throw std::runtime_error("A connected track is locked");
     for (auto &other : buses)
         if (references(other.mix) && other.locked)
-            throw std::runtime_error("Un bus raccordé est verrouillé");
+            throw std::runtime_error("A connected bus is locked");
     auto disconnect = [&](MixChannel &mix) {
         if (mix.output == id)
             mix.output = 0;
@@ -552,7 +1634,7 @@ void Project::split(Id id, double time) {
     for (auto member : ids) {
         auto &c = *findClip(member);
         if (!std::isfinite(time) || time <= c.start + 1e-5 || time >= c.start + c.duration - 1e-5)
-            throw std::runtime_error("Placer la tête de lecture à l'intérieur de tous les clips liés");
+            throw std::runtime_error("Place the playhead inside all linked clips");
     }
     Id group = ids.size() > 1 ? allocate() : 0;
     for (auto member : ids) {
@@ -584,7 +1666,7 @@ void Project::remove(Id id) {
 void Project::makeContainer(Id id) {
     auto *clip = findClip(id);
     if (!clip || owner(id)->kind != TrackKind::Video || owner(id)->locked)
-        throw std::runtime_error("Clip vidéo éditable requis");
+        throw std::runtime_error("An editable video clip is required");
     if (!clip->composition.IsNull())
         return;
     Project child;
@@ -647,7 +1729,7 @@ static std::map<std::string, Parameter> readParams(const Json &j) {
         for (auto &k : a["keys"].Elements()) {
             int curve = k["curve"].I();
             if (curve < 0 || curve > 3)
-                throw std::runtime_error("Interpolation inconnue");
+                throw std::runtime_error("Unknown interpolation");
             p.setKey({k["time"].Num(), k["value"].F(), Curve(curve), k["shape"].F()});
         }
         ps[n] = p;
@@ -753,6 +1835,12 @@ Json Project::json() const {
         a["locked"] = t.locked;
         a["gain"] = t.gain;
         a["pan"] = t.pan;
+        if (t.color)
+            a["color"] = t.color;
+        if (t.height > 0)
+            a["height"] = t.height;
+        if (t.group)
+            a["group"] = t.group;
         a["mix"] = mixJson(t.mix);
         a["clips"] = Json::Array();
         for (auto &c : t.clips) {
@@ -772,6 +1860,16 @@ Json Project::json() const {
             b["fadeIn"] = c.fadeIn;
             b["fadeOut"] = c.fadeOut;
             b["generator"] = c.generator;
+            if (!c.enabled)
+                b["enabled"] = false;
+            if (c.hold)
+                b["hold"] = true;
+            if (c.reverse)
+                b["reverse"] = true;
+            if (c.adjustment)
+                b["adjustment"] = true;
+            if (c.color)
+                b["color"] = c.color;
             b["sourceColor"] = c.sourceColor;
             b["sourcePremultiplied"] = c.sourcePremultiplied;
             auto &title = b["title"];
@@ -821,11 +1919,49 @@ Json Project::json() const {
         }
         j["tracks"].Push(a);
     }
+    if (!bin.empty()) {
+        j["bin"] = Json::Array();
+        for (auto &path : bin)
+            j["bin"].Push(path);
+    }
+    if (!groups.empty()) {
+        j["groups"] = Json::Array();
+        for (auto &group : groups) {
+            Json g = Json::Object();
+            g["id"] = group.id;
+            g["name"] = group.name;
+            if (group.color)
+                g["color"] = group.color;
+            g["collapsed"] = group.collapsed;
+            j["groups"].Push(g);
+        }
+    }
+    if (!markers.empty()) {
+        j["markers"] = Json::Array();
+        for (auto &marker : markers) {
+            Json m = Json::Object();
+            m["id"] = marker.id;
+            m["time"] = marker.time;
+            m["name"] = marker.name;
+            if (marker.color)
+                m["color"] = marker.color;
+            if (!marker.note.empty())
+                m["note"] = marker.note;
+            if (marker.duration > 0)
+                m["duration"] = marker.duration;
+            j["markers"].Push(m);
+        }
+    }
+    if (hasWorkArea()) {
+        j["workArea"] = Json::Array();
+        j["workArea"].Push(workIn);
+        j["workArea"].Push(workOut);
+    }
     return j;
 }
 Project Project::fromJson(const Json &j) {
     if (j["format"].S() != "shaderixframe" || j["schema"].I() < 1 || j["schema"].I() > 10)
-        throw std::runtime_error("Format ou version de projet non pris en charge");
+        throw std::runtime_error("Unsupported project format or version");
     Project p;
     p.name = j["name"].S();
     p.width = j["width"].I();
@@ -862,13 +1998,16 @@ Project Project::fromJson(const Json &j) {
         t.name = a["name"].S();
         int kind = a["kind"].I();
         if (kind < 0 || kind > 1)
-            throw std::runtime_error("Type de piste inconnu");
+            throw std::runtime_error("Unknown track type");
         t.kind = TrackKind(kind);
         t.muted = a["muted"].B();
         t.solo = a["solo"].B();
         t.locked = a["locked"].B();
         t.gain = a["gain"].F();
         t.pan = a["pan"].F();
+        t.color = a["color"].U();
+        t.height = a["height"].F();
+        t.group = a["group"].U();
         if (j["schema"].I() >= 5)
             t.mix = readMix(a["mix"]);
         for (auto &b : a["clips"].Elements()) {
@@ -888,6 +2027,11 @@ Project Project::fromJson(const Json &j) {
                 c.fadeOut = b["fadeOut"].Num();
             }
             c.generator = b["generator"].B();
+            c.enabled = b["enabled"].B(true);
+        c.hold = b["hold"].B(false);
+        c.reverse = b["reverse"].B(false);
+        c.adjustment = b["adjustment"].B(false);
+            c.color = b["color"].U();
             if (j["schema"].I() >= 7) {
                 c.sourceColor = b["sourceColor"].S("auto");
                 c.sourcePremultiplied = b["sourcePremultiplied"].B();
@@ -895,19 +2039,19 @@ Project Project::fromJson(const Json &j) {
             if (j["schema"].I() >= 3) {
                 auto &title = b["title"];
                 c.title.enabled = title["enabled"].B();
-                c.title.text = title["text"].S("Votre titre");
+                c.title.text = title["text"].S("Your title");
                 c.title.font = title["font"].S("Segoe UI");
                 c.title.alignment = title["alignment"].I(1);
                 c.title.bold = title["bold"].B(true);
                 c.title.italic = title["italic"].B();
                 int shape = b["mask"]["shape"].I();
                 if (shape < 0 || shape > 3)
-                    throw std::runtime_error("Forme de masque inconnue");
+                    throw std::runtime_error("Unknown mask shape");
                 c.mask.shape = MaskShape(shape);
                 c.mask.inverted = b["mask"]["inverted"].B();
                 for (auto &point : b["mask"]["points"].Elements()) {
                     if (point.Size() != 6)
-                        throw std::runtime_error("Point Bézier invalide");
+                        throw std::runtime_error("Invalid Bezier point");
                     c.mask.points.push_back({point.At(0).F(), point.At(1).F(), point.At(2).F(),
                                              point.At(3).F(), point.At(4).F(), point.At(5).F()});
                 }
@@ -937,6 +2081,32 @@ Project Project::fromJson(const Json &j) {
         }
         p.tracks.push_back(t);
     }
+    for (auto &path : j["bin"].Elements())
+        p.bin.push_back(path.S());
+    for (auto &g : j["groups"].Elements()) {
+        TrackGroup group;
+        group.id = g["id"].U();
+        group.name = g["name"].S("Group");
+        group.color = g["color"].U();
+        group.collapsed = g["collapsed"].B();
+        p.groups.push_back(group);
+    }
+    for (auto &m : j["markers"].Elements()) {
+        Marker marker;
+        marker.id = m["id"].U();
+        marker.time = m["time"].Num();
+        marker.name = m["name"].S();
+        marker.color = m["color"].U();
+        marker.note = m["note"].S();
+        marker.duration = m["duration"].Num(0);
+        p.markers.push_back(marker);
+    }
+    std::stable_sort(p.markers.begin(), p.markers.end(),
+                     [](const Marker &a, const Marker &b) { return a.time < b.time; });
+    if (j["workArea"].Size() == 2) {
+        p.workIn = j["workArea"].At(0).Num();
+        p.workOut = j["workArea"].At(1).Num();
+    }
     p.layerGraph = j["layerGraph"];
     p.validate();
     return p;
@@ -944,7 +2114,7 @@ Project Project::fromJson(const Json &j) {
 void Project::validate() const {
     static thread_local unsigned depth = 0;
     if (depth >= 8)
-        throw std::runtime_error("Imbrication de clips limitée à huit niveaux");
+        throw std::runtime_error("Clip nesting is limited to eight levels");
     struct Guard {
         unsigned &depth;
         Guard(unsigned &d) : depth(d) { ++depth; }
@@ -952,7 +2122,7 @@ void Project::validate() const {
     } guard(depth);
 
     if (!std::isfinite(timeOrigin) || std::abs(timeOrigin) > 86400)
-        throw std::runtime_error("Origine temporelle des shaders invalide");
+        throw std::runtime_error("Invalid shader time origin");
     validateWidgets(*this);
     if (!layerGraph.IsNull())
         decodeLayerGraph(layerGraph, *this);
@@ -961,26 +2131,26 @@ void Project::validate() const {
     if (!color(workingSpace) || (toneMap != "clip" && toneMap != "reinhard" && toneMap != "aces") ||
         !finite(exposure) || std::abs(exposure) > 20 || !finite(backgroundAlpha) || backgroundAlpha < 0 ||
         backgroundAlpha > 1 || (imageFormat != "png8" && imageFormat != "png16" && imageFormat != "exr16"))
-        throw std::runtime_error("Gestion couleur invalide");
+        throw std::runtime_error("Invalid color management");
     if (width < 64 || height < 64 || width > 8192 || height > 8192 || width % 2 || height % 2 || fps < 1 ||
         fps > 120 || !finite(duration) || duration <= 0 || duration > 86400 || !finite(master) ||
         master < -80 || master > 12)
-        throw std::runtime_error("Réglages de séquence invalides (dimensions paires, 1–120 fps)");
+        throw std::runtime_error("Invalid sequence settings (even dimensions, 1-120 fps)");
     std::set<Id> ids;
     Id largest = 0;
     auto idCheck = [&](Id id) {
         if (!id || !ids.insert(id).second)
-            throw std::runtime_error("Identifiant manquant ou dupliqué");
+            throw std::runtime_error("Missing or duplicate ID");
         largest = std::max(id, largest);
     };
     auto checkParams = [&](const auto &ps) {
         for (auto &[n, p] : ps) {
             if (n.empty() || !finite(p.value))
-                throw std::runtime_error("Paramètre invalide");
+                throw std::runtime_error("Invalid parameter");
             double previous = -std::numeric_limits<double>::infinity();
             for (auto &k : p.keys) {
                 if (!finite(k.time) || k.time <= previous || !finite(k.value) || !finite(k.shape))
-                    throw std::runtime_error("Animation invalide");
+                    throw std::runtime_error("Invalid animation");
                 previous = k.time;
             }
         }
@@ -988,21 +2158,21 @@ void Project::validate() const {
     auto checkMix = [&](const MixChannel &mix, bool masterChannel = false) {
         if (mix.effects.size() > 64 || mix.sends.size() > 64 ||
             (masterChannel && (mix.output || !mix.sends.empty())))
-            throw std::runtime_error("Canal de mixage invalide");
+            throw std::runtime_error("Invalid mix channel");
         if (mix.output && !findBus(mix.output))
-            throw std::runtime_error("Sortie audio introuvable");
+            throw std::runtime_error("Audio output not found");
         std::set<Id> destinations;
         for (auto &send : mix.sends)
             if (!send.bus || !findBus(send.bus) || !destinations.insert(send.bus).second ||
                 !finite(send.gain) || send.gain < -80 || send.gain > 12)
-                throw std::runtime_error("Envoi audio invalide");
+                throw std::runtime_error("Invalid audio send");
         auto rangedParams = [&](const auto &params, auto range) {
             checkParams(params);
             for (auto &[key, parameter] : params) {
                 auto [low, high] = range(key);
                 auto check = [&](float value) {
                     if (value < low || value > high)
-                        throw std::runtime_error("Paramètre de mixage hors plage : " + key);
+                        throw std::runtime_error("Mix parameter out of range: " + key);
                 };
                 check(parameter.value);
                 for (auto &frame : parameter.keys)
@@ -1017,24 +2187,24 @@ void Project::validate() const {
             for (auto &send : mix.sends)
                 if (key == "send." + std::to_string(send.bus))
                     return {-80, 12};
-            throw std::runtime_error("Paramètre de canal inconnu : " + key);
+            throw std::runtime_error("Unknown channel parameter: " + key);
         });
         for (auto &effect : mix.effects) {
             if (!effect.pluginState.empty()) {
                 if (effect.id != "vst3")
-                    throw std::runtime_error("État opaque incompatible avec cet effet");
+                    throw std::runtime_error("Opaque state is incompatible with this effect");
                 decodeBase64(effect.pluginState);
             }
             if (effect.parameterNames.size() > 512)
-                throw std::runtime_error("Trop de noms de paramètres plugin");
+                throw std::runtime_error("Too many plugin parameter names");
             for (auto &[key, value] : effect.parameterNames)
                 if (!externalAudio(effect.id) || !externalParameter(key) || value.size() > 256)
-                    throw std::runtime_error("Nom de paramètre plugin invalide");
+                    throw std::runtime_error("Invalid plugin parameter name");
             auto *definition = audioEffect(effect.id);
             if (!definition || (!externalAudio(effect.id) && !effect.code.empty()) ||
                 (effect.id != "cydaw.graph" && !effect.graph.IsNull()) ||
                 (externalAudio(effect.id) && effect.code.empty()))
-                throw std::runtime_error("DSP de mixage inconnu ou incompatible");
+                throw std::runtime_error("Unknown or incompatible mixing DSP");
             if (effect.id == "cydaw.graph")
                 decodeDspGraph(effect.graph);
             rangedParams(effect.params, [&](const std::string &key) -> std::pair<float, float> {
@@ -1043,7 +2213,7 @@ void Project::validate() const {
                 for (auto &parameter : definition->parameters)
                     if (key == parameter.key)
                         return {parameter.minimum, parameter.maximum};
-                throw std::runtime_error("Paramètre DSP inconnu : " + key);
+                throw std::runtime_error("Unknown DSP parameter: " + key);
             });
         }
     };
@@ -1054,61 +2224,92 @@ void Project::validate() const {
         idCheck(bus.id);
         if (bus.name.empty() || bus.name.size() > 256 || !finite(bus.gain) || bus.gain < -80 ||
             bus.gain > 12 || !finite(bus.pan) || std::abs(bus.pan) > 1)
-            throw std::runtime_error("Bus audio invalide");
+            throw std::runtime_error("Invalid audio bus");
         checkMix(bus.mix);
     }
     audioBusOrder();
+    if (markers.size() > 4096)
+        throw std::runtime_error("4096 markers maximum");
+    if (groups.size() > 256)
+        throw std::runtime_error("256 track groups maximum");
+    if (bin.size() > 4096 || std::any_of(bin.begin(), bin.end(), [](const std::string &path) {
+            return path.empty() || path.size() > 32768;
+        }))
+        throw std::runtime_error("Invalid media bin");
+    for (auto &group : groups) {
+        idCheck(group.id);
+        if (group.name.empty() || group.name.size() > 256 || group.color > 0xffffff)
+            throw std::runtime_error("Invalid track group");
+    }
+    for (auto &marker : markers) {
+        idCheck(marker.id);
+        if (!finite(marker.time) || marker.time < 0 || marker.time > 86400 || marker.name.size() > 256 ||
+            marker.note.size() > 4096 || marker.color > 0xffffff || !finite(marker.duration) ||
+            marker.duration < 0 || marker.duration > 86400)
+            throw std::runtime_error("Invalid marker");
+    }
+    if (!finite(workIn) || !finite(workOut) || workIn < 0 || workOut < 0 || workIn > 86400 || workOut > 86400)
+        throw std::runtime_error("Invalid work area");
     for (auto &t : tracks) {
         idCheck(t.id);
         checkMix(t.mix);
+        if (t.color > 0xffffff || !finite(t.height) || t.height < 0 || t.height > 600)
+            throw std::runtime_error("Invalid track appearance");
+        if (t.group && !std::any_of(groups.begin(), groups.end(), [&](const TrackGroup &g) { return g.id == t.group; }))
+            throw std::runtime_error("Track group not found");
         if (t.kind != TrackKind::Audio &&
             (t.mix.output || !t.mix.sends.empty() || !t.mix.effects.empty() || !t.mix.params.empty()))
-            throw std::runtime_error("Une piste vidéo ne peut pas héberger un canal audio");
+            throw std::runtime_error("A video track cannot host an audio channel");
         if (!finite(t.gain) || t.gain < -80 || t.gain > 12 || !finite(t.pan) || std::abs(t.pan) > 1)
-            throw std::runtime_error("Mixage invalide");
+            throw std::runtime_error("Invalid mix");
         for (auto &c : t.clips) {
             idCheck(c.id);
             largest = std::max(largest, c.link);
+            if (c.color > 0xffffff)
+                throw std::runtime_error("Invalid clip color");
             if (!finite(c.start) || c.start < 0 || !finite(c.duration) || c.duration < 1e-5 ||
                 !finite(c.in) || c.in < 0 || !finite(c.speed) || c.speed < 0.05 || c.speed > 16 ||
                 !finite(c.fadeIn) || c.fadeIn < 0 || c.fadeIn > c.duration || !finite(c.fadeOut) ||
                 c.fadeOut < 0 || c.fadeOut > c.duration)
-                throw std::runtime_error("Temps de clip invalide");
+                throw std::runtime_error("Invalid clip time");
             checkParams(c.params);
             if (!c.composition.IsNull()) {
                 if (t.kind != TrackKind::Video || c.generator || c.title.enabled || !c.source.empty() ||
                     c.composition.Dump(0).size() > 16 * 1024 * 1024)
-                    throw std::runtime_error("Conteneur vidéo invalide");
+                    throw std::runtime_error("Invalid video container");
                 Project::fromJson(c.composition);
             }
 
             if (c.sourceColor != "auto" && c.sourceColor != "logc3-awg3-ei800" && !color(c.sourceColor))
-                throw std::runtime_error("Espace couleur du média inconnu");
+                throw std::runtime_error("Unknown media color space");
             if (!finite(c.transition.duration) || c.transition.duration < 1e-5 ||
                 (c.transition.enabled && (t.kind != TrackKind::Video || c.transition.id.empty() ||
                                           c.transition.duration > c.duration)))
-                throw std::runtime_error("Transition vidéo invalide");
+                throw std::runtime_error("Invalid video transition");
+            if (c.adjustment && (t.kind != TrackKind::Video || c.generator || c.title.enabled || !c.source.empty() ||
+                                 !c.composition.IsNull()))
+                throw std::runtime_error("Invalid adjustment layer: video clip without media or a generator");
             if (c.title.enabled &&
                 (t.kind != TrackKind::Video || c.generator || !c.source.empty() ||
                  c.title.text.size() > 16384 || c.title.font.empty() || c.title.font.size() > 256 ||
                  c.title.alignment < 0 || c.title.alignment > 2))
-                throw std::runtime_error("Titre invalide");
+                throw std::runtime_error("Invalid title");
             if (int(c.mask.shape) < 0 || int(c.mask.shape) > 3 ||
                 (c.mask.shape != MaskShape::None && t.kind != TrackKind::Video))
-                throw std::runtime_error("Masque vidéo invalide");
+                throw std::runtime_error("Invalid video mask");
             if (c.mask.points.size() > 16 || (c.mask.shape == MaskShape::Bezier && c.mask.points.size() < 3))
-                throw std::runtime_error("3 à 16 points Bézier requis");
+                throw std::runtime_error("3 to 16 Bezier points required");
             for (auto &point : c.mask.points)
                 for (float value : {point.x, point.y, point.inX, point.inY, point.outX, point.outY})
                     if (!finite(value) || std::abs(value) > 2)
-                        throw std::runtime_error("Coordonnée Bézier hors plage");
+                        throw std::runtime_error("Bezier coordinate out of range");
             auto range = [&](const char *key, float low, float high) {
                 auto it = c.params.find(key);
                 if (it == c.params.end())
                     return;
                 auto check = [&](float v) {
                     if (v < low || v > high)
-                        throw std::runtime_error(std::string("Paramètre hors plage : ") + key);
+                        throw std::runtime_error(std::string("Parameter out of range: ") + key);
                 };
                 check(it->second.value);
                 for (auto &keyframe : it->second.keys)
@@ -1137,17 +2338,17 @@ void Project::validate() const {
                 checkParams(e.params);
                 if (e.id == "grading") {
                     if (t.kind != TrackKind::Video)
-                        throw std::runtime_error("Étalonnage : clip vidéo requis");
+                        throw std::runtime_error("Color grading requires a video clip");
                     validateGrade(e);
                 }
                 if (e.id == "ofx") {
                     if (t.kind != TrackKind::Video)
-                        throw std::runtime_error("OFX exige un clip vidéo");
+                        throw std::runtime_error("OFX requires a video clip");
                     validateOfx(e);
                 }
                 if (e.id == "cydaw.graph" || externalAudio(e.id)) {
                     if (t.kind != TrackKind::Audio)
-                        throw std::runtime_error("Un DSP exige un clip audio");
+                        throw std::runtime_error("A DSP requires an audio clip");
                     MixChannel chain;
                     chain.effects = {e};
                     checkMix(chain);
@@ -1156,7 +2357,7 @@ void Project::validate() const {
         }
     }
     if (nextId <= largest)
-        throw std::runtime_error("Compteur d'identifiants invalide");
+        throw std::runtime_error("Invalid ID counter");
 }
 void Project::save(const std::string &path) const {
     validate();
@@ -1164,18 +2365,18 @@ void Project::save(const std::string &path) const {
     {
         std::ofstream f(output.path(), std::ios::binary);
         if (!f)
-            throw std::runtime_error("Impossible d'écrire le projet");
+            throw std::runtime_error("Unable to write the project");
         f << json().Dump(2);
         f.flush();
         if (!f)
-            throw std::runtime_error("Écriture du projet échouée");
+            throw std::runtime_error("Project write failed");
     }
     output.commit();
 }
 Project Project::load(const std::string &path) {
     std::string text;
     if (!sx::ReadTextFile(path, text))
-        throw std::runtime_error("Projet introuvable");
+        throw std::runtime_error("Project not found");
     Json j;
     std::string error;
     if (!Json::Parse(text, j, &error))
@@ -1236,12 +2437,12 @@ Project Project::load(const std::string &path) {
 }
 Project Project::demo() {
     Project p;
-    p.name = "Première lumière";
+    p.name = "First Light";
     auto &t = p.addTrack(TrackKind::Video);
-    t.name = "01  /  Lumière procédurale";
+    t.name = "01 / Procedural light";
     Clip c;
     c.id = p.allocate();
-    c.name = "Aurora · générateur HLSL";
+    c.name = "Aurora - HLSL generator";
     c.duration = 12;
     c.generator = true;
     c.params["opacity"] = {1};
@@ -1252,11 +2453,11 @@ Project Project::demo() {
     c.effects.push_back(color);
     t.clips.push_back(c);
     auto &sound = p.addTrack(TrackKind::Audio);
-    sound.name = "02  /  Bande sonore";
+    sound.name = "02  /  Soundtrack";
     return p;
 }
-void History::checkpoint(const Project &p) {
-    past.push_back(p);
+void History::checkpoint(const Project &p, std::string label) {
+    past.push_back({p, std::move(label)});
     if (past.size() > 64)
         past.erase(past.begin());
     future.clear();
@@ -1264,16 +2465,16 @@ void History::checkpoint(const Project &p) {
 bool History::undo(Project &p) {
     if (past.empty())
         return false;
-    future.push_back(p);
-    p = past.back();
+    future.push_back({p, past.back().label});
+    p = std::move(past.back().project);
     past.pop_back();
     return true;
 }
 bool History::redo(Project &p) {
     if (future.empty())
         return false;
-    past.push_back(p);
-    p = future.back();
+    past.push_back({p, future.back().label});
+    p = std::move(future.back().project);
     future.pop_back();
     return true;
 }

@@ -7,11 +7,11 @@ static std::string identity(const Project &project, Id id) {
         for (auto &clip : track["clips"].Elements())
             if (clip["id"].U() == id)
                 return clip.Dump(0);
-    throw std::runtime_error("Clip de suivi introuvable");
+    throw std::runtime_error("Tracking clip not found");
 }
 static std::vector<float> gray(const Image &frame, unsigned &width, unsigned &height) {
     if (frame.pixels.empty())
-        throw std::runtime_error("Image de suivi vide");
+        throw std::runtime_error("Empty tracking image");
     float scale = std::min(1.f, 320.f / std::max(frame.width, frame.height));
     width = std::max(1u, unsigned(frame.width * scale));
     height = std::max(1u, unsigned(frame.height * scale));
@@ -36,7 +36,7 @@ Id TrackingJobs::start(const Project &project, Id selected, double begin, double
     Clip tracing;
     if (effect >= 0 && clip) {
         if (effect >= int(clip->effects.size()) || clip->effects[effect].id != "grading")
-            throw std::runtime_error("Correction de suivi introuvable");
+            throw std::runtime_error("Tracking correction not found");
         tracing = *clip;
         auto mask = clip->effects[effect].params.find("mask_mode");
         tracing.mask.shape = MaskShape(
@@ -51,11 +51,11 @@ Id TrackingJobs::start(const Project &project, Id selected, double begin, double
         !std::isfinite(begin) || !std::isfinite(end) || begin < clip->start || end <= begin ||
         end > clip->start + clip->duration || (end - begin) * project.fps > 1800 || radius < 1 || radius > 64)
         throw std::runtime_error(
-            "Suivi : clip vidéo masqué, intervalle contenu (1800 frames max) et rayon 1..64 requis");
+            "Tracking requires a masked video clip, an interior range (1800 frames maximum) and radius 1..64");
     {
         std::lock_guard lock(mutex);
         if (state == "running")
-            throw std::runtime_error("Un suivi est déjà en cours");
+            throw std::runtime_error("Tracking is already running");
     }
     if (worker.joinable())
         worker.join();
@@ -87,7 +87,7 @@ void TrackingJobs::run(Clip clip, double begin, double end, int fps, int radius)
             mf = SUCCEEDED(com) ? MFStartup(MF_VERSION) : com;
     {
         try {
-            check(mf, "Runtime du suivi");
+            check(mf, "Tracking runtime");
             MediaAsset asset;
             asset.open(clip.source, {}, false);
             unsigned width = 0, height = 0;
@@ -102,7 +102,7 @@ void TrackingJobs::run(Clip clip, double begin, double end, int fps, int radius)
                                       int(clip.param("mask_height", begin, .1f) * fitY * height * .5f)}));
             if (centerX - half < 0 || centerY - half < 0 || centerX + half >= int(width) ||
                 centerY + half >= int(height))
-                throw std::runtime_error("La zone de suivi doit être entièrement dans l'image");
+                throw std::runtime_error("Tracking region must be entirely inside the image");
             std::vector<float> pattern;
             double mean = 0;
             for (int dy = -half; dy <= half; dy += 2)
@@ -118,7 +118,7 @@ void TrackingJobs::run(Clip clip, double begin, double end, int fps, int radius)
                 energy += value * value;
             }
             if (energy < .001)
-                throw std::runtime_error("La zone de suivi manque de contraste");
+                throw std::runtime_error("Tracking region lacks contrast");
             int total = int(std::ceil((end - begin) * fps));
             xs.push_back({begin, (float(centerX) / width - .5f) / fitX, Curve::Linear});
             ys.push_back({begin, (float(centerY) / height - .5f) / fitY, Curve::Linear});
@@ -131,7 +131,7 @@ void TrackingJobs::run(Clip clip, double begin, double end, int fps, int radius)
                 unsigned w = 0, h = 0;
                 auto image = gray(asset.at(clip.sourceTime(time)), w, h);
                 if (w != width || h != height)
-                    throw std::runtime_error("Dimensions modifiées pendant le suivi");
+                    throw std::runtime_error("Dimensions changed during tracking");
                 double best = 1e30;
                 int bestX = centerX, bestY = centerY;
                 for (int cy = std::max(half, centerY - radius);
@@ -157,7 +157,7 @@ void TrackingJobs::run(Clip clip, double begin, double end, int fps, int radius)
                         }
                     }
                 if (best / energy > .65)
-                    throw std::runtime_error("Suivi perdu : ajuster la zone ou raccourcir l'intervalle");
+                    throw std::runtime_error("Tracking lost: adjust the region or shorten the range");
                 centerX = bestX;
                 centerY = bestY;
                 xs.push_back({time, (float(centerX) / width - .5f) / fitX, Curve::Linear});
@@ -204,10 +204,10 @@ bool TrackingJobs::cancel() {
 void TrackingJobs::apply(Project &project, Id job) {
     std::lock_guard lock(mutex);
     if (job != id || state != "completed" || sf::identity(project, clipId) != identity)
-        throw std::runtime_error("Le clip a changé depuis le suivi ; relancer le calcul");
+        throw std::runtime_error("The clip has changed since tracking; run it again");
     auto *track = project.owner(clipId);
     if (track->locked)
-        throw std::runtime_error("La piste du suivi est verrouillée");
+        throw std::runtime_error("The tracking track is locked");
     auto candidate = project;
     auto &clip = *candidate.findClip(clipId);
     auto &params = gradeIndex < 0 ? clip.params : clip.effects.at(gradeIndex).params;

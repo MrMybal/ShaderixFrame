@@ -9,7 +9,7 @@ graph = json.loads((examples/'ParallelEQ.json').read_text('utf-8'))
 graph['layout'] = {'input': [20,200], 'output': [1100,200]}
 graph['nodes'][0]['pos'] = [300,80]
 graph['nodes'][1]['pos'] = [300,320]
-graph['nodes'].append({'id':3,'name':'Somme stéréo','processor':'sf.sum','pos':[800,200],'params':{}})
+graph['nodes'].append({'id':3,'name':'Stereo Sum','processor':'sf.sum','pos':[800,200],'params':{}})
 for wire in graph['connections']:
     if wire['destination']==0:
         wire['destination']=3

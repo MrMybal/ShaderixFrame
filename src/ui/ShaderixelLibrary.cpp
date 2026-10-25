@@ -5,7 +5,7 @@ namespace sf {
 void Editor::addLibraryLayer(const std::string &id) {
     auto *d = s.renderer.library.find(id);
     if (!d || !d->generator) {
-        error = "Un générateur Shaderixel est requis";
+        error = "A Shaderixel generator is required";
         return;
     }
     auto before = s.project;
@@ -34,10 +34,10 @@ void Editor::addLibraryLayer(const std::string &id) {
     }
 }
 void Editor::shaderixelLibrary() {
-    if (!panels["Bibliothèque Shaderixel"] || !beginPanel("Bibliothèque Shaderixel"))
+    if (!panels["Shaderixel Library"] || !beginPanel("Shaderixel Library"))
         return;
-    ImGui::InputTextWithHint("Recherche", "Nom / catégorie…", &shaderixelFilter);
-    ImGui::Combo("Afficher", &shaderixelMode, "Tous\0Calques / générateurs\0Effets\0");
+    ImGui::InputTextWithHint("Search", "Name / category...", &shaderixelFilter);
+    ImGui::Combo("Show", &shaderixelMode, "All\0Layers / Generators\0Effects\0");
     std::set<std::string> categories;
     unsigned total = 0;
     for (auto &d : s.renderer.library.definitions)
@@ -45,15 +45,15 @@ void Editor::shaderixelLibrary() {
             categories.insert(d.category);
             ++total;
         }
-    if (ImGui::BeginCombo("Catégorie", shaderixelCategory.empty() ? "Toutes" : shaderixelCategory.c_str())) {
-        if (ImGui::Selectable("Toutes", shaderixelCategory.empty()))
+    if (ImGui::BeginCombo("Category", shaderixelCategory.empty() ? "All" : shaderixelCategory.c_str())) {
+        if (ImGui::Selectable("All", shaderixelCategory.empty()))
             shaderixelCategory.clear();
         for (auto &category : categories)
             if (ImGui::Selectable(category.c_str(), category == shaderixelCategory))
                 shaderixelCategory = category;
         ImGui::EndCombo();
     }
-    ImGui::TextDisabled("%u éléments Shaderixel · sources embarquées", total);
+    ImGui::TextDisabled("%u Shaderixel items - embedded sources", total);
     ImGui::BeginChild("ShaderixelCatalogue");
     for (auto &d : s.renderer.library.definitions) {
         if (!d.id.starts_with("shaderixel.") || (shaderixelMode == 1 && !d.generator) ||
@@ -82,9 +82,9 @@ void Editor::shaderixelLibrary() {
         }
         if (ImGui::BeginPopupContextItem()) {
             if (d.generator) {
-                if (ImGui::MenuItem("Créer un calque dans la timeline"))
+                if (ImGui::MenuItem("Create Layer in Timeline"))
                     addLibraryLayer(d.id);
-            } else if (ImGui::MenuItem("Appliquer au clip sélectionné", nullptr, false, s.selected != 0)) {
+            } else if (ImGui::MenuItem("Apply to Selected Clip", nullptr, false, s.selected != 0)) {
                 Json a = Json::Object();
                 a["clip"] = s.selected;
                 a["id"] = d.id;
@@ -92,12 +92,12 @@ void Editor::shaderixelLibrary() {
             }
             ImGui::EndPopup();
         }
-        ImGui::TextDisabled("%s · %s", d.category.c_str(), d.generator ? "CALQUE HLSL" : "EFFET HLSL");
+        ImGui::TextDisabled("%s · %s", d.category.c_str(), d.generator ? "HLSL LAYER" : "HLSL EFFECT");
         ImGui::PopID();
     }
     ImGui::EndChild();
-    ImGui::TextWrapped("Double clic : créer un calque ou appliquer l'effet au clip sélectionné. Le graphe "
-                       "des calques propose aussi ce catalogue.");
+    ImGui::TextWrapped("Double-click: create a layer or apply the effect to the selected clip. The layer "
+                       "graph also provides this library.");
     ImGui::End();
 }
 } // namespace sf

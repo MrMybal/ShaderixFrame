@@ -608,14 +608,14 @@ void run(const wchar_t *binary) {
     HMODULE module =
         LoadLibraryExW(binary, nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     if (!module)
-        throw std::runtime_error("Chargement DLL OFX échoué");
+        throw std::runtime_error("OFX DLL load failed");
     auto count = reinterpret_cast<int (*)()>(GetProcAddress(module, "OfxGetNumberOfPlugins"));
     auto at = reinterpret_cast<OfxPlugin *(*)(int)>(GetProcAddress(module, "OfxGetPlugin"));
     if (!count || !at)
-        throw std::runtime_error("Entrées OFX manquantes");
+        throw std::runtime_error("Missing OFX entry points");
     int n = count();
     if (n < 1 || n > 256)
-        throw std::runtime_error("Catalogue OFX invalide");
+        throw std::runtime_error("Invalid OFX catalog");
     OfxPlugin *plugin = nullptr;
     for (int i = 0; i < n; ++i) {
         auto *p = at(i);
@@ -626,7 +626,7 @@ void run(const wchar_t *binary) {
         }
     }
     if (!plugin)
-        throw std::runtime_error("Identifiant OFX ImageEffect v1 introuvable");
+        throw std::runtime_error("OFX ImageEffect v1 identifier not found");
     plugin->setHost(&host);
     action(plugin, kOfxActionLoad);
     Effect descriptor;
@@ -637,19 +637,19 @@ void run(const wchar_t *binary) {
             : kOfxImageEffectContextGeneral;
     if (!supports(descriptor.props, kOfxImageEffectPropSupportedContexts, context.c_str()) ||
         !supports(descriptor.props, kOfxImageEffectPropSupportedPixelDepths, kOfxBitDepthFloat))
-        throw std::runtime_error("OFX requiert filtre/general RGBA float CPU");
+        throw std::runtime_error("OFX requires filter/general RGBA float CPU");
     Props args;
     string(args, kOfxImageEffectPropContext, context);
     action(plugin, kOfxImageEffectActionDescribeInContext, &descriptor, &args);
     if (!descriptor.clips.contains("Source") || !descriptor.clips.contains("Output"))
-        throw std::runtime_error("OFX : clips Source et Output requis");
+        throw std::runtime_error("OFX: Source and Output clips required");
     for (auto &[name, clip] : descriptor.clips) {
         int optional = 0;
         get(handle(clip.props), kOfxImageClipPropOptional, 0, &optional);
         if (name != "Source" && name != "Output" && !optional)
-            throw std::runtime_error("OFX : entrées supplémentaires obligatoires non prises en charge");
+            throw std::runtime_error("OFX: additional required inputs are unsupported");
         if (!supports(clip.props, kOfxImageEffectPropSupportedComponents, kOfxImageComponentRGBA))
-            throw std::runtime_error("OFX : clip RGBA requis");
+            throw std::runtime_error("OFX: RGBA clip required");
     }
     Effect instance = descriptor;
     string(instance.props, kOfxPropType, std::string(kOfxTypeImageEffectInstance));
@@ -681,7 +681,7 @@ void run(const wchar_t *binary) {
             continue;
         for (unsigned component = 0; component < dimensions(param); ++component) {
             if (index >= 512)
-                throw std::runtime_error("512 contrôles OFX maximum");
+                throw std::runtime_error("512 OFX controls maximum");
             param.values[component] = real(param.props, kOfxParamPropDefault, 0, component);
             Json p = Json::Object();
             p["key"] = "p" + std::to_string(index++);
@@ -705,7 +705,7 @@ void run(const wchar_t *binary) {
                 high = options == param.props.data.end() ? 0 : double(options->second.size() - 1);
             }
             if (!std::isfinite(low) || !std::isfinite(high) || low > high)
-                throw std::runtime_error("Plage OFX invalide");
+                throw std::runtime_error("Invalid OFX range");
             p["minimum"] = low;
             p["maximum"] = high;
             p["default"] = std::clamp(param.values[component], low, high);
@@ -722,12 +722,12 @@ void run(const wchar_t *binary) {
     std::string premult = text(preferences, kOfxImageEffectPropPreMultiplication, kOfxImagePreMultiplied);
     if (premult != kOfxImagePreMultiplied && premult != kOfxImageUnPreMultiplied &&
         premult != kOfxImageOpaque)
-        throw std::runtime_error("Préférence alpha OFX inconnue");
+        throw std::runtime_error("Unknown OFX alpha preference");
     string(instance.clips["Output"].props, kOfxImageEffectPropPreMultiplication, premult);
     string(instance.clips["Output"].image, kOfxImageEffectPropPreMultiplication, premult);
     auto textMeta = metadata.Dump(0);
     if (textMeta.size() >= sizeof(shared->metadata))
-        throw std::runtime_error("Métadonnées OFX trop grandes");
+        throw std::runtime_error("OFX metadata is too large");
     memcpy(shared->metadata, textMeta.c_str(), textMeta.size() + 1);
     std::atomic_ref(shared->ready).store(1, std::memory_order_release);
     uint64_t last = 0;
@@ -741,7 +741,7 @@ void run(const wchar_t *binary) {
         try {
             Json values;
             if (!Json::Parse(shared->parameters, values))
-                throw std::runtime_error("Paramètres OFX invalides");
+                throw std::runtime_error("Invalid OFX parameters");
             std::set<std::string> changed;
             for (unsigned i = 0; i < bindings.size(); ++i) {
                 auto &[p, c] = bindings[i];
@@ -749,7 +749,7 @@ void run(const wchar_t *binary) {
                 double v = values[key].Num(p->values[c]);
                 auto &m = metadata["parameters"].At(i);
                 if (!std::isfinite(v) || v < m["minimum"].Num() || v > m["maximum"].Num())
-                    throw std::runtime_error("Valeur OFX hors plage");
+                    throw std::runtime_error("OFX value out of range");
                 v = isInt(*p) ? std::round(v) : v;
                 if (p->values[c] != v)
                     changed.insert(p->name);
@@ -854,7 +854,7 @@ int wmain(int argc, wchar_t **argv) {
         GetFileSizeEx(file, &size);
         if (shared->magic != 0x53464f58 || shared->version != 1 || !shared->width || !shared->height ||
             sf::ofxBytes(shared->width, shared->height) > uint64_t(size.QuadPart))
-            throw std::runtime_error("Protocole OFX invalide");
+            throw std::runtime_error("Invalid OFX protocol");
         run(argv[2]);
     } catch (const std::exception &e) {
         shared->result = 1;

@@ -40,7 +40,12 @@ struct MediaAsset {
     std::string path, error;
     bool video = false, image = false, hasAudio = false;
     bool loading = false;
-    double duration = 0, lastTime = -1;
+    double duration = 0, lastTime = -1, lastRequest = -1;
+    unsigned seeks = 0; // repositionings of the decoder, for diagnostics and tests
+    // Decoded video buffers are often taller than the picture (H.264 codes 1080 lines as 1088):
+    // frames are cropped to the display aperture inside the coded size.
+    unsigned codedWidth = 0, codedHeight = 0;
+    unsigned cropX = 0, cropY = 0;
     Image frame;
     Image thumbnail;
     std::vector<float> pcm; // interleaved stereo float, 48 kHz
@@ -146,16 +151,47 @@ class AudioOutput {
 };
 class Renderer;
 struct ExportCancelled : std::runtime_error {
-    ExportCancelled() : std::runtime_error("Export annulé") {}
+    ExportCancelled() : std::runtime_error("Export canceled") {}
+};
+// Part of the sequence to render, in sequence seconds; an empty range is the whole sequence.
+// Frames are rendered at their own time, so effects, graphs and mixes match the preview.
+struct ExportRange {
+    double begin = 0, end = 0;
+    double from(const Project &p) const { return end > begin ? std::clamp(begin, 0., p.duration) : 0.; }
+    double to(const Project &p) const { return end > begin ? std::clamp(end, from(p), p.duration) : p.duration; }
 };
 void exportVideo(const Project &p, MediaCache &media, Renderer &renderer, const std::string &path,
-                 const std::function<bool(float)> &progress = {});
+                 const std::function<bool(float)> &progress = {}, ExportRange range = {});
 void exportAvi(const Project &p, MediaCache &media, Renderer &renderer, const std::string &path,
-               const std::function<bool(float)> &progress = {});
+               const std::function<bool(float)> &progress = {}, ExportRange range = {});
 bool readFrameAviAudio(const std::string &path, const std::function<void(const float *, size_t)> &write);
 void exportWav(const Project &p, MediaCache &media, const std::string &path,
-               const std::function<bool(float)> &progress = {});
+               const std::function<bool(float)> &progress = {}, ExportRange range = {});
 void writePng(const Image &image, const std::string &path);
+// Animated GIF of a range, looping: frames rendered at width (height kept in proportion) and fps, each
+// reduced to its own 256-colour palette with error diffusion.
+void exportGif(const Project &p, MediaCache &media, Renderer &renderer, const std::string &path, ExportRange range,
+               unsigned width, int fps, const std::function<bool(float)> &progress = {});
 void exportImages(const Project &p, MediaCache &media, Renderer &renderer, const std::string &directory,
-                  const std::function<bool(float)> &progress = {});
+                  const std::function<bool(float)> &progress = {}, ExportRange range = {});
+// Attacks (onsets) of a decoded medium between two source times, in source seconds: transient energy
+// flux against a moving threshold. Sensitivity 0..1 finds more attacks as it rises; minGap in seconds.
+std::vector<double> detectOnsets(const MediaAsset &asset, double begin, double end, float sensitivity,
+                                 double minGap);
+// Spans quieter than thresholdDb (RMS over 10 ms) lasting at least minLength, in source seconds.
+std::vector<std::pair<double, double>> detectSilences(const MediaAsset &asset, double begin, double end,
+                                                      float thresholdDb, double minLength);
+// Picture changes between begin and end, in source seconds: luminance histograms of consecutive frames
+// (step seconds apart) compared against a threshold 0..1 and their neighbourhood.
+std::vector<double> detectScenes(MediaAsset &asset, double begin, double end, double step, float threshold,
+                                 const std::function<bool(float)> &progress = {});
+// Timeline spans to remove from a sounding clip: its silences, less a padding kept around the speech,
+// on whole frames.
+// Offset in seconds that best lines up the sound of `moved` (from movedIn) with `reference` (from
+// referenceIn): positive when the moved sound's content happens later in its file. RMS envelopes at
+// 100 per second, normalised cross-correlation within ±maxLag; confidence is the correlation 0..1.
+double soundOffset(const MediaAsset &reference, double referenceIn, double referenceLength, const MediaAsset &moved,
+                   double movedIn, double movedLength, double maxLag, double &confidence);
+std::vector<std::pair<double, double>> silenceSpans(const Clip &clip, const MediaAsset &asset, float thresholdDb,
+                                                    double minLength, double padding, int fps);
 } // namespace sf

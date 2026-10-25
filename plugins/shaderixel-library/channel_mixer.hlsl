@@ -24,19 +24,19 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Mélangeur de couches
-//@category Réglages
+//@name Channel Mixer
+//@category Adjustments
 //@param sx_red color 1 0 0 1 "Rouge en sortie (R,V,B)"
 //@param sx_green color 0 1 0 1 "Vert en sortie (R,V,B)"
 //@param sx_blue color 0 0 1 1 "Bleu en sortie (R,V,B)"

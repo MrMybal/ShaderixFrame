@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
                 "Missing asynchronous media reports an error instead of remaining stuck loading");
         sf::Protocol protocol(s);
         auto presets = protocol.execute("list_export_presets", sf::Json::Object());
-        require(presets["presets"].Size() == 5, "MCP exposes export presets independently of the document");
+        require(presets["presets"].Size() == 8, "MCP exposes export presets independently of the document");
         auto nativePath = sx::Narrow((std::filesystem::current_path() / "native_gain.dll").wstring());
         {
             sf::IsolatedAudio plugin("native", nativePath);

@@ -10,7 +10,7 @@ static Json target(Id clip, int effect) {
 }
 void Editor::captureGradeReference(const Image &im) {
     if (!im.width || !im.height || im.pixels.empty())
-        throw std::runtime_error("Référence vide");
+        throw std::runtime_error("Empty reference");
     D3D11_TEXTURE2D_DESC d{};
     d.Width = im.width;
     d.Height = im.height;
@@ -21,18 +21,18 @@ void Editor::captureGradeReference(const Image &im) {
     d.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     D3D11_SUBRESOURCE_DATA data{im.pixels.data(), im.width * 4, 0};
     Com<ID3D11Texture2D> texture;
-    check(s.renderer.gpu()->CreateTexture2D(&d, &data, &texture), "Image de référence");
+    check(s.renderer.gpu()->CreateTexture2D(&d, &data, &texture), "Reference image");
     check(s.renderer.gpu()->CreateShaderResourceView(texture.Get(), nullptr, &gradeReference),
-          "Vue de référence");
+          "Reference view");
 }
 void Editor::gradeComparisonControls() {
     ImGui::SetNextItemWidth(210);
-    ImGui::Combo("Comparaison", &gradeComparison,
-                 "Image corrigée\0Bypass étalonnage\0Référence / correction\0Avant / après\0");
+    ImGui::Combo("Compare", &gradeComparison,
+                 "Graded Image\0Bypass Grading\0Reference / Grade\0Before / After\0");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(140);
-    ImGui::SliderFloat("Séparation", &gradeSplit, 0, 1, "%.2f");
-    if (ImGui::Button("Mémoriser référence")) {
+    ImGui::SliderFloat("Split", &gradeSplit, 0, 1, "%.2f");
+    if (ImGui::Button("Store Reference")) {
         try {
             captureGradeReference(s.renderer.readback());
             gradeComparison = 2;
@@ -41,8 +41,8 @@ void Editor::gradeComparisonControls() {
         }
     }
     ImGui::SameLine();
-    if (ImGui::Button("Charger référence…")) {
-        auto path = dialog(false, L"Image de référence\0*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.exr\0Tous\0*.*\0\0",
+    if (ImGui::Button("Load Reference...")) {
+        auto path = dialog(false, L"Reference Image\0*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.exr\0All\0*.*\0\0",
                            nullptr);
         if (!path.empty())
             try {
@@ -53,10 +53,10 @@ void Editor::gradeComparisonControls() {
             }
     }
     ImGui::SameLine();
-    if (ImGui::Button("Effacer référence"))
+    if (ImGui::Button("Clear Reference"))
         gradeReference.Reset();
     ImGui::SameLine();
-    ImGui::Checkbox("Voir sélection", &gradeMatte);
+    ImGui::Checkbox("Show Selection", &gradeMatte);
 }
 void Editor::gradePreview(ImVec2 origin, float width, float height) {
     auto *draw = ImGui::GetWindowDrawList();
@@ -70,14 +70,14 @@ void Editor::gradePreview(ImVec2 origin, float width, float height) {
         draw->PopClipRect();
         draw->AddLine({split, origin.y}, {split, origin.y + height}, IM_COL32(255, 180, 90, 255), 2);
         draw->AddText({origin.x + 8, origin.y + 8}, IM_COL32_WHITE,
-                      gradeComparison == 2 ? "RÉFÉRENCE" : "AVANT");
-        draw->AddText({split + 8, origin.y + 8}, IM_COL32_WHITE, "APRÈS");
+                      gradeComparison == 2 ? "REFERENCE" : "BEFORE");
+        draw->AddText({split + 8, origin.y + 8}, IM_COL32_WHITE, "AFTER");
     }
     if (!gradePick)
         return;
     draw->AddText({origin.x + 8, origin.y + height - 22}, IM_COL32(255, 190, 90, 255),
-                  gradePick == 1 ? "PIPETTE NEUTRE · clic dans l'image · Échap annule"
-                                 : "PIPETTE HSL · clic dans l'image · Échap annule");
+                  gradePick == 1 ? "NEUTRAL EYEDROPPER - click image - Esc cancels"
+                                 : "HSL EYEDROPPER - click image - Esc cancels");
     if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         gradePick = 0;
         return;
@@ -136,7 +136,7 @@ void Editor::gradePreview(ImVec2 origin, float width, float height) {
         auto before = s.project;
         clip->effects[selectedEffect].params["hue"] = {h};
         clip->effects[selectedEffect].params["qualifier"] = {1};
-        s.history.checkpoint(before);
+        s.history.checkpoint(before, "Color Grading");
         s.dirty = true;
         s.renderer.clearHistory();
     }
@@ -158,15 +158,15 @@ void Editor::gradingPanel() {
     if (auto *timeline = ImGui::FindWindowByName(panelTitle("Timeline").c_str());
         timeline && timeline->DockId)
         ImGui::SetNextWindowDockID(timeline->DockId, ImGuiCond_FirstUseEver);
-    if (!panels["Étalonnage"] || !beginPanel("Étalonnage"))
+    if (!panels["Color Grading"] || !beginPanel("Color Grading"))
         return;
     gradeComparisonControls();
     if (!pendingGradeReference.empty())
-        ImGui::TextDisabled("Chargement de la référence…");
+        ImGui::TextDisabled("Loading reference...");
     auto *clip = s.project.findClip(s.selected);
     if (!clip || s.project.owner(clip->id)->kind != TrackKind::Video) {
         ImGui::TextWrapped(
-            "Sélectionnez un clip vidéo. Chaque correction conserve ses propres masques, courbes et LUT.");
+            "Select a video clip. Each correction keeps its own masks, curves and LUT.");
         ImGui::End();
         return;
     }
@@ -182,9 +182,9 @@ void Editor::gradingPanel() {
         selectedEffect = int(clip->effects.size() - 1);
     }
     ImGui::SameLine();
-    ImGui::TextDisabled("%s · corrections du clip · RGBA16F", clip->name.c_str());
-    if (ImGui::SmallButton("Ouvrir le graphe des calques"))
-        openPanel("Graphe des calques");
+    ImGui::TextDisabled("%s - clip corrections - RGBA16F", clip->name.c_str());
+    if (ImGui::SmallButton("Open Layer Graph"))
+        openPanel("Layer Graph");
     // These nodes are the actual ordered clip stack. Clicking a node selects its correction.
     ImGui::BeginChild("Grade graph", {0, 72}, ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
     auto nodePosition = ImGui::GetCursorScreenPos();
@@ -228,7 +228,7 @@ void Editor::gradingPanel() {
     ImGui::EndChild();
     if (selectedEffect < 0 || selectedEffect >= int(clip->effects.size()) ||
         clip->effects[selectedEffect].id != "grading") {
-        ImGui::TextUnformatted("Cliquez une correction dans la pile, ou ajoutez-en une.");
+        ImGui::TextUnformatted("Click a correction in the stack or add one.");
         ImGui::EndDisabled();
         ImGui::End();
         return;
@@ -236,7 +236,7 @@ void Editor::gradingPanel() {
     auto &effect = clip->effects[selectedEffect];
     args = target(clip->id, selectedEffect);
     bool enabled = effect.enabled;
-    if (ImGui::Checkbox("Activer", &enabled)) {
+    if (ImGui::Checkbox("Enable", &enabled)) {
         auto a = args;
         a["enabled"] = enabled;
         if (!action("set_effect", a)) {
@@ -254,7 +254,7 @@ void Editor::gradingPanel() {
     ImGui::SameLine();
     std::string name = static_cast<const Effect &>(effect).grading["name"].S("Correction");
     ImGui::SetNextItemWidth(170);
-    if (ImGui::InputText("Nom", &name, ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (ImGui::InputText("Name", &name, ImGuiInputTextFlags_EnterReturnsTrue)) {
         auto a = args;
         a["settings"] = Json::Object();
         a["settings"]["name"] = name;
@@ -300,17 +300,17 @@ void Editor::gradingPanel() {
         ImGui::SetNextItemWidth(std::max(80.f, ImGui::GetContentRegionAvail().x - 190));
         bool changed = ImGui::SliderFloat(it->label, &f, lo, hi, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         if (ImGui::IsItemActivated())
-            s.history.checkpoint(s.project);
+            s.history.checkpoint(s.project, "Color Grading");
         if (changed)
             assign(key, f);
         if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {
             animationKey = key;
             animationEffect = selectedEffect;
-            openPanel("Animations");
+            openPanel("Animation");
         }
         ImGui::SameLine();
         if (ImGui::SmallButton("K")) {
-            s.history.checkpoint(s.project);
+            s.history.checkpoint(s.project, "Color Grading");
             effect.params.try_emplace(key, Parameter{it->value})
                 .first->second.setKey({snapTime(s.time, s.project.fps, true), f, Curve::Smooth});
             s.dirty = true;
@@ -325,23 +325,23 @@ void Editor::gradingPanel() {
     };
     control("intensity");
     if (ImGui::BeginTabBar("Grade tools")) {
-        if (ImGui::BeginTabItem("Primaires")) {
-            if (ImGui::Button("Pipette neutre")) {
+        if (ImGui::BeginTabItem("Primaries")) {
+            if (ImGui::Button("Neutral eyedropper")) {
                 gradePick = 1;
                 gradeMatte = false;
                 gradeComparison = 0;
             }
             ImGui::SameLine();
-            ImGui::TextDisabled("échantillon avant cette correction, moyenne 5×5");
+            ImGui::TextDisabled("sample before this correction, 5x5 average");
             for (auto key : {"temperature", "tint", "wb_r", "wb_g", "wb_b", "exposure", "contrast", "pivot",
                              "blacks", "whites", "saturation", "vibrance"})
                 control(key);
-            ImGui::TextWrapped("Balance créative relative à 6500 K. Les roues et primaires travaillent en "
-                               "Rec.709 linéaire ; les valeurs HDR et négatives sont conservées.");
+            ImGui::TextWrapped("Creative balance relative to 6500 K. Wheels and primaries work in "
+                               "linear Rec.709; HDR and negative values are preserved.");
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Roues")) {
-            const char *labels[] = {"Ombres", "Tons moyens", "Hautes lumières", "Offset global"};
+        if (ImGui::BeginTabItem("Wheels")) {
+            const char *labels[] = {"Ombres", "Midtones", "Highlights", "Offset global"};
             const char *keys[][3] = {{"shadow_r", "shadow_g", "shadow_b"},
                                      {"mid_r", "mid_g", "mid_b"},
                                      {"high_r", "high_g", "high_b"},
@@ -369,7 +369,7 @@ void Editor::gradingPanel() {
                     float hx = (r - (g + b) / 2) * .5f, hy = (g - b) * .4330127f;
                     d->AddCircle({center.x + hx * radius, center.y + hy * radius}, 4, IM_COL32_WHITE, 12, 2);
                     if (ImGui::IsItemActivated())
-                        s.history.checkpoint(s.project);
+                        s.history.checkpoint(s.project, "Color Grading");
                     if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 0)) {
                         auto m = ImGui::GetIO().MousePos;
                         float x = (m.x - center.x) / radius, y = (m.y - center.y) / radius,
@@ -385,12 +385,12 @@ void Editor::gradingPanel() {
                     float old = lum;
                     bool changed = ImGui::SliderFloat("Luminance", &lum, -.5f, .5f, "%.3f");
                     if (ImGui::IsItemActivated())
-                        s.history.checkpoint(s.project);
+                        s.history.checkpoint(s.project, "Color Grading");
                     if (changed)
                         for (auto key : keys[w])
                             assign(key, std::clamp(value(key) + lum - old, -1.f, 1.f));
-                    if (ImGui::Button("Réinitialiser")) {
-                        s.history.checkpoint(s.project);
+                    if (ImGui::Button("Reset")) {
+                        s.history.checkpoint(s.project, "Color Grading");
                         for (auto key : keys[w])
                             assign(key, 0);
                     }
@@ -402,11 +402,11 @@ void Editor::gradingPanel() {
                 ImGui::EndTable();
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Courbes")) {
+        if (ImGui::BeginTabItem("Curves")) {
             const char *names[] = {"master", "r", "g", "b", "hue_hue", "hue_sat", "hue_luma", "luma_sat"};
             ImGui::SetNextItemWidth(220);
-            ImGui::Combo("Courbe", &gradeCurveIndex,
-                         "Maître\0Rouge\0Vert\0Bleu\0Teinte → teinte\0Teinte → saturation\0Teinte → "
+            ImGui::Combo("Curve", &gradeCurveIndex,
+                         "Master\0Red\0Green\0Blue\0Hue -> Hue\0Hue -> Saturation\0Hue -> "
                          "luminance\0Luminance → saturation\0");
             const char *key = names[gradeCurveIndex];
             auto points = static_cast<const Effect &>(effect).grading["curves"][key];
@@ -459,7 +459,7 @@ void Editor::gradingPanel() {
                 values.emplace_back(p.At(0).F(), p.At(1).F());
             bool update = false;
             if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && distance < 10) {
-                s.history.checkpoint(s.project);
+                s.history.checkpoint(s.project, "Color Grading");
                 gradeCurvePoint = nearest;
                 gradeGestureClip = clip->id;
                 gradeGestureEffect = selectedEffect;
@@ -470,7 +470,7 @@ void Editor::gradingPanel() {
                 float y = std::clamp(high - (mouse.y - pos.y) / size.y * (high - low), low, high);
                 if (std::none_of(values.begin(), values.end(),
                                  [&](auto p) { return std::abs(p.first - x) < .001f; })) {
-                    s.history.checkpoint(s.project);
+                    s.history.checkpoint(s.project, "Color Grading");
                     values.emplace_back(x, y);
                     std::sort(values.begin(), values.end());
                     update = true;
@@ -478,7 +478,7 @@ void Editor::gradingPanel() {
             }
             if (hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Right) && distance < 10 && nearest > 0 &&
                 nearest + 1 < int(values.size())) {
-                s.history.checkpoint(s.project);
+                s.history.checkpoint(s.project, "Color Grading");
                 values.erase(values.begin() + nearest);
                 update = true;
             }
@@ -510,10 +510,10 @@ void Editor::gradingPanel() {
                 s.dirty = true;
                 s.renderer.clearHistory();
             }
-            ImGui::TextDisabled("Double clic : ajouter · clic droit : retirer · glisser : déplacer · "
-                                "extrapolation HDR des courbes RGB");
-            if (ImGui::Button("Réinitialiser courbe")) {
-                s.history.checkpoint(s.project);
+            ImGui::TextDisabled("Double-click: add - right-click: remove - drag: move - "
+                                "HDR extrapolation of RGB curves");
+            if (ImGui::Button("Reset Curve")) {
+                s.history.checkpoint(s.project, "Color Grading");
                 auto curves = static_cast<const Effect &>(effect).grading["curves"];
                 Json clean = Json::Object();
                 for (auto &[k, v] : curves.Items())
@@ -524,14 +524,14 @@ void Editor::gradingPanel() {
             }
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Sélection & masque")) {
+        if (ImGui::BeginTabItem("Selection & Mask")) {
             bool qualifier = value("qualifier") > .5f;
-            if (ImGui::Checkbox("Sélection HSL", &qualifier)) {
-                s.history.checkpoint(s.project);
+            if (ImGui::Checkbox("HSL Selection", &qualifier)) {
+                s.history.checkpoint(s.project, "Color Grading");
                 assign("qualifier", qualifier ? 1.f : 0.f);
             }
             ImGui::SameLine();
-            if (ImGui::Button("Pipette couleur")) {
+            if (ImGui::Button("Color Eyedropper")) {
                 gradePick = 2;
                 gradeMatte = false;
                 gradeComparison = 0;
@@ -540,8 +540,8 @@ void Editor::gradingPanel() {
                            "qual_soft", "qual_invert"})
                 control(k);
             int mode = int(std::round(value("mask_mode")));
-            if (ImGui::Combo("Masque local", &mode, "Aucun\0Rectangle\0Ellipse\0Polygone\0")) {
-                s.history.checkpoint(s.project);
+            if (ImGui::Combo("Local mask", &mode, "None\0Rectangle\0Ellipse\0Polygon\0")) {
+                s.history.checkpoint(s.project, "Color Grading");
                 if (mode == 3 && static_cast<const Effect &>(effect).grading["maskPoints"].IsNull()) {
                     Json points = Json::Array();
                     for (auto p :
@@ -565,9 +565,9 @@ void Editor::gradingPanel() {
                 for (size_t i = 0; i < points.Size(); ++i) {
                     ImGui::PushID(int(i));
                     float xy[] = {points.At(i).At(0).F(), points.At(i).At(1).F()};
-                    bool edit = ImGui::SliderFloat2("Sommet", xy, -1, 1);
+                    bool edit = ImGui::SliderFloat2("Vertex", xy, -1, 1);
                     if (ImGui::IsItemActivated())
-                        s.history.checkpoint(s.project);
+                        s.history.checkpoint(s.project, "Color Grading");
                     changed |= edit;
                     Json p = Json::Array();
                     p.Push(xy[0]);
@@ -579,8 +579,8 @@ void Editor::gradingPanel() {
                     effect.grading["maskPoints"] = replacement;
                     s.dirty = true;
                 }
-                if (points.Size() < 16 && ImGui::Button("Ajouter sommet")) {
-                    s.history.checkpoint(s.project);
+                if (points.Size() < 16 && ImGui::Button("Add Vertex")) {
+                    s.history.checkpoint(s.project, "Color Grading");
                     Json p = Json::Array();
                     p.Push(0);
                     p.Push(.5f);
@@ -589,10 +589,10 @@ void Editor::gradingPanel() {
                     s.dirty = true;
                 }
             }
-            ImGui::TextWrapped("Le masque et le qualifier multiplient l'intensité de cette correction. "
-                               "L'alpha et les pixels extérieurs restent intacts. Le suivi calcule une "
-                               "translation ; il exige une zone contrastée dans un média vidéo.");
-            if (ImGui::Button("Suivre jusqu'à la fin du clip")) {
+            ImGui::TextWrapped("Mask and qualifier multiply this correction's strength. "
+                               "Alpha and pixels outside the mask stay intact. Tracking calculates "
+                               "translation and requires a high-contrast region in video media.");
+            if (ImGui::Button("Track to Clip End")) {
                 auto a = args;
                 a["begin"] = s.time;
                 a["end"] = clip->start + clip->duration;
@@ -603,21 +603,21 @@ void Editor::gradingPanel() {
             ImGui::SameLine();
             ImGui::Text("%s · %.0f%%", status["state"].S().c_str(), status["progress"].F() * 100);
             if (status["state"].S() == "completed") {
-                if (ImGui::Button("Appliquer suivi")) {
+                if (ImGui::Button("Apply tracking")) {
                     Json a = Json::Object();
                     a["job"] = status["job"];
                     action("apply_mask_tracking", a);
                 }
             }
-            if (status["state"].S() == "running" && ImGui::Button("Annuler suivi"))
+            if (status["state"].S() == "running" && ImGui::Button("Cancel Tracking"))
                 action("cancel_mask_tracking");
             if (!status["error"].S().empty())
                 ImGui::TextWrapped("%s", status["error"].S().c_str());
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("LUT & looks")) {
-            ImGui::Combo("Disposition LUT image", &gradeLutLayout, "Automatique\0Atlas 3D\0Carte RG 2D\0");
-            if (ImGui::Button("Importer LUT .cube / image 2D…")) {
+            ImGui::Combo("Image LUT layout", &gradeLutLayout, "Automatic\0 3D atlas\0 2D RG map\0");
+            if (ImGui::Button("Import .cube / 2D image LUT…")) {
                 auto path = dialog(false, L"LUT Cube\0*.cube;*.png;*.tif;*.exr\0\0", L"cube");
                 if (!path.empty()) {
                     auto a = args;
@@ -633,7 +633,7 @@ void Editor::gradingPanel() {
                 }
             }
             ImGui::SameLine();
-            if (ImGui::Button("Retirer LUT")) {
+            if (ImGui::Button("Remove LUT")) {
                 auto a = args;
                 a["settings"] = Json::Object();
                 a["settings"]["lut"] = {};
@@ -642,17 +642,17 @@ void Editor::gradingPanel() {
             const auto &settings = static_cast<const Effect &>(effect).grading;
             auto &lut = settings["lut"];
             if (!lut.IsNull())
-                ImGui::Text("%s · LUT %dD · taille %d · incorporée dans le projet",
-                            lut["title"].S("Sans titre").c_str(), lut["dimension"].I(), lut["size"].I());
+                ImGui::Text("%s - %dD LUT - size %d - embedded in project",
+                            lut["title"].S("Untitled").c_str(), lut["dimension"].I(), lut["size"].I());
             const char *spaces[] = {"linear709", "srgb", "linear2020", "logc3-awg3-ei800"};
             for (auto key : {"lutInput", "lutOutput"}) {
                 int current = 0;
                 for (int i = 0; i < 4; ++i)
                     if (settings[key].S("linear709") == spaces[i])
                         current = i;
-                if (ImGui::Combo(key == std::string("lutInput") ? "Espace entrée LUT" : "Espace sortie LUT",
+                if (ImGui::Combo(key == std::string("lutInput") ? "LUT Input Space" : "LUT Output Space",
                                  &current,
-                                 "Rec.709 linéaire\0sRGB\0Rec.2020 linéaire\0ARRI LogC3 / AWG3 · EI800\0")) {
+                                 "Linear Rec.709\0sRGB\0Linear Rec.2020\0ARRI LogC3 / AWG3 - EI800\0")) {
                     auto a = args;
                     a["settings"] = Json::Object();
                     a["settings"][key] = spaces[current];
@@ -666,12 +666,12 @@ void Editor::gradingPanel() {
                 }
             }
             control("lut_intensity");
-            ImGui::TextWrapped("LUT 3D : interpolation trilinéaire, rouge varie le plus vite. Le domaine "
-                               ".cube limite l'entrée ; les autres corrections conservent le HDR. Les "
-                               "espaces doivent correspondre à ceux prévus par l'auteur de la LUT.");
-            if (ImGui::BeginCombo("Préréglage", "Choisir…")) {
+            ImGui::TextWrapped("3D LUT: trilinear interpolation, red changes fastest. The .cube domain "
+                               "clamps the input; other corrections preserve HDR. "
+                               "Color spaces must match those intended by the LUT author.");
+            if (ImGui::BeginCombo("Preset", "Choose…")) {
                 for (auto name :
-                     {"Neutre", "Chaud", "Froid", "Noir et blanc", "Ombres cyan / hautes chaudes"})
+                     {"Neutral", "Warm", "Cool", "Black and White", "Cyan shadows / warm highlights"})
                     if (ImGui::Selectable(name)) {
                         auto a = args;
                         a["name"] = name;
@@ -679,8 +679,8 @@ void Editor::gradingPanel() {
                     }
                 ImGui::EndCombo();
             }
-            if (ImGui::Button("Sauver .sgrade…")) {
-                auto path = dialog(true, L"Étalonnage ShaderixFrame\0*.sgrade\0\0", L"sgrade");
+            if (ImGui::Button("Save .sgrade…")) {
+                auto path = dialog(true, L"ShaderixFrame Color Grade\0*.sgrade\0\0", L"sgrade");
                 if (!path.empty()) {
                     auto a = args;
                     a["path"] = path;
@@ -688,8 +688,8 @@ void Editor::gradingPanel() {
                 }
             }
             ImGui::SameLine();
-            if (ImGui::Button("Charger .sgrade…")) {
-                auto path = dialog(false, L"Étalonnage ShaderixFrame\0*.sgrade\0\0", L"sgrade");
+            if (ImGui::Button("Load .sgrade…")) {
+                auto path = dialog(false, L"ShaderixFrame Color Grade\0*.sgrade\0\0", L"sgrade");
                 if (!path.empty()) {
                     auto a = args;
                     a["path"] = path;
@@ -704,20 +704,20 @@ void Editor::gradingPanel() {
     ImGui::End();
 }
 void Editor::scopesPanel() {
-    if (auto *properties = ImGui::FindWindowByName(panelTitle("Propriétés").c_str());
+    if (auto *properties = ImGui::FindWindowByName(panelTitle("Properties").c_str());
         properties && properties->DockId)
         ImGui::SetNextWindowDockID(properties->DockId, ImGuiCond_FirstUseEver);
-    if (!panels["Scopes vidéo"]) {
+    if (!panels["Video Scopes"]) {
         gradeScopesVisible = false;
         return;
     }
-    gradeScopesVisible = ImGui::Begin(panelTitle("Scopes vidéo").c_str(), &panels["Scopes vidéo"]);
+    gradeScopesVisible = ImGui::Begin(panelTitle("Video Scopes").c_str(), &panels["Video Scopes"]);
     if (!gradeScopesVisible) {
         ImGui::End();
         return;
     }
-    ImGui::Combo("Mesure", &gradeScopeIndex,
-                 "Waveform luminance\0Parade RGB\0Vectorscope\0Histogramme RGB\0");
+    ImGui::Combo("Measure", &gradeScopeIndex,
+                 "Luma waveform\0RGB parade\0Vectorscope\0RGB histogram\0");
     auto pos = ImGui::GetCursorScreenPos();
     ImVec2 size{std::max(100.f, ImGui::GetContentRegionAvail().x),
                 std::max(120.f, ImGui::GetContentRegionAvail().y - 80)};
@@ -777,11 +777,11 @@ void Editor::scopesPanel() {
                            pos + ImVec2(size.x * x / 255, size.y * (1 - h(x))), colors[k], 1.5f);
             }
         }
-    ImGui::Text("%u échantillons · min %.4f · max %.4f", gradeScopes.samples, gradeScopes.minimum,
+    ImGui::Text("%u samples - min %.4f - max %.4f", gradeScopes.samples, gradeScopes.minimum,
                 gradeScopes.maximum);
-    ImGui::Text("Sous zéro : %u · au-dessus du blanc : %u", gradeScopes.below, gradeScopes.above);
-    ImGui::TextWrapped("Traces après affichage SDR / tone mapping. Min/max : Rec.709 linéaire. "
-                       "Échantillonnage limité, rafraîchissement 4 Hz.");
+    ImGui::Text("Below Zero: %u - Above White: %u", gradeScopes.below, gradeScopes.above);
+    ImGui::TextWrapped("Scopes after SDR display / tone mapping. Min/max: linear Rec.709. "
+                       "Limited sampling, 4 Hz refresh.");
     ImGui::End();
 }
 } // namespace sf

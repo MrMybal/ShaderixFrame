@@ -24,19 +24,19 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
 //@name Ondulation
-//@category Déformation
+//@category Distortion
 //@halo amplitude 1 2
 //@premultiplied
 //@param sx_amplitude float 10 0 200 "Amplitude (px)"
@@ -47,7 +47,7 @@ float4 Effect(EffectContext ctx)
     float a = radians(sx_angle);
     float2 dir = float2(cos(a), sin(a));
     float2 perp = float2(-dir.y, dir.x);
-    float phase = dot(float2(ctx.px), dir) / sx_wavelength * 6.2831853;
+    float phase = dot(((float2)(ctx.px)), dir) / sx_wavelength * 6.2831853;
     float2 offset = perp * sin(phase) * sx_amplitude;
     return InputUV(0, ctx.uv + offset * ctx.texel);
 }

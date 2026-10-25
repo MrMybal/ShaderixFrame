@@ -54,7 +54,7 @@ try:
     process.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
     process.stdin.flush()
     catalogue = rpc('tools/list')['tools']
-    assert len(catalogue) == 99
+    assert len(catalogue) == 160
     call('new_project', {'name':'Clip container MCP','width':64,'height':64,'duration':2})
     container=call('add_generator',{'duration':2})['clip']
     call('make_clip_container',{'clip':container})
@@ -141,7 +141,7 @@ try:
     call('undo')
     call('redo')
     effects = call('list_effects')['effects']
-    assert len(effects) == 340 and any(e['id'] == 'cydaw.limiter' for e in effects)
+    assert len(effects) == 429 and any(e['id'] == 'cydaw.limiter' for e in effects)
     assert {e['id'] for e in effects if e['kind'] == 'transition'} == {'transition.crossfade', 'transition.wipe'}
     title = call('add_title', {'text': 'Été · VFX\nMontage vidéo', 'start': 0, 'duration': 0.5})['clip']
     call('set_title', {'clip': title, 'font': 'Segoe UI', 'alignment': 1, 'bold': True, 'italic': True})
@@ -235,7 +235,7 @@ try:
     selected = call('select_clips', {'clips': [video_clips[1], video_clips[0], video_clips[1]]})['clips']
     state = call('status')
     assert set(selected) == set(video_clips) and state['selection'] == selected
-    assert state['selected'] == video_clips[1] and state['version'] == '0.12.0'
+    assert state['selected'] == video_clips[1] and state['version'] == '0.13.0'
     # The selection is shared UI state and never creates a document/history entry.
     assert call('select_clips', {'clips': []})['clips'] == []
     assert call('status')['selected'] == 0
@@ -347,7 +347,7 @@ try:
     assert call('status')['project'] == saved
     call('add_effect', {'clip': first, 'id': 'vignette'})
     call('set_shader', {'clip': first, 'effect': 0, 'code': '//@passes 2\nfloat4 Effect(EffectContext c){return Prev(c.px);}'})
-    assert len(call('list_export_presets')['presets']) == 5
+    assert len(call('list_export_presets')['presets']) == 8
     dsp = {'schema': 2, 'nodes': [{'id': 1, 'processor': 'cydaw.eq-three'}],
            'connections': [{'source': 0, 'destination': 1}, {'source': 1, 'destination': 0}]}
     dsp_index = call('set_dsp_graph', {'scope': 'master', 'graph': dsp})['effect']
@@ -438,7 +438,7 @@ try:
     grade_index = call('add_grade', {'clip': precise_clip, 'name': 'Grade MCP'})['effect']
     grade_target = {'clip': precise_clip, 'effect': grade_index}
     assert len(call('list_grade_presets')['presets']) == 5
-    call('apply_grade_preset', dict(grade_target, name='Chaud'))
+    call('apply_grade_preset', dict(grade_target, name='Warm'))
     call('set_grade_curve', dict(grade_target, curve='master', values=[[0, 0], [.5, .6], [1, 1]]))
     call('neutral_grade', dict(grade_target, r=.4, g=.2, b=.1))
     cube = sandbox/'identity-grade.cube'

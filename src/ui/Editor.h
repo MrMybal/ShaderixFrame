@@ -5,10 +5,20 @@
 #include "ui/ClipPreviews.h"
 #include "ui/DspCanvas.h"
 #include "ui/LayerCanvas.h"
+#include "ui/RenderCache.h"
+#include "ui/Keymap.h"
 #include <imgui.h>
+#include <array>
+#include <set>
 #include <optional>
 namespace sf {
 class Editor {
+  public:
+    // Workspaces, as CyDAW's application modes.
+    enum class Mode { Edit, Effects, Motion, Color, Audio, Deliver };
+    static constexpr int modeCount = 6;
+
+  private:
     struct PendingImport {
         std::string path;
         double time;
@@ -74,7 +84,7 @@ class Editor {
     std::filesystem::path root;
     float zoom = 55;
     double scroll = 0;
-    bool snap = true, loop = false, layoutReady = false, exportsFocus = false;
+    bool snap = true, loop = false, layoutReady = false, exportsFocus = false, exportWorkArea = true;
     bool recoveryScanned = false, recoveryVisible = false;
     double nextRecovery = 0;
     std::vector<RecoveryEntry> recoveries;
@@ -93,33 +103,283 @@ class Editor {
     Id graphNode = 0, wireNode = 0;
     int wireOutput = 0;
     CanvasView graphView, compositionView;
+    float compositionDetail = 0, pendingPixelZoom = 0, compositionPixelLock = 0;
+    bool compositionPanning = false, compositionMapDrag = false, compositionHovered = false, spaceOverView = false,
+         spacePanned = false;
     double navigateAnchor = 0;
-    std::map<std::string, bool> panels{{"Médias & effets", true},
+    std::map<std::string, bool> panels{{"Media & Effects", true},
                                        {"Composition", true},
-                                       {"Calques", true},
-                                       {"Propriétés", true},
+                                       {"Layers", true},
+                                       {"Properties", true},
                                        {"Timeline", true},
-                                       {"Animations", true},
+                                       {"Animation", true},
                                        {"HLSL", true},
-                                       {"Graphe VFX", true},
-                                       {"Graphe des calques", true},
-                                       {"Étalonnage", true},
-                                       {"Scopes vidéo", true},
-                                       {"Mixeur & graphe audio", true},
+                                       {"Shader Graph", true},
+                                       {"Layer Graph", true},
+                                       {"Color Grading", true},
+                                       {"Video Scopes", true},
+                                       {"Mixer & Audio Graph", true},
                                        {"Plugins & MCP", true},
                                        {"Exports", true},
-                                       {"Graphe DSP", false},
-                                       {"Éditeur de clip", false},
-                                       {"Motion design", false},
-                                       {"Bibliothèque Shaderixel", true}};
+                                       {"DSP Graph", false},
+                                       {"Clip Editor", false},
+                                       {"Motion Design", false},
+                                       {"Shaderixel Library", true},
+                                       {"Source", false},
+                                       {"Markers", false},
+                                       {"History", false},
+                                       {"Subtitles", false},
+                                       {"Camera Angles", false},
+                                       {"Keyboard Shortcuts", false}};
+    // Sequence panels (ui/SequencePanels.cpp).
+    void markersPanel();
+    void historyPanel();
+    void subtitlesPanel();
+    void anglesPanel();
+    Id subtitleTrack = 0;
+    std::string subtitleFilter;
+    // Skimming over a bin card: a private reader decodes the frame under the pointer.
+    std::unique_ptr<MediaAsset> skimAsset;
+    std::string skimPath;
+    Com<ID3D11ShaderResourceView> skimView;
+    double skimTime = -1, skimDecoded = 0;
+    ID3D11ShaderResourceView *skimFrame(const std::string &path, double fraction);
+    float subtitleStyle[4]{40, .38f, 2, 0};
+    bool subtitleStyleEditing = false;
+    // Windows' folder picker; empty when cancelled.
+    std::string folderDialog(const wchar_t *title);
+    // Confirmation shown in the status bar for a few seconds.
+    std::string notice;
+    double noticeUntil = 0;
+    // Loudness measured on a worker thread; the result is applied as one undoable change.
+    struct LoudnessJob {
+        std::thread worker;
+        std::atomic<float> progress = 0;
+        std::atomic<bool> finished = false, cancelled = false;
+        double measured = 0, peak = 0, target = -14;
+        bool limit = true;
+        std::string error;
+        ~LoudnessJob() {
+            cancelled = true;
+            if (worker.joinable())
+                worker.join();
+        }
+    };
+    std::unique_ptr<LoudnessJob> loudnessJob;
+    // An analysis of media (silences, shots) on a worker thread; its result becomes the arguments of one
+    // undoable command applied when it finishes.
+    struct AnalysisJob {
+        std::thread worker;
+        std::atomic<float> progress = -1; // negative: no measure of progress
+        std::atomic<bool> finished = false, cancelled = false;
+        std::string label, command, error;
+        Json args;
+        std::function<std::string(const Json &)> report;
+        ~AnalysisJob() {
+            cancelled = true;
+            if (worker.joinable())
+                worker.join();
+        }
+    };
+    std::unique_ptr<AnalysisJob> analysis;
+    void startAnalysis(std::string label, std::string command, std::function<Json(AnalysisJob &)> work,
+                       std::function<std::string(const Json &)> report);
+    void pollAnalysis();
+    void removeSilencesInBackground(Id clip, double threshold, double minLength);
+    void exportGifInBackground(const std::string &path);
+    void detectScenesInBackground(Id clip, bool split);
+    bool loudnessLimit = true;
+    void startLoudness(double target);
+    void pollLoudness();
+    void say(std::string text) {
+        notice = std::move(text);
+        noticeUntil = ImGui::GetTime() + 6;
+    }
+    int historySeen = -1;
+    std::string markerFilter;
+    bool markerPictures = true;
+    std::optional<Project> markerEditBefore;
+    Mode mode = Mode::Edit;
+    bool modesReady = false, layoutForce = false;
+    std::array<std::map<std::string, bool>, modeCount> modePanels;
+    void modeBar();
+    void buildLayout(ImGuiID dock, ImVec2 size);
+    bool layoutRestore = false;
+    void saveModeLayout();
+    bool restoreModeLayout(ImGuiID dock, ImVec2 size);
+    void resetModeLayout();
+    std::set<std::string> detachedPanels; // open in their own native window
+    void trackDetachedPanels();
     bool beginPanel(const char *name);
     bool panelSettingsRead = false;
+    std::filesystem::path panelSettingsFile;
     std::string panelSettingsSignature;
     void panelSettings();
     std::string graphViewIdentity;
     Id graphDragging = 0;
-    bool graphPanning = false, graphFitPending = false;
+    bool graphPanning = false, graphFitPending = false, graphAutoFit = false;
+    ImVec2 graphFitSize;
     std::optional<Project> graphDragBefore;
+    // Timeline: CyDAW ArrangementView/Cinema model adapted to seconds and frames (ui/Timeline.cpp).
+    enum class Tool { Select, Blade, Slip, Hand, Roll, Stretch, Slide };
+    enum class Gesture {
+        None, Seek, WorkDraw, WorkIn, WorkOut, WorkMove, Marker, Navigator, TrackHeight, TrackMove,
+        HeaderWidth, Fade, Key, Pan, HScroll, VScroll, Slip, Ripple, Roll, Gain, Stretch, Slide, Transition,
+        RegionEnd
+    };
+    struct AutomationLane {
+        bool visible = false;
+        std::string key = "opacity", effect; // effect id ; empty for clip parameters
+    };
+    struct TimelineGeometry {
+        ImVec2 navigator, lanes;   // top-left of the navigator band and of the first lane
+        float ruler = 0;           // top of the timecode ruler
+        std::vector<float> tops, rows; // lane tops (screen space) and clip row heights
+    };
+    Tool tool = Tool::Select;
+    int gridIndex = 0;
+    bool snapEdges = true, follow = true, followPaused = false, rippleEdits = false, timelinePlaying = false,
+         showFilmstrip = true, showClipThumbnails = true, showWaveforms = true, showKeyframes = true;
+    float verticalScroll = 0, laneZoom = 1, headerWidth = 200;
+    std::map<Id, AutomationLane> lanes;
+    std::map<std::string, std::pair<float, float>> parameterRanges;
+    bool automationReveal = false;
+    Gesture gesture = Gesture::None;
+    Id gestureId = 0, gestureOther = 0;
+    int gestureIndex = -1;
+    double gestureTime = 0, gestureValue = 0;
+    float gestureMouse = 0;
+    std::optional<Project> gestureBefore;
+    Id renamingTrack = 0, renamingMarker = 0;
+    std::string renameDraft;
+    bool renameFocus = false;
+    Id contextTrack = 0, contextMarker = 0, contextGroup = 0, renamingGroup = 0;
+    double contextTime = 0;
+    TimelineGeometry geometry;
+    // Animations panel curve editor (ui/CurveEditor.cpp).
+    struct CurveKey {
+        int effect;
+        std::string key;
+        int index;
+    };
+    struct CurvePoint {
+        int effect;
+        std::string key;
+        int index;
+        ImVec2 at;
+    };
+    std::vector<CurveKey> curveSelection;
+    std::vector<Keyframe> curveOriginal;
+    std::vector<CurvePoint> curvePoints;
+    std::set<std::string> curveVisible;
+    double curveStart = 0, curveEnd = 1;
+    Id curveClip = 0;
+    bool curveTable = false, curveDelete = false, curveCopy = false, curvePaste = false;
+    // Copied keys, their times relative to the first one: pasted at the playhead, on any clip.
+    struct CopiedKey {
+        int effect;
+        std::string key;
+        Keyframe frame;
+    };
+    std::vector<CopiedKey> curveClipboard;
+    int curveInterpolation = -1, curveGesture = 0, curveBend = -1;
+    float curveBendShape = 0;
+    ImVec2 curveAnchor;
+    std::optional<Project> curveBefore;
+    std::map<std::string, Parameter> *curveParams(Clip &clip, int effect);
+    std::pair<float, float> curveRange(const std::string &key, const Parameter &param) const;
+    void timelineToolbar();
+    double gridStep() const;
+    double snapToGrid(double seconds, bool force = false) const;
+    std::vector<double> snapPoints(const std::vector<Id> &ignore) const;
+    float trackHeight(const Track &track) const;
+    void blade(Id clip, double time);
+    std::vector<std::pair<Id, Clip>> clipboard; // owning track, clip
+    std::string effectSearch;
+    // Media bin and source monitor (ui/SourceMonitor.cpp).
+    std::string sourcePath, binFilter;
+    double sourceTime = 0, sourceIn = 0, sourceOut = 0, sourceFrameTime = -1;
+    bool sourceVideo = true, sourceAudio = true, sourcePlaying = false;
+    float sourceSpeed = 1;
+    int sourceMarkDrag = 0; // 1: in point, 2: out point, while dragged on the scrub bar
+    ImVec2 sourceBarMin, sourceBarSize; // scrub bar of the last frame
+    AudioOutput sourceSound;   // the source monitor's own sound, at normal speed
+    Project sourceSoundProject; // one audio clip of the opened medium
+    std::string sourceSoundPath;
+    void matchFrame();
+    Id targetVideo = 0, targetAudio = 0; // destination tracks of source edits, 0: first free track
+    std::unique_ptr<MediaAsset> sourceAsset;
+    Com<ID3D11Texture2D> sourceTexture;
+    Com<ID3D11ShaderResourceView> sourceFrame;
+    unsigned sourceFrameWidth = 0, sourceFrameHeight = 0;
+    void sourcePanel();
+    void mediaBin();
+    void sourceEdit(bool insert, bool fit = false);
+    ID3D11ShaderResourceView *mediaThumbnail(const std::string &path);
+    static void centredLabel(ImDrawList *list, ImVec2 min, ImVec2 max, const char *label);
+    Id effectClip = 0;
+    void effectMenu(Id clip);
+    void copyClips(bool cut);
+    void pasteClips(double at);
+    void toggleClipsEnabled();
+    void trimToPlayhead(bool head, bool ripple);
+    void insertGapMenu(double at);
+    void crossfadeAtPlayhead();
+    void selectFrom(double time, bool forward, Id onlyTrack = 0);
+    void freezeAtPlayhead(double length);
+    void exportStill();
+    Id speedClip = 0;
+    float speedDraft = 100;
+    double durationDraft = 1;
+    bool openSpeed = false, openRename = false, openAttributes = false, openLowerThird = false;
+    bool autoProxies = true;    // heavy videos get a preview proxy when imported
+    // Editable shortcuts, kept beside the panel settings (keymap.json).
+    Keymap keymap;
+    bool keymapRead = false;
+    std::string keymapCapture; // action waiting for its new key in the Raccourcis panel
+    void saveKeymap();
+    void shortcutsPanel();
+    // Command palette (ui/CommandPalette.cpp): every editor command by name, filtered as one types.
+    struct Command {
+        std::string label, shortcut;
+        std::function<void()> run;
+        bool enabled = true;
+    };
+    bool paletteOpen = false, paletteFocus = false;
+    std::string paletteQuery;
+    int paletteIndex = 0;
+    std::vector<Command> commands();
+    void commandPalette();
+    void saveCommand();
+    void openCommand();
+    void importCommand();
+    void workAreaEdge(bool in);
+    // Projects opened or saved lately, newest first, kept beside the panel settings.
+    std::vector<std::string> recentProjects;
+    bool recentRead = false;
+    void rememberProject(const std::string &path);
+    void loadRecentProjects();
+    // A welcome card over an empty sequence: templates, open, recent projects, import.
+    void welcomeCard(ImVec2 origin, ImVec2 size);
+    bool welcomeShown = false;
+    bool angleSound = true;     // multicam: each angle's linked sound follows its picture
+    bool clipMenuRequest = false; // opens the clip menu on the selection (captures)
+    std::string lowerName, lowerRole;
+    double lowerStart = 0;
+    AttributeChoice attributeChoice;
+    // Pastes the attributes of the first copied clip onto the selection, one undo step.
+    void pasteAttributes();
+    std::string renamePattern = "Shot ##";
+    int renameFirst = 1;
+    // Ctrl+F: clips found by name, track or media file; the chosen one is selected and revealed.
+    bool openFind = false, findFocus = false;
+    std::string findText;
+    double pendingReveal = -1;
+    ImVec2 speedButtons[2]{}; // centres of the 200 % preset and of « Appliquer », for the tests
+    void revealTime(double time);
+    void fitTimeline(float width);
+    void fitSelection(float width);
+    bool headerWheelHovered = false; // a header widget used the wheel last frame
     Id timelineDragging = 0;
     int timelineTrim = 0;
     float timelineDragX = 0;
@@ -132,8 +392,28 @@ class Editor {
     ImVec2 marqueeAnchor;
     std::vector<Id> marqueeBase;
     double wallTime = 0, lastTransport = 0;
+    // Pre-render of the work area (Enter in the timeline): shown during playback while the document matches.
+    RenderCache renderCache;
+    double renderCacheChecked = 0;
+    std::size_t renderCacheHistory = 0;
+    ID3D11ShaderResourceView *cachedView = nullptr;
+    std::string renderSignature() const;
+    float previewScale() const;
+    ID3D11ShaderResourceView *shownView() const { return cachedView ? cachedView : s.renderer.view(); }
+    // Shuttle (J / K / Shift+L): playback rate, picture only away from ×1; anchored at a time and a clock.
+    double shuttleRate = 1, anchoredRate = 1, shuttleOrigin = 0, shuttleWall = 0;
+    void shuttleStep(int direction);
     bool wasPlaying = false;
     bool maskGuides = true;
+    // Composition overlays: framing guides (1 safe areas, 2 thirds, 4 centre) and a target aspect ratio.
+    int guideFlags = 0, guideRatio = 0;
+    // A/B comparison: a snapshot of the view on the left of a draggable wipe, the live picture on the right.
+    Com<ID3D11ShaderResourceView> snapshotView;
+    std::string snapshotLabel;
+    bool snapshotCompare = false, wipeDragging = false;
+    float wipe = .5f;
+    void compositionOverlays(ImVec2 origin, float w, float h, bool hovered);
+    void guidesMenu();
     Id maskDragging = 0;
     ImVec2 maskDragMouse;
     float maskDragX = 0, maskDragY = 0;
@@ -153,6 +433,7 @@ class Editor {
     void recoveryPanel();
     void exportPanel();
     bool action(const std::string &name, Json args = Json::Object());
+    Json actionResult; // result of the last successful action
     std::string dialog(bool save, const wchar_t *filter, const wchar_t *extension);
     void parameter(const char *label, const std::string &key, float minimum, float maximum, float fallback,
                    int effect = -1);
@@ -165,8 +446,8 @@ class Editor {
     Editor(Session &session, std::filesystem::path base) : s(session), protocol(s), root(std::move(base)) {}
     void draw();
     void showDspGraph() {
-        openPanel("Graphe DSP");
-        panels["Mixeur & graphe audio"] = true;
+        openPanel("DSP Graph");
+        panels["Mixer & Audio Graph"] = true;
         mixScope = "master";
         mixTarget = 0;
         for (auto &track : s.project.tracks)
@@ -177,8 +458,9 @@ class Editor {
                 mixTarget = track.id;
                 break;
             }
-        ImGui::SetWindowFocus(panelTitle("Graphe DSP").c_str());
+        ImGui::SetWindowFocus(panelTitle("DSP Graph").c_str());
     }
+    void openSource(const std::string &path);
     void showClipEditor() {
         if (s.selected)
             openClipEditor(s.selected);
@@ -204,9 +486,118 @@ class Editor {
     bool applyClipDrafts();
     const CanvasView &previewNavigation() const { return compositionView; }
     float timelinePixelsPerSecond() const { return zoom; }
+    void setTimelineView(float pixelsPerSecond, double firstVisible) {
+        zoom = std::clamp(pixelsPerSecond, 2.f, 20000.f);
+        scroll = std::max(0., firstVisible);
+    }
+    void setCompositionPixelZoom(float percent) { pendingPixelZoom = percent; }
+    // Screen point inside the clip row of a track at a sequence time, from the last drawn frame.
+    ImVec2 timelinePoint(double seconds, int track) const {
+        bool known = track >= 0 && track < int(geometry.tops.size());
+        float top = known ? geometry.tops[track] : geometry.lanes.y, row = known ? geometry.rows[track] : 60;
+        return {geometry.lanes.x + float((seconds - scroll) * zoom), top + row * .6f};
+    }
+    float timelineHeaderLeft() const { return geometry.lanes.x - headerWidth; }
+    // Screen point on the ruler at a sequence time, dy pixels below its top.
+    ImVec2 rulerPoint(double seconds, float dy) const {
+        return {geometry.lanes.x + float((seconds - scroll) * zoom), geometry.ruler + dy};
+    }
+    const std::string &sourceMedia() const { return sourcePath; }
+    std::pair<double, double> sourceMarks() const { return {sourceIn, sourceOut}; }
+    std::pair<ImVec2, ImVec2> sourceScrubBar() const { return {sourceBarMin, sourceBarSize}; }
+    ImVec2 speedButton(int which) const { return speedButtons[which]; }
+    float timelineTrackTop(int track) const {
+        return track >= 0 && track < int(geometry.tops.size()) ? geometry.tops[track] : geometry.lanes.y;
+    }
+    // Screen position of a key drawn by the Animations curve editor in the last frame.
+    ImVec2 curvePoint(int effect, const std::string &key, int index) const {
+        for (auto &point : curvePoints)
+            if (point.effect == effect && point.key == key && point.index == index)
+                return point.at;
+        return {-1, -1};
+    }
+    ImVec2 timelineNavigatorPoint(double seconds) const {
+        return {geometry.lanes.x + float((seconds - scroll) * zoom), geometry.navigator.y + 6};
+    }
+    void setMode(Mode next);
+    int storedModeLayouts() const;
+    void setPanelSettingsFile(std::filesystem::path path) { panelSettingsFile = std::move(path); }
+    Mode currentMode() const { return mode; }
     double timelineFirstVisibleTime() const { return scroll; }
     float layerGraphZoom() const { return layerCanvas.zoomLevel(); }
     bool hasError() const { return !error.empty(); }
+    const std::string &errorMessage() const { return error; }
+    // The frame under the playhead, at the sequence's size, on the Windows clipboard.
+    bool copyStill();
+    // Keeps the current view as the A side of the comparison, which turns on.
+    bool takeSnapshot();
+    bool comparing() const { return snapshotCompare && snapshotView; }
+    void setWipe(float position) { wipe = std::clamp(position, 0.f, 1.f); }
+    // Selects the n-th clip, tracks from the top then by start (captures).
+    void selectClipAt(int index) {
+        int n = 0;
+        for (auto &track : s.project.tracks)
+            for (auto &clip : track.clips)
+                if (n++ == index)
+                    s.selectClip(clip.id);
+    }
+    void setGuides(int flags, int ratio) {
+        guideFlags = flags;
+        guideRatio = ratio;
+    }
+    // History panel row: 0 is the oldest state kept, undoSteps().size() the current one.
+    void goToHistoryStep(int target);
+    double playbackRate() const { return s.playing ? shuttleRate : 0; }
+    void measureLoudness(double target) { startLoudness(target); }
+    bool measuringLoudness() const { return loudnessJob != nullptr; }
+    void removeSilences(Id clip, double threshold, double minLength) { removeSilencesInBackground(clip, threshold, minLength); }
+    void detectScenes(Id clip, bool split) { detectScenesInBackground(clip, split); }
+    bool analysing() const { return analysis != nullptr; }
+    const std::vector<std::string> &recentList() const { return recentProjects; }
+    void remember(const std::string &path) {
+        recentRead = true;
+        rememberProject(path);
+    }
+    bool welcomeVisible() const { return welcomeShown; }
+    Keymap &shortcuts() { return keymap; }
+    void captureShortcut(const std::string &id) { keymapCapture = id; }
+    void openPalette(const std::string &query = {}) {
+        paletteOpen = paletteFocus = true;
+        paletteQuery = query;
+        paletteIndex = 0;
+    }
+    bool paletteVisible() const { return paletteOpen; }
+    std::vector<std::string> paletteMatches(const std::string &query);
+    bool looping() const { return loop; }
+    void openClipMenuAt(int index) {
+        selectClipAt(index);
+        clipMenuRequest = s.selected != 0;
+    }
+    void openLowerThirdDialog(double at) {
+        lowerStart = at;
+        openLowerThird = true;
+    }
+    void exportGif(const std::string &path) { exportGifInBackground(path); }
+    const std::string &lastNotice() const { return notice; }
+    void pasteCopiedAttributes() { pasteAttributes(); }
+    void setAttributeChoice(const AttributeChoice &choice) { attributeChoice = choice; }
+    // The frame skimmed at a fraction of a medium, and its time (test hooks).
+    bool skim(const std::string &path, double fraction) { return skimFrame(path, fraction) != nullptr; }
+    double skimmedTime() const { return skimTime; }
+    // Shift+Space: plays two seconds around the playhead, then returns to it.
+    void playAround();
+    double playAroundReturn = 0, playAroundEnd = -1;
+    // Media files missing from disk, checked every few seconds.
+    int offlineMedia = 0;
+    double offlineChecked = 0;
+    void relinkDialog();
+    int offlineCount() const { return offlineMedia; }
+    // Pre-renders the work area (the whole sequence without one) into memory.
+    void startRenderCache();
+    const RenderCache &renderCacheState() const { return renderCache; }
+    bool showingCachedFrame() const { return cachedView != nullptr; }
 };
 void applyFrameTheme();
+// CF_DIB bytes of an RGBA image: header, then bottom-up BGRA rows.
+std::vector<unsigned char> clipboardDib(const Image &image);
 } // namespace sf

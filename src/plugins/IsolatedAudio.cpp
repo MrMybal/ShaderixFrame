@@ -18,19 +18,19 @@ void IsolatedAudio::await(uint64_t value, bool command, unsigned timeout) {
     auto &counter = command ? shared->commandResponseSequence : shared->responseSequence;
     while (std::atomic_ref(counter).load(std::memory_order_acquire) != value) {
         if (WaitForSingleObject(processHandle, 0) == WAIT_OBJECT_0)
-            throw std::runtime_error("Le processus plugin a quitté pendant le traitement");
+            throw std::runtime_error("Plugin process exited during processing");
         if (std::atomic_ref(shared->state).load(std::memory_order_acquire) ==
             uint32_t(SharedPluginState::error))
             throw std::runtime_error(shared->statusMessage);
         if (GetTickCount64() > deadline)
-            throw std::runtime_error("Le plugin isolé ne répond plus");
+            throw std::runtime_error("Isolated plugin is not responding");
         Sleep(0);
     }
 }
 IsolatedAudio::IsolatedAudio(const std::string &kind, const std::string &path) : kind(kind) {
     try {
         if (!externalAudio(kind) || path.empty() || !std::filesystem::exists(sx::Utf8Path(path)))
-            throw std::runtime_error("Plugin natif/VST3 introuvable");
+            throw std::runtime_error("Native/VST3 plugin not found");
         wchar_t temporary[MAX_PATH], name[MAX_PATH];
         GetTempPathW(MAX_PATH, temporary);
         if (!GetTempFileNameW(temporary, L"sfp", 0, name))
@@ -39,14 +39,14 @@ IsolatedAudio::IsolatedAudio(const std::string &kind, const std::string &path) :
         file = CreateFileW(ipc.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                            nullptr, OPEN_EXISTING, 0, nullptr);
         if (file == INVALID_HANDLE_VALUE)
-            throw std::runtime_error("Création IPC échouée");
+            throw std::runtime_error("IPC creation failed");
         mapping = CreateFileMappingW(file, nullptr, PAGE_READWRITE, 0, sizeof(SharedPluginAudio), nullptr);
         if (!mapping)
-            throw std::runtime_error("Mapping plugin échoué");
+            throw std::runtime_error("Plugin mapping failed");
         shared = static_cast<SharedPluginAudio *>(
             MapViewOfFile(mapping, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(SharedPluginAudio)));
         if (!shared)
-            throw std::runtime_error("Vue IPC échouée");
+            throw std::runtime_error("IPC view failed");
         memset(shared, 0, sizeof(*shared));
         shared->magic = workerProtocolMagic;
         shared->protocolVersion = workerProtocolVersion;
@@ -71,14 +71,14 @@ IsolatedAudio::IsolatedAudio(const std::string &kind, const std::string &path) :
         PROCESS_INFORMATION process{};
         if (!CreateProcessW(helper.c_str(), command.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW,
                             nullptr, nullptr, &startup, &process))
-            throw std::runtime_error("Lancement de l'hôte plugin échoué");
+            throw std::runtime_error("Plugin host launch failed");
         processHandle = process.hProcess;
         CloseHandle(process.hThread);
         auto deadline = GetTickCount64() + 15000;
         while (std::atomic_ref(shared->state).load(std::memory_order_acquire) ==
                uint32_t(SharedPluginState::loading)) {
             if (WaitForSingleObject(processHandle, 0) == WAIT_OBJECT_0 || GetTickCount64() > deadline)
-                throw std::runtime_error("Chargement du plugin isolé échoué");
+                throw std::runtime_error("Isolated plugin load failed");
             Sleep(1);
         }
         if (std::atomic_ref(shared->state).load(std::memory_order_acquire) !=
@@ -123,11 +123,11 @@ std::map<std::string, float> IsolatedAudio::parameters() {
     command(SharedPluginCommand::refreshParameters);
     std::map<std::string, float> result;
     if (shared->parameterCount > maximumSharedPluginParameters)
-        throw std::runtime_error("Métadonnées plugin trop grandes");
+        throw std::runtime_error("Plugin metadata is too large");
     for (uint32_t i = 0; i < shared->parameterCount; ++i) {
         auto p = shared->parameters[i];
         if (p.index >= maximumSharedPluginParameters || !std::isfinite(p.value) || p.value < 0 || p.value > 1)
-            throw std::runtime_error("Métadonnées plugin invalides");
+            throw std::runtime_error("Invalid plugin metadata");
         result["p" + std::to_string(p.index)] = p.value;
     }
     return result;
@@ -156,14 +156,14 @@ std::string IsolatedAudio::state() {
         return {};
     command(SharedPluginCommand::getState);
     if (shared->stateBytes > maximumSharedPluginStateBytes)
-        throw std::runtime_error("État VST3 supérieur à 4 Mio");
+        throw std::runtime_error("VST3 state exceeds 4 MiB");
     return encodeBase64({shared->stateData, shared->stateBytes});
 }
 void IsolatedAudio::restoreState(const std::string &text) {
     if (text.empty())
         return;
     if (kind != "vst3")
-        throw std::runtime_error("État opaque disponible pour VST3 uniquement");
+        throw std::runtime_error("Opaque state is available for VST3 only");
     auto bytes = decodeBase64(text);
     memcpy(shared->stateData, bytes.data(), bytes.size());
     shared->stateBytes = unsigned(bytes.size());
@@ -172,14 +172,14 @@ void IsolatedAudio::restoreState(const std::string &text) {
 }
 void IsolatedAudio::setParameter(unsigned index, float value) {
     if (index >= maximumSharedPluginParameters || !std::isfinite(value) || value < 0 || value > 1)
-        throw std::runtime_error("Contrôle plugin hors plage");
+        throw std::runtime_error("Plugin control out of range");
     shared->commandParameterIndex = index;
     shared->commandParameterValue = value;
     command(SharedPluginCommand::setParameter);
 }
 void IsolatedAudio::showEditor(bool visible) {
     if (kind != "vst3")
-        throw std::runtime_error("Cette API native n'expose pas de fenêtre");
+        throw std::runtime_error("This native API has no editor window");
     command(visible ? SharedPluginCommand::showEditor : SharedPluginCommand::hideEditor);
 }
 void IsolatedAudio::process(double time, unsigned frames, std::vector<float> &data,
@@ -189,7 +189,7 @@ void IsolatedAudio::process(double time, unsigned frames, std::vector<float> &da
         shared->automationCount = 0;
         for (auto &[key, param] : params) {
             if (!externalParameter(key))
-                throw std::runtime_error("Paramètre plugin invalide");
+                throw std::runtime_error("Invalid plugin parameter");
             if (shared->automationCount >= maximumSharedAutomationParameters) {
                 unsigned index = unsigned(std::stoul(key.substr(1)));
                 float value = std::clamp(param.at(time + offset / 48000.), 0.f, 1.f);
@@ -211,12 +211,12 @@ void IsolatedAudio::process(double time, unsigned frames, std::vector<float> &da
         std::atomic_ref(shared->requestSequence).store(++sequence, std::memory_order_release);
         await(sequence);
         if (shared->outputFrameCount != count)
-            throw std::runtime_error("Taille de sortie du plugin invalide");
+            throw std::runtime_error("Invalid plugin output size");
         for (unsigned frame = 0; frame < count; ++frame)
             for (unsigned channel = 0; channel < 2; ++channel) {
                 float sample = shared->output[sharedAudioIndex(channel, frame)];
                 if (!std::isfinite(sample))
-                    throw std::runtime_error("Plugin : sortie non finie");
+                    throw std::runtime_error("Plugin: non-finite output");
                 data[(offset + frame) * 2 + channel] = sample;
             }
     }

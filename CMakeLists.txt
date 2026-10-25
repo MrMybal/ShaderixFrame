@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(ShaderixFrame VERSION 0.12.0 LANGUAGES CXX)
+project(ShaderixFrame VERSION 0.13.0 LANGUAGES CXX)
 # CMake decodes French cl.exe diagnostics through the OEM codepage on this machine.
 # Ninja consumes the compiler's UTF-8 output directly. Keep the dependency prefix exact.
 if(CMAKE_CXX_CL_SHOWINCLUDES_PREFIX MATCHES "^Remarque")
@@ -47,7 +47,7 @@ configure_file(src/core/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/generated/core/
 target_include_directories(frame_engine PUBLIC src ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(frame_engine PUBLIC shared_components d3d11 dxgi d3dcompiler
     mfplat mfreadwrite mfuuid ole32 windowscodecs winmm d2d1 dwrite crypt32)
-add_executable(ShaderixFrame WIN32 src/main.cpp src/ui/Editor.cpp src/ui/GradingPanel.cpp src/ui/DspCanvas.cpp src/ui/LayerCanvas.cpp src/ui/ClipPreviews.cpp src/ui/ClipWorkspace.cpp src/ui/MotionPanel.cpp src/ui/ShaderixelLibrary.cpp)
+add_executable(ShaderixFrame WIN32 src/main.cpp src/ui/Editor.cpp src/ui/GradingPanel.cpp src/ui/DspCanvas.cpp src/ui/LayerCanvas.cpp src/ui/ClipPreviews.cpp src/ui/ClipWorkspace.cpp src/ui/MotionPanel.cpp src/ui/ShaderixelLibrary.cpp src/ui/Timeline.cpp src/ui/Workspaces.cpp src/ui/FrameStyle.cpp src/ui/CurveEditor.cpp src/ui/SourceMonitor.cpp src/ui/SequencePanels.cpp src/ui/RenderCache.cpp src/ui/Keymap.cpp src/ui/CommandPalette.cpp)
 target_link_libraries(ShaderixFrame PRIVATE frame_engine comdlg32 shell32 dwmapi)
 target_link_options(ShaderixFrame PRIVATE /ENTRY:mainCRTStartup)
 add_executable(ShaderixFramePluginWorker src/plugins/NativeWorker.cpp)
@@ -72,13 +72,17 @@ else()
     message(STATUS "Optional VST3 worker not installed; see docs/BUILDING.md")
 endif()
 add_dependencies(ShaderixFrame ShaderixFramePluginWorker ShaderixFrameOfxWorker native_gain native_latency)
-add_custom_command(TARGET ShaderixFrame POST_BUILD
+# Shaders, plugins and examples are refreshed on every build, not only when the executable relinks:
+# a regenerated Shaderixel library must reach the build directory too.
+set(SF_ASSET_COPY
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:ShaderixFrame>/shaders
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/plugins $<TARGET_FILE_DIR:ShaderixFrame>/plugins)
 if(EXISTS ${CMAKE_SOURCE_DIR}/examples)
-    add_custom_command(TARGET ShaderixFrame POST_BUILD
+    list(APPEND SF_ASSET_COPY
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/examples $<TARGET_FILE_DIR:ShaderixFrame>/examples)
 endif()
+add_custom_target(frame_assets ALL ${SF_ASSET_COPY} VERBATIM)
+add_dependencies(ShaderixFrame frame_assets)
 enable_testing()
 add_executable(advanced_tests tests/AdvancedTests.cpp)
 target_link_libraries(advanced_tests PRIVATE frame_engine)
@@ -87,7 +91,7 @@ set_tests_properties(advanced_workflows PROPERTIES TIMEOUT 60)
 add_executable(frame_tests tests/CoreTests.cpp)
 target_link_libraries(frame_tests PRIVATE frame_engine)
 add_test(NAME core_and_gpu COMMAND frame_tests ${CMAKE_SOURCE_DIR})
-add_executable(editor_tests tests/EditorTests.cpp src/ui/Editor.cpp src/ui/GradingPanel.cpp src/ui/DspCanvas.cpp src/ui/LayerCanvas.cpp src/ui/ClipPreviews.cpp src/ui/ClipWorkspace.cpp src/ui/MotionPanel.cpp src/ui/ShaderixelLibrary.cpp)
+add_executable(editor_tests tests/EditorTests.cpp src/ui/Editor.cpp src/ui/GradingPanel.cpp src/ui/DspCanvas.cpp src/ui/LayerCanvas.cpp src/ui/ClipPreviews.cpp src/ui/ClipWorkspace.cpp src/ui/MotionPanel.cpp src/ui/ShaderixelLibrary.cpp src/ui/Timeline.cpp src/ui/Workspaces.cpp src/ui/FrameStyle.cpp src/ui/CurveEditor.cpp src/ui/SourceMonitor.cpp src/ui/SequencePanels.cpp src/ui/RenderCache.cpp src/ui/Keymap.cpp src/ui/CommandPalette.cpp)
 target_link_libraries(editor_tests PRIVATE frame_engine comdlg32 shell32 dwmapi)
 add_test(NAME editor_interactions COMMAND editor_tests ${CMAKE_SOURCE_DIR})
 add_executable(export_tests tests/ExportTests.cpp)
@@ -120,4 +124,6 @@ endif()
 if(Python3_FOUND)
     add_test(NAME mcp_stdio COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/mcp_smoke.py $<TARGET_FILE:ShaderixFrame>)
     set_tests_properties(mcp_stdio PROPERTIES TIMEOUT 60)
+    add_test(NAME workspace_modes COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/mode_smoke.py $<TARGET_FILE:ShaderixFrame>)
+    set_tests_properties(workspace_modes PROPERTIES TIMEOUT 150)
 endif()

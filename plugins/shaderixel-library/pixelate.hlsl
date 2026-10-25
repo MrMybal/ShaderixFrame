@@ -24,26 +24,26 @@ float3 HSVToRGB(float3 c)
 
 float Hash12(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    float3 p3 = frac(((float3)(p.xyx)) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.x + p3.y) * p3.z);
 }
 
 float2 Hash22(float2 p)
 {
-    float3 p3 = frac(float3(p.xyx) * float3(0.1031, 0.1030, 0.0973));
+    float3 p3 = frac(((float3)(p.xyx)) * float3(0.1031, 0.1030, 0.0973));
     p3 += dot(p3, p3.yzx + 33.33);
     return frac((p3.xx + p3.yz) * p3.zy);
 }
-//@name Mosaïque
+//@name Mosaic
 //@category Pixellisation
 //@halo cell 1 1
 //@premultiplied
-//@param sx_cell int 16 2 256 "Taille de cellule"
+//@param sx_cell int 16 2 256 "Cell Size"
 float4 Effect(EffectContext ctx)
 {
     int s = max(sx_cell, 1);
     int2 origin = (ctx.px / s) * s;
-    float2 uv = (float2(origin) + s * 0.5) * ctx.texel;
+    float2 uv = (((float2)(origin)) + s * 0.5) * ctx.texel;
     return InputUV(0, uv);
 }
