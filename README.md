@@ -23,6 +23,30 @@ CyUI is MIT-licensed. See its
 and the [bundled licence](vendor/cyui/LICENSE).
 See [0.14 release notes](docs/RELEASE_0.14.md).
 
+## Screenshots
+
+Captured from **0.14.0-alpha.1** using the bundled example projects.
+Click an image to view it at full size.
+
+**Video editing** — composition preview, linked video/audio clips, frame filmstrip and waveforms.
+
+[![ShaderixFrame video editing workspace with composition preview and a multitrack timeline](docs/screenshots/editing.png)](docs/screenshots/editing.png)
+
+| Layer compositing | HLSL shader graph |
+| --- | --- |
+| [![Layer graph with track inputs, color corrections and compositing nodes](docs/screenshots/layer-graph.png)](docs/screenshots/layer-graph.png) | [![Shader graph with image input, desaturation, parameter and output nodes](docs/screenshots/shader-graph.png)](docs/screenshots/shader-graph.png) |
+| Blend tracks and branch corrections with live node previews. | Build effects by connecting shader nodes and parameters. |
+
+| Color grading | Audio DSP graph |
+| --- | --- |
+| [![Color grading panel with a correction chain and primary color controls](docs/screenshots/color-grading.png)](docs/screenshots/color-grading.png) | [![CyDAW DSP graph with two parallel EQ branches and a stereo sum](docs/screenshots/audio-dsp.png)](docs/screenshots/audio-dsp.png) |
+| Stack corrections and adjust balance, exposure and contrast. | Route stereo audio through parallel processing branches. |
+
+| Motion design | Nested clip editor |
+| --- | --- |
+| [![Motion design editor with a widget hierarchy and selected title on the canvas](docs/screenshots/motion-design.png)](docs/screenshots/motion-design.png) | [![Clip editor with its own composition preview, timeline and audio waveform](docs/screenshots/clip-editor.png)](docs/screenshots/clip-editor.png) |
+| Arrange text and shapes using a widget hierarchy and canvas. | Edit a container's local timeline, composition and effects. |
+
 ## Start editing
 
 Run `dist/ShaderixFrame/ShaderixFrame.exe`, or the executable from the Windows package.
