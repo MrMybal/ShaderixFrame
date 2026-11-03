@@ -1,0 +1,14 @@
+title = "CyUI"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Dear ImGui keyboard enum comparison"
+condition = "AND"
+paths = ['''(^|/)third_party/imgui/imgui\.cpp$''']
+regexTarget = "secret"
+regexes = ['''^ImGuiKey_Keypad0$''']

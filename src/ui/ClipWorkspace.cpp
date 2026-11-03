@@ -164,38 +164,38 @@ void Editor::clipEditor() {
     ImGuiID dock = ImGui::GetID("ClipDocumentDock");
     ImVec2 dockSize = ImGui::GetContentRegionAvail();
     if (visible) {
-        if (ImGui::Button("Open Selected Clip") && s.selected)
+        if (ImGui::Button(cyui::trLabel("Open Selected Clip").c_str()) && s.selected)
             openClipEditor(s.selected);
         if (clipWorkspace) {
             ImGui::SameLine();
-            if (ImGui::Button("Separate Window")) {
+            if (ImGui::Button(cyui::trLabel("Separate Window").c_str())) {
                 clipDetached = true;
                 clipDetachRequested = true;
             }
             ImGui::SameLine();
-            if (ImGui::Button("Apply to Container")) {
+            if (ImGui::Button(cyui::trLabel("Apply to Container").c_str())) {
                 applyClipDrafts();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Reload"))
+            if (ImGui::Button(cyui::trLabel("Reload").c_str()))
                 openClipEditor(editedContainer, true);
             ImGui::SameLine();
-            if (ImGui::BeginCombo("Clip Windows", "Show...")) {
+            if (ImGui::BeginCombo(cyui::trLabel("Clip Windows").c_str(), "Show...")) {
                 for (auto &[name, open] : clipWorkspace->panels)
                     if (ImGui::Selectable(name.c_str(), open))
                         clipWorkspace->openPanel(name);
                 ImGui::EndCombo();
             }
-            if (ImGui::SmallButton("Local Shader Time from Zero")) {
+            if (ImGui::SmallButton(cyui::trLabel("Local Shader Time from Zero").c_str())) {
                 clipSession->history.checkpoint(clipSession->project);
                 clipSession->project.timeOrigin = 0;
                 clipSession->dirty = true;
             }
-            ImGui::Text("Clip %u - local time - %s", editedContainer,
+            ImGui::Text(cyui::tr("Clip %u - local time - %s").c_str(), editedContainer,
                         clipSession->dirty ? "modified draft; apply for final rendering"
                                            : "saved content");
             if (clipWorkspace->hasError())
-                ImGui::TextWrapped("%s", clipWorkspace->error.c_str());
+                ImGui::TextWrapped(cyui::tr("%s").c_str(), clipWorkspace->error.c_str());
             dockSize = ImGui::GetContentRegionAvail();
             ImGui::DockSpace(dock, {0, 0});
         } else
@@ -211,8 +211,8 @@ void Editor::clipEditor() {
 void Editor::dspPanel() {
     if (!panels["DSP Graph"] || !beginPanel("DSP Graph"))
         return;
-    if (ImGui::BeginCombo("Channel", mixScope == "master" ? "MASTER" : mixScope.c_str())) {
-        if (ImGui::Selectable("MASTER", mixScope == "master")) {
+    if (ImGui::BeginCombo(cyui::trLabel("Channel").c_str(), mixScope == "master" ? "MASTER" : mixScope.c_str())) {
+        if (ImGui::Selectable(cyui::trLabel("MASTER").c_str(), mixScope == "master")) {
             mixScope = "master";
             mixTarget = 0;
         }
@@ -273,7 +273,7 @@ void Editor::dspPanel() {
                 channelDspIndex = i;
                 break;
             }
-    if (ImGui::BeginCombo("Instance", channelDspIndex < 0
+    if (ImGui::BeginCombo(cyui::trLabel("Instance").c_str(), channelDspIndex < 0
                                           ? "New Graph"
                                           : ("DSP #" + std::to_string(channelDspIndex + 1)).c_str())) {
         for (int i = 0; i < int(chain->size()); ++i)
@@ -310,7 +310,7 @@ void Editor::dspPanel() {
         }
     }
     ImGui::SameLine();
-    ImGui::TextDisabled("CyDAW v2 - stereo audio - %s",
+    ImGui::TextDisabled(cyui::tr("CyDAW v2 - stereo audio - %s").c_str(),
                         channelDspDirty ? "draft changes pending" : "saved signal");
     channelDspDirty |= channelDsp.draw(s.time);
     ImGui::End();

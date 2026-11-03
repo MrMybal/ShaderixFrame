@@ -21,6 +21,15 @@ Existing third-party copyright notices and licences remain applicable.
   The matching source release includes the JUCE source used by the worker,
   including its dependencies and their notices. Unused Android Firebase demo
   configurations are omitted. See `docs/LICENSING.md`.
+- `vendor/cyui/`: [CyUI](https://github.com/MrMybal/CyUI) 1.2.0, commit
+  `8367401fe45fc22bfed5e227cb3de343177f676b`, under [MIT](https://github.com/MrMybal/CyUI/blob/8367401fe45fc22bfed5e227cb3de343177f676b/LICENSE). The licence is also provided locally in `vendor/cyui/LICENSE` and in the package. It supplies common
+  controls, themes, fonts, canvases, nodes, curves, source timelines, plots,
+  inspectors and code editing. Its own ImGui copy is omitted: the application
+  provides the single ImGui target. CodeEditor includes the MIT TextEditor;
+  Code includes Lexilla, Scintilla headers and SciTE syntax data under their
+  permissive licences. Original licences and notices are preserved in the
+  snapshot and copied to `licenses/cyui/` by the binary packager. See
+  `vendor/cyui/THIRD_PARTY_NOTICES.md` and `cyui.lock.json`.
 - `vendor/imgui/`: the Dear ImGui docking snapshot used by Shaderixel; MIT licence
   in `vendor/imgui/LICENSE.txt`, distributed as `IMGUI-LICENSE.txt`.
 - `vendor/openfx/`: ASWF OpenFX headers/examples at commit

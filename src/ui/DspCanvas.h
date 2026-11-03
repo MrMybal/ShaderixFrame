@@ -2,32 +2,30 @@
 #include "adapters/DspGraph.h"
 #include "core/CanvasView.h"
 #include <imgui.h>
+#include <cyui/modules/Nodes.h>
+#include <cyui/modules/Curves.h>
 #include <optional>
 #include <set>
 namespace sf {
-// Adaptation of CyDAW v2 GraphEditor/GraphLayout interactions; engine and project stay local.
+// CyUI node interactions over the application-owned CyDAW-compatible DSP draft.
 class DspCanvas {
+    cyui::NodeState nodesState;
+    cyui::CurveState curveState;
+    std::uint64_t revision = 0;
+    std::string stamp, curveIdentity;
+    Id contextNode = 0;
     Json graph;
     std::vector<Json> past, future;
     CanvasView view;
     std::set<Id> selection;
-    Id dragging = 0, wire = 0;
-    bool hasWire = false, wireOutput = true, box = false, fitPending = true;
-    ImVec2 origin{}, mouseOrigin{}, boxOrigin{};
-    std::map<Id, sx::float2> moveOrigins;
-    std::optional<Json> beforeDrag;
+    Id wire = 0;
+    bool hasWire = false, wireOutput = true, fitPending = true;
+    ImVec2 origin{};
     std::string search, error, automationKey;
-    Id automationNode = 0, disconnectFrom = 0, disconnectTo = 0;
+    Id automationNode = 0;
     sx::float2 newPosition;
-    struct Card {
-        Id id;
-        sx::float2 world;
-        ImVec2 min, max, input, output;
-    };
-    std::vector<Card> cards;
     void checkpoint();
     void nodeSearch();
-    void select(Id node, bool extend);
     sx::float2 position(Id node) const;
     void setPosition(Id node, sx::float2 point);
 

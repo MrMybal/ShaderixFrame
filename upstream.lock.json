@@ -31,11 +31,11 @@
     },
     "cydaw2/include/cydaw/graph/GraphDefinition.h": {
       "source": "include/cydaw/graph/GraphDefinition.h",
-      "sha256": "c0233fb63d2279769c1c4cb3abfa8487a369e5da4ca93530edd82819e2368f0d"
+      "sha256": "a705cf08d5f0f5e1eea7ec02e1c0b75f9b28f7e1f434115781f6977354b12fcf"
     },
     "cydaw2/src/graph/GraphDefinition.cpp": {
       "source": "src/graph/GraphDefinition.cpp",
-      "sha256": "e04194f4cea0be4618d0122f372167a9046c3e3599d140d02535809c3484ed10"
+      "sha256": "c2c2bb1d3334321f6df1df7fd7706ac66253c2c0bb43b5f9a4656c2e71dccd28"
     },
     "cydaw2/include/cydaw/engine/AudioBuffer.h": {
       "source": "include/cydaw/engine/AudioBuffer.h",
@@ -135,19 +135,19 @@
     },
     "cydaw2/include/cydaw/engine/EffectProcessors.h": {
       "source": "include/cydaw/engine/EffectProcessors.h",
-      "sha256": "fec01edec70246b97e05c9cd7a187380b598b4d3762fb2159f8aa17585a0732f"
+      "sha256": "c47ab3f5ded9dc3a41faf7705ba0c40cfe4baecf8ca341765dfd00f290d30c07"
     },
     "cydaw2/src/engine/EffectProcessors.cpp": {
       "source": "src/engine/EffectProcessors.cpp",
-      "sha256": "8befc2db3e5975abb4df9506805bc8c2ed56470f82f994897834ca624bf26767"
+      "sha256": "ebe89ebc4cbeb9a65972636b3f83d38af21b92da3ec186c2ff6ff7aa8ad74655"
     },
     "cydaw2/include/cydaw/engine/EffectCatalogue.h": {
       "source": "include/cydaw/engine/EffectCatalogue.h",
-      "sha256": "a5b378f771fd35d0e8a43c4182ee2d370b1d7aa8e3b34d4b48e8df819751d33e"
+      "sha256": "4a3c8694f376be92a9cff1eadf12c5323df70d8505c99f489aa7f08f089a6ca9"
     },
     "cydaw2/include/cydaw/engine/NativeDspGraph.h": {
       "source": "include/cydaw/engine/NativeDspGraph.h",
-      "sha256": "64a1ec110b951091767da76bff74a0f63af2cbe472f0a162bae9ca5019e8b1b1"
+      "sha256": "5c1b58213ad2ac3a285c0b6d5ea852e9fd29dbe3a65c5300143587491e922255"
     },
     "cydaw2/include/cydaw/engine/BiquadDesign.h": {
       "source": "include/cydaw/engine/BiquadDesign.h",
@@ -155,7 +155,7 @@
     },
     "cydaw2/include/cydaw/engine/AudioProcessor.h": {
       "source": "include/cydaw/engine/AudioProcessor.h",
-      "sha256": "875b84889d2bfeff066031a7219353628bf05845e9572404cee4d1f635d86205"
+      "sha256": "8127d92f154fe8a7a5ba5085ea8ad3b240d9453a29848cfd0321e5ca13458f00"
     },
     "cydaw2/include/cydaw/engine/Transport.h": {
       "source": "include/cydaw/engine/Transport.h",
@@ -163,11 +163,11 @@
     },
     "cydaw2/include/cydaw/engine/Sampler.h": {
       "source": "include/cydaw/engine/Sampler.h",
-      "sha256": "31446545d3bd3bcd80d309350e9a848f1022f97816c60588d7870dd42966497b"
+      "sha256": "c79ee61fa3ece809c11218619d9954bd57d5b9f7c5b55bd3063042546f074ce0"
     },
     "cydaw2/include/cydaw/engine/SoundModel.h": {
       "source": "include/cydaw/engine/SoundModel.h",
-      "sha256": "1c7f2251ed210ab9c76ea60a019fa51f4b165c19bea2a82e8a4693affd6ba85c"
+      "sha256": "6a50719b37c4a8f0535712a770566342fb0d9ceb6c81f62f702b005c111f5775"
     },
     "cydaw2/include/cydaw/engine/WavetableShape.h": {
       "source": "include/cydaw/engine/WavetableShape.h",
@@ -234,19 +234,19 @@
     },
     "cydaw2/include/cydaw/engine/AudioGraph.h": {
       "source": "include/cydaw/engine/AudioGraph.h",
-      "sha256": "5a6b9fe8e01530f0d36df25ec5e519db848b3dce793e2d1bcc64c1f2f0d76432"
+      "sha256": "150bbd02952eec2cb2a04d0ad9644a829868e4f01a5470f965d59a13121b84cb"
     },
     "cydaw2/include/cydaw/engine/AudioRenderPlan.h": {
       "source": "include/cydaw/engine/AudioRenderPlan.h",
-      "sha256": "6c7f27cd08ed49c2cb16b5f1f276ebb7e7ce83057c77d8becbc94490dc639648"
+      "sha256": "fad537b92d684473a3a07821f0773a1ca101cff98dd968d176a7e0da835949b7"
     },
     "cydaw2/src/engine/AudioGraph.cpp": {
       "source": "src/engine/AudioGraph.cpp",
-      "sha256": "cd2ae6d7e1550bbf794003bd133650c0d8fcee320d3cfd251ac4bd5ad3a44f63"
+      "sha256": "aadec1657366ac65260c6ddea8aca02153ef1967af2d7f0c1231db815ef43a5e"
     },
     "cydaw2/src/engine/AudioRenderPlan.cpp": {
       "source": "src/engine/AudioRenderPlan.cpp",
-      "sha256": "93c08fa31d73f41f4fc90236edff9eabe4238f6e409a157af28905c68e2ed9ab"
+      "sha256": "4006f4d5fc7017d653edbff23e6cff739a7415eca18a6acf81f65ff106bc5c19"
     },
     "shaderixel/src/doc/Document.h": {
       "source": "src/doc/Document.h",
@@ -1915,6 +1915,254 @@
     "cydaw2/LICENSE": {
       "source": "LICENSE",
       "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+    },
+    "cydaw2/src/engine/AddedEffects.cpp": {
+      "source": "src/engine/AddedEffects.cpp",
+      "sha256": "e70228bb6b85ba1d3d14f4f73ea80bc7ff2420cfd1feed090486e9fdabd1e90c"
+    },
+    "cydaw2/src/engine/AmpDesign.cpp": {
+      "source": "src/engine/AmpDesign.cpp",
+      "sha256": "f9e6a3888637bf167b065b3f836344b94de1bbe29ac42532974586a8236a47e0"
+    },
+    "cydaw2/src/engine/AmpEffects.cpp": {
+      "source": "src/engine/AmpEffects.cpp",
+      "sha256": "9f83317b0cf062f303955a9256da9dcdfd727f0b13d223687d24dccc0e6b86f1"
+    },
+    "cydaw2/src/engine/Convolver.cpp": {
+      "source": "src/engine/Convolver.cpp",
+      "sha256": "5706a9978f0aa8970f71715fedb033a25440c095b894df69ebc436e30a7d3a5f"
+    },
+    "cydaw2/src/engine/HaloReverb.cpp": {
+      "source": "src/engine/HaloReverb.cpp",
+      "sha256": "7a63dd22de4cddb4dfab1d905c541aafe6bb183e35c897e2509df0ba5a94019c"
+    },
+    "cydaw2/src/engine/MixEffects.cpp": {
+      "source": "src/engine/MixEffects.cpp",
+      "sha256": "8a06441e42ccb8981a59271942db76ac4ebf423ac371d5c951c3b56b6bebda66"
+    },
+    "cydaw2/src/engine/MotionEffects.cpp": {
+      "source": "src/engine/MotionEffects.cpp",
+      "sha256": "a6f15090d44ff9fded5cbc51e3ed0519761afad431491f70828c1afbc5810d0a"
+    },
+    "cydaw2/src/engine/PitchEffects.cpp": {
+      "source": "src/engine/PitchEffects.cpp",
+      "sha256": "b68c01c8db353ab24c183d0cd98a2e3b525cf92f8c7228dce8b4bc7b87ebef48"
+    },
+    "cydaw2/src/engine/ProEffects.cpp": {
+      "source": "src/engine/ProEffects.cpp",
+      "sha256": "3e8e8aa014badb0b6e69def166525edcb6ea0a5837af11532d0225b3e5a10e04"
+    },
+    "cydaw2/src/engine/ResonanceEffects.cpp": {
+      "source": "src/engine/ResonanceEffects.cpp",
+      "sha256": "ea6d73db79cd65d4c3fca738f10c0abd0eebf9f341ddebe775ec885df39a1599"
+    },
+    "cydaw2/src/engine/RhythmEffects.cpp": {
+      "source": "src/engine/RhythmEffects.cpp",
+      "sha256": "aeed86909278b263c9b57a33417e0f61e9b14717af2147025dde3a9d7d4fa053"
+    },
+    "cydaw2/src/engine/SpaceEffects.cpp": {
+      "source": "src/engine/SpaceEffects.cpp",
+      "sha256": "2c57c9d6c847f7e4a7b39077b8f3bb8b5977b603340518a66feb880c48847de8"
+    },
+    "cydaw2/src/engine/SuiteEffects.cpp": {
+      "source": "src/engine/SuiteEffects.cpp",
+      "sha256": "5b8d3106bb468c556053ca4ce7f1405929a4cec9950388250e0040a8ee4b2e75"
+    },
+    "cydaw2/src/engine/UtilityEffects.cpp": {
+      "source": "src/engine/UtilityEffects.cpp",
+      "sha256": "1b8c6151e05c2848434e51cf552a1f676be5f323dca970fbdc2432eef0ac76c8"
+    },
+    "cydaw2/src/engine/VoiceEffects.cpp": {
+      "source": "src/engine/VoiceEffects.cpp",
+      "sha256": "079c7de17ec33ffee4d28f932db7f2cdfb4cfd14821c0a53ca2fa509b7855064"
+    },
+    "cydaw2/src/engine/KickSynth.cpp": {
+      "source": "src/engine/KickSynth.cpp",
+      "sha256": "7c88d36b6cde408c5d4d406feec467d2f9919601980f594580c8913668efaa9e"
+    },
+    "cydaw2/src/engine/PrismSynth.cpp": {
+      "source": "src/engine/PrismSynth.cpp",
+      "sha256": "9f8b81c6b7ca08f63c5a357f7bc0cb9049e22e4015c0788befbb91fba46e207c"
+    },
+    "cydaw2/include/cydaw/engine/AddedEffects.h": {
+      "source": "include/cydaw/engine/AddedEffects.h",
+      "sha256": "f8b4a15b08777b37f5d8139e24dfb25f9ab728f223a3c2956cdecf7bcca9ce2b"
+    },
+    "cydaw2/include/cydaw/engine/AmpDesign.h": {
+      "source": "include/cydaw/engine/AmpDesign.h",
+      "sha256": "1e11e49872b85d4b1ef2e49fbd9901c5acdbd3fc683a44356b62b298b335b495"
+    },
+    "cydaw2/include/cydaw/engine/AmpEffects.h": {
+      "source": "include/cydaw/engine/AmpEffects.h",
+      "sha256": "4afda5f8ae5360cbd50b0b6edcc7c6f05e15a6770e27af27c3c687cf42307171"
+    },
+    "cydaw2/include/cydaw/engine/BuiltinProcessors.h": {
+      "source": "include/cydaw/engine/BuiltinProcessors.h",
+      "sha256": "b7352df9553e76203cc70d9bdd24649f3d93521a25c6e62ba199af8b998f0e3a"
+    },
+    "cydaw2/include/cydaw/engine/ContainerProcessors.h": {
+      "source": "include/cydaw/engine/ContainerProcessors.h",
+      "sha256": "a89a95a6fab7de6ee4b555feefca3da5430e95dfc5950ce96102349d414b2806"
+    },
+    "cydaw2/include/cydaw/engine/Containers.h": {
+      "source": "include/cydaw/engine/Containers.h",
+      "sha256": "00f8e426ad619a371fcc32f9e27038c55a2a18cebc9c1a411c7b78bf7fa8f5a3"
+    },
+    "cydaw2/include/cydaw/engine/Convolver.h": {
+      "source": "include/cydaw/engine/Convolver.h",
+      "sha256": "336d8fb6d80e05739ffa1c6555a1b7ed0363f60d639d9d8e2aa1a7cbcc28c1c6"
+    },
+    "cydaw2/include/cydaw/engine/DrumKit.h": {
+      "source": "include/cydaw/engine/DrumKit.h",
+      "sha256": "534e4df40146259b62b49753913ee54465383b0fa65f7d26b22b502b85b387a1"
+    },
+    "cydaw2/include/cydaw/engine/Fft.h": {
+      "source": "include/cydaw/engine/Fft.h",
+      "sha256": "07ced135513a57453d66f9984a34286a19e1f8b94c313e19fbcd56ba0b336509"
+    },
+    "cydaw2/include/cydaw/engine/HaloDesign.h": {
+      "source": "include/cydaw/engine/HaloDesign.h",
+      "sha256": "953153b574e426aed51332ab1f748c38a2c6775d08e0e3b9689d59c79cf8bfe7"
+    },
+    "cydaw2/include/cydaw/engine/HaloReverb.h": {
+      "source": "include/cydaw/engine/HaloReverb.h",
+      "sha256": "3048e263099cc8a1cffd0f24820addabb44ca0952f9e5a91572252d6735a6648"
+    },
+    "cydaw2/include/cydaw/engine/InstrumentContainers.h": {
+      "source": "include/cydaw/engine/InstrumentContainers.h",
+      "sha256": "28f2fcf2d61d71a32b78618338ef8d2f59f29cf43a148163a34f47d521bca611"
+    },
+    "cydaw2/include/cydaw/engine/KickSynth.h": {
+      "source": "include/cydaw/engine/KickSynth.h",
+      "sha256": "e078dc453a445f5bdd217301f3d0a85ac83f89bc5502d4757c73212b82c18d11"
+    },
+    "cydaw2/include/cydaw/engine/MidiEffects.h": {
+      "source": "include/cydaw/engine/MidiEffects.h",
+      "sha256": "29b47aa1612b82d7737d53bf8ab5436b99d6661b6db159474f8418bc56b49154"
+    },
+    "cydaw2/include/cydaw/engine/MidiEffectsDesign.h": {
+      "source": "include/cydaw/engine/MidiEffectsDesign.h",
+      "sha256": "36ebb52e747d58fc89ace3f51c908eedd30ce85fccebe3f1f5b7f900f337db13"
+    },
+    "cydaw2/include/cydaw/engine/MixDesign.h": {
+      "source": "include/cydaw/engine/MixDesign.h",
+      "sha256": "3b3d837708a5d90a5093e8f142bbab6e66a1336f02566b62943dbb25cfbc3259"
+    },
+    "cydaw2/include/cydaw/engine/MixEffects.h": {
+      "source": "include/cydaw/engine/MixEffects.h",
+      "sha256": "16d96828b2a91af3842cde324b25e0095f8c273d07a3fbdd45fc64ae349ff3e8"
+    },
+    "cydaw2/include/cydaw/engine/MotionDesign.h": {
+      "source": "include/cydaw/engine/MotionDesign.h",
+      "sha256": "97ece49e05ef4bdd8fb9984349bbd62753f6a3b97d38595e0fa0b3bf3cb6a405"
+    },
+    "cydaw2/include/cydaw/engine/MotionEffects.h": {
+      "source": "include/cydaw/engine/MotionEffects.h",
+      "sha256": "5eabe4a8b3041075d139608184c1a816d7c1e5304b69f8440e9bcad5a489fa3c"
+    },
+    "cydaw2/include/cydaw/engine/PitchDesign.h": {
+      "source": "include/cydaw/engine/PitchDesign.h",
+      "sha256": "546ad97a6a5d76ab0477eccf9190c4e1900d4ca2e962680c33820051c03b1b2a"
+    },
+    "cydaw2/include/cydaw/engine/PitchEffects.h": {
+      "source": "include/cydaw/engine/PitchEffects.h",
+      "sha256": "f967cdb9d62e8cfce1255806745735303182a4a5362620b86d379eeed58357cb"
+    },
+    "cydaw2/include/cydaw/engine/PitchTracker.h": {
+      "source": "include/cydaw/engine/PitchTracker.h",
+      "sha256": "597510735037453ac4623b6f1d96293d5a5ca7c31e7aea57b9c8e1c898e8b892"
+    },
+    "cydaw2/include/cydaw/engine/PolySynthGraph.h": {
+      "source": "include/cydaw/engine/PolySynthGraph.h",
+      "sha256": "007868a7fc8e0f3df57cea213fd51d6f32a081600c27fdfd23a562fe18f8148c"
+    },
+    "cydaw2/include/cydaw/engine/PolyVoice.h": {
+      "source": "include/cydaw/engine/PolyVoice.h",
+      "sha256": "58739775161a4f87df984c6c0560133f85d7a3039b984f3c5397860412f2f15b"
+    },
+    "cydaw2/include/cydaw/engine/PolyVoiceFilter.h": {
+      "source": "include/cydaw/engine/PolyVoiceFilter.h",
+      "sha256": "b611ca92fbaa0c44c1c755bf089d8758b286b3c8c65db060d6d7672c711d67f8"
+    },
+    "cydaw2/include/cydaw/engine/PolyVoiceOscillator.h": {
+      "source": "include/cydaw/engine/PolyVoiceOscillator.h",
+      "sha256": "a83d326bbe98ece69fffa680a603edf6658e52c179a046cf4aae2eb52ee9ccc9"
+    },
+    "cydaw2/include/cydaw/engine/PrismSynth.h": {
+      "source": "include/cydaw/engine/PrismSynth.h",
+      "sha256": "98b6c8151154769be17b9b8e28c6ee06a7a14cc3d10127940a56e53a6e03e881"
+    },
+    "cydaw2/include/cydaw/engine/ProEffects.h": {
+      "source": "include/cydaw/engine/ProEffects.h",
+      "sha256": "25a50d2c1ce3eb1889652ecf94fb5e748c4c2473c73a7d35cf68dc231714eccd"
+    },
+    "cydaw2/include/cydaw/engine/ProEffectsDesign.h": {
+      "source": "include/cydaw/engine/ProEffectsDesign.h",
+      "sha256": "a8baab814b32d88855b6ce805e596c7e3e6318a157a6d8f87eb7a130623edb7e"
+    },
+    "cydaw2/include/cydaw/engine/ResonanceDesign.h": {
+      "source": "include/cydaw/engine/ResonanceDesign.h",
+      "sha256": "faf3bdec6f8cc54be698b23006de2a55f1795ed981d85de9010cbe05b77c1c06"
+    },
+    "cydaw2/include/cydaw/engine/ResonanceEffects.h": {
+      "source": "include/cydaw/engine/ResonanceEffects.h",
+      "sha256": "49415ae449e53c14096a1888e51dc95e61c1cbe4587356a0fcb9d322a8bb7bf6"
+    },
+    "cydaw2/include/cydaw/engine/RhythmDesign.h": {
+      "source": "include/cydaw/engine/RhythmDesign.h",
+      "sha256": "4e31353a681f1900471ffb46879acabbaa3cb413d178db3078d296b56f64bb47"
+    },
+    "cydaw2/include/cydaw/engine/RhythmEffects.h": {
+      "source": "include/cydaw/engine/RhythmEffects.h",
+      "sha256": "97ea4a1f1b387af3c6c51dd5128c56794dd84b3e668146b913570200988d578e"
+    },
+    "cydaw2/include/cydaw/engine/SpaceDesign.h": {
+      "source": "include/cydaw/engine/SpaceDesign.h",
+      "sha256": "f0ba0029b2d630f40474df07fa210395516f3ac3543916320ad252e814d5e8a2"
+    },
+    "cydaw2/include/cydaw/engine/SpaceEffects.h": {
+      "source": "include/cydaw/engine/SpaceEffects.h",
+      "sha256": "1e2f0967b3baa9cd5d2920d106786d8826b4605b834de5939273edf64d6db3ba"
+    },
+    "cydaw2/include/cydaw/engine/SuiteDesign.h": {
+      "source": "include/cydaw/engine/SuiteDesign.h",
+      "sha256": "9223f04ef492f00be03e36c651384088617e749e72a6a822c81a422627d76e2e"
+    },
+    "cydaw2/include/cydaw/engine/SuiteEffects.h": {
+      "source": "include/cydaw/engine/SuiteEffects.h",
+      "sha256": "930494448b422931cb8b40c10850d6a1760752eb01d582db85b41fa5df7da694"
+    },
+    "cydaw2/include/cydaw/engine/SynthFamily.h": {
+      "source": "include/cydaw/engine/SynthFamily.h",
+      "sha256": "d932e485c82b6e391b2cbcd2019051a966b072b6a906e351139aa28c1a60ae92"
+    },
+    "cydaw2/include/cydaw/engine/UtilityDesign.h": {
+      "source": "include/cydaw/engine/UtilityDesign.h",
+      "sha256": "ced632280c6d2423efedc13c613e729f36f7b9f261fc1e972b1c4e4c0b87ecc8"
+    },
+    "cydaw2/include/cydaw/engine/UtilityEffects.h": {
+      "source": "include/cydaw/engine/UtilityEffects.h",
+      "sha256": "0d86025ed479813d7087e6248c241dc39e637dc802b80e5b57269b5ca672537c"
+    },
+    "cydaw2/include/cydaw/engine/VoiceDesign.h": {
+      "source": "include/cydaw/engine/VoiceDesign.h",
+      "sha256": "dc8fb60e55dc92122a7b95aa501f9b77feadfa7fdd89d54d29546eabdab33623"
+    },
+    "cydaw2/include/cydaw/engine/VoiceEffects.h": {
+      "source": "include/cydaw/engine/VoiceEffects.h",
+      "sha256": "07537848dab936fa10702d42ffc08f8f7e68bda44f2f83251a3ba2aeca7e1211"
+    },
+    "cydaw2/include/cydaw/engine/VoiceLive.h": {
+      "source": "include/cydaw/engine/VoiceLive.h",
+      "sha256": "bbb9607191ff9ebcea4cbd74f54ec87776dc9705a67b7cda62d9dc77beab4ec0"
+    },
+    "cydaw2/include/cydaw/realtime/RtPublisher.h": {
+      "source": "include/cydaw/realtime/RtPublisher.h",
+      "sha256": "3a20c626c8b1d252269d5f2571afd4b716d2ea4e7f801304140ae5100bfb5ee7"
+    },
+    "cydaw2/src/engine/DspParts.h": {
+      "source": "src/engine/DspParts.h",
+      "sha256": "5acfb7d3cc53f5ce021272f9140c9bddbdfac883f88e7bf862c86d1ce7fa9e47"
     }
   }
 }

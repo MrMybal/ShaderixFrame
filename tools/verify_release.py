@@ -21,11 +21,11 @@ with zipfile.ZipFile(archive) as zipped:
     names = zipped.namelist()
     assert all(name.startswith('ShaderixFrame/') and '..' not in Path(name).parts for name in names)
     assert not any(any(part in name for part in ('test-output', 'recovery/', 'cache/', 'workspace.ini', '.pending')) for name in names)
-    for required in ('LICENSE', 'CYDAW-LICENSE.txt', 'release-worker.lock.json', 'THIRD-PARTY-LICENSES.txt', 'docs/LICENSING.md', 'docs/RELEASE_ALPHA.md', 'ShaderixFramePluginWorker.exe', 'ShaderixFrameOfxWorker.exe', 'CyDAWPluginWorker.exe', 'native_gain.dll', 'ofx_gain.ofx', 'OPENFX-LICENSE.txt',
+    for required in ('cyui.lock.json', 'licenses/cyui/LICENSE', 'licenses/cyui/THIRD_PARTY_NOTICES.md', 'licenses/cyui/third_party/texteditor/LICENSE', 'licenses/cyui/third_party/lexilla/License.txt', 'licenses/cyui/third_party/scintilla/License.txt', 'licenses/cyui/third_party/SciTE-Properties-License.txt', 'LICENSE', 'CYDAW-LICENSE.txt', 'release-worker.lock.json', 'THIRD-PARTY-LICENSES.txt', 'docs/LICENSING.md', 'docs/RELEASE_ALPHA.md', 'ShaderixFramePluginWorker.exe', 'ShaderixFrameOfxWorker.exe', 'CyDAWPluginWorker.exe', 'native_gain.dll', 'ofx_gain.ofx', 'OPENFX-LICENSE.txt',
                      'JUCE-LICENSE.md', 'sdk/ShaderixFramePlugin.h', 'examples/VfxStudy.sframe',
                      'examples/ParallelEQ.json', 'examples/GradingStudy.sframe', 'examples/LayerGraphStudy.sframe',
                      'examples/MotionStudy.sframe', 'examples/ClipStudy.sframe', 'docs/BUILDING.md',
-                     'docs/RELEASE_0.13.md', 'plugins/shaderixel-library/plugin.json', 'sdk/openfx/ofxImageEffect.h'):
+                     'docs/RELEASE_0.13.md', 'docs/RELEASE_0.14.md', 'plugins/shaderixel-library/plugin.json', 'sdk/openfx/ofxImageEffect.h'):
         assert 'ShaderixFrame/' + required in names
     zipped.extractall(target)
 exe = target / 'ShaderixFrame/ShaderixFrame.exe'

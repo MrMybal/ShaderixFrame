@@ -1124,6 +1124,11 @@ void Project::removeTrack(Id id) {
         if (removed.count(layerGraph["output"].U()))
             layerGraph = Json();
     }
+    // Track graphs above that read this track as a side input lose that branch the same way.
+    if (it->kind == TrackKind::Video)
+        for (auto &other : tracks)
+            if (other.id != id && !other.graph.IsNull())
+                other.graph = withoutSurface(other.graph, id);
     tracks.erase(it);
     std::erase_if(groups, [&](const TrackGroup &g) {
         return std::none_of(tracks.begin(), tracks.end(), [&](const Track &t) { return t.group == g.id; });
@@ -1842,6 +1847,19 @@ Json Project::json() const {
         if (t.group)
             a["group"] = t.group;
         a["mix"] = mixJson(t.mix);
+        if (!t.graph.IsNull())
+            a["graph"] = t.graph;
+        if (t.blend)
+            a["blend"] = t.blend;
+        if (t.opacity != 1)
+            a["opacity"] = t.opacity;
+        if (!t.blendEffect.id.empty()) {
+            Json f = Json::Object();
+            f["id"] = t.blendEffect.id;
+            f["code"] = t.blendEffect.code;
+            f["params"] = paramsJson(t.blendEffect.params);
+            a["blendEffect"] = f;
+        }
         a["clips"] = Json::Array();
         for (auto &c : t.clips) {
             Json b = Json::Object();
@@ -2010,6 +2028,14 @@ Project Project::fromJson(const Json &j) {
         t.group = a["group"].U();
         if (j["schema"].I() >= 5)
             t.mix = readMix(a["mix"]);
+            t.graph = a["graph"];
+            t.blend = a["blend"].I(0);
+            t.opacity = float(a["opacity"].Num(1));
+            if (a["blendEffect"].IsObject()) {
+                t.blendEffect.id = a["blendEffect"]["id"].S();
+                t.blendEffect.code = a["blendEffect"]["code"].S();
+                t.blendEffect.params = readParams(a["blendEffect"]["params"]);
+            }
         for (auto &b : a["clips"].Elements()) {
             Clip c;
             c.id = b["id"].U();
@@ -2260,6 +2286,16 @@ void Project::validate() const {
         if (t.kind != TrackKind::Audio &&
             (t.mix.output || !t.mix.sends.empty() || !t.mix.effects.empty() || !t.mix.params.empty()))
             throw std::runtime_error("A video track cannot host an audio channel");
+        if (t.blend < 0 || t.blend >= int(sx::BlendMode::Count) || !finite(t.opacity) || t.opacity < 0 ||
+            t.opacity > 1 || (t.kind != TrackKind::Video && (t.blend || t.opacity != 1 || !t.blendEffect.id.empty())))
+            throw std::runtime_error("Invalid track blending");
+        if (!t.blendEffect.id.empty() && t.blendEffect.code.empty())
+            throw std::runtime_error("A track blend effect keeps its shader");
+        if (!t.graph.IsNull()) {
+            if (t.kind != TrackKind::Video)
+                throw std::runtime_error("Only a video track has an effect graph");
+            decodeTrackGraph(t.graph, *this, t.id);
+        }
         if (!finite(t.gain) || t.gain < -80 || t.gain > 12 || !finite(t.pan) || std::abs(t.pan) > 1)
             throw std::runtime_error("Invalid mix");
         for (auto &c : t.clips) {

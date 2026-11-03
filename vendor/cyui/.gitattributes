@@ -1,0 +1,13 @@
+* text=auto eol=lf
+*.md text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.py text eol=lf
+*.bat text eol=crlf
+.githooks/* text eol=lf
+*.png binary
+*.jpg binary
+*.bmp binary
+# Keep the bundled dependency byte-for-byte.
+third_party/imgui/** -text !eol
+third_party/texteditor/** -text !eol whitespace=cr-at-eol

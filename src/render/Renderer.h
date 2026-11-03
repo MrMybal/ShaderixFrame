@@ -5,6 +5,7 @@
 #include "render/Titles.h"
 #include <d3d11.h>
 namespace sf {
+struct LayerComposition;
 class Renderer {
     struct Target {
         Com<ID3D11Texture2D> texture;
@@ -43,6 +44,10 @@ class Renderer {
     TitleRasterizer titles;
     Target composite, alternateComposite, transitionOutput, originalInput, display, working[2];
     std::map<Id, Target> compositionNodes;
+    std::map<Id, std::map<Id, Target>> trackNodes; // per video track, the nodes of its effect graph
+    ID3D11ShaderResourceView *evaluateComposition(LayerComposition &composition, std::map<Id, Target> &nodes,
+                                                  const std::map<Id, Target> &sources, Target &empty,
+                                                  const Project &p, double time, bool bypassGrading, Id id);
     std::string currentSpace = "srgb", currentTone = "clip";
     float currentExposure = 0;
     struct HistoryFrame {
@@ -83,6 +88,13 @@ class Renderer {
     ID3D11ShaderResourceView *layerNodeView(Id id) const {
         auto it = compositionNodes.find(id);
         return it == compositionNodes.end() ? nullptr : it->second.srv.Get();
+    }
+    ID3D11ShaderResourceView *trackNodeView(Id track, Id node) const {
+        auto graph = trackNodes.find(track);
+        if (graph == trackNodes.end())
+            return nullptr;
+        auto it = graph->second.find(node);
+        return it == graph->second.end() ? nullptr : it->second.srv.Get();
     }
     Image readback();
     FloatImage readbackFloat(bool forDisplay = false);

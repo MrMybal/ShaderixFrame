@@ -1,77 +1,33 @@
 // Command palette (Ctrl+Maj+P): the editor's commands by name, filtered as one types, and the file and
 // work-area commands its keyboard shortcuts share.
 #include "ui/Editor.h"
+#include <cyui/modules/Commands.h>
 #include <algorithm>
 #include <cstring>
 #include <imgui_stdlib.h>
 
 namespace sf {
 namespace {
-// Lower case without French accents, so « decoup » finds « Découper ».
-std::string folded(const std::string &text) {
-    static const std::pair<const char *, char> accents[] = {
-        {"à", 'a'}, {"â", 'a'}, {"ä", 'a'}, {"ç", 'c'}, {"é", 'e'}, {"è", 'e'}, {"ê", 'e'}, {"ë", 'e'},
-        {"î", 'i'}, {"ï", 'i'}, {"ô", 'o'}, {"ö", 'o'}, {"ù", 'u'}, {"û", 'u'}, {"ü", 'u'}, {"À", 'a'},
-        {"Â", 'a'}, {"Ç", 'c'}, {"É", 'e'}, {"È", 'e'}, {"Ê", 'e'}, {"Î", 'i'}, {"Ô", 'o'}, {"Û", 'u'}};
-    std::string out;
-    for (size_t i = 0; i < text.size();) {
-        bool replaced = false;
-        for (auto [from, to] : accents) {
-            size_t length = strlen(from);
-            if (text.compare(i, length, from) == 0) {
-                out += to;
-                i += length;
-                replaced = true;
-                break;
-            }
-        }
-        if (!replaced) {
-            char c = text[i++];
-            out += c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
-        }
+// Search normalization is a host policy: CyUI's ranker intentionally only folds ASCII case.
+std::string searchText(const std::string& text) {
+    auto wide=sx::Widen(text);if(wide.empty())return {};
+    int count=FoldStringW(MAP_COMPOSITE,wide.data(),int(wide.size()),nullptr,0);
+    if(!count)return text;
+    std::wstring decomposed(size_t(count),L'\0');
+    if(!FoldStringW(MAP_COMPOSITE,wide.data(),int(wide.size()),decomposed.data(),count))return text;
+    std::erase_if(decomposed,[](wchar_t c){return c>=0x300&&c<=0x36f;});
+    return sx::Narrow(decomposed);
+}
+std::vector<cyui::Command> commandModel(const auto& list) {
+    std::vector<cyui::Command> out;
+    for(const auto& c:list) {
+        std::uint64_t id=1469598103934665603ull;
+        for(unsigned char ch:c.label) id=(id^ch)*1099511628211ull;
+        out.push_back({id? id:1,c.label,c.shortcut,searchText(c.label)+" "+searchText(cyui::tr(c.label.c_str())),c.enabled});
     }
     return out;
 }
-// Every word of the query must appear in the label or the shortcut; a label starting with the first word
-// comes first, then the earliest match. Negative: no match.
-int rank(const std::string &query, const std::string &label, const std::string &shortcut) {
-    auto haystack = folded(label) + "  " + folded(shortcut);
-    auto words = folded(query);
-    int score = 0;
-    bool first = true;
-    size_t at = 0;
-    while (at < words.size()) {
-        while (at < words.size() && words[at] == ' ')
-            ++at;
-        size_t end = words.find(' ', at);
-        if (end == std::string::npos)
-            end = words.size();
-        if (end > at) {
-            auto found = haystack.find(words.substr(at, end - at));
-            if (found == std::string::npos)
-                return -1;
-            if (first)
-                score = found == 0 ? 0 : 1 + int(found);
-            first = false;
-        }
-        at = end;
-    }
-    return score;
 }
-// The commands matching a query, best first.
-template <class List> std::vector<size_t> matching(const List &list, const std::string &query) {
-    std::vector<std::pair<int, size_t>> order;
-    for (size_t i = 0; i < list.size(); ++i)
-        if (int score = rank(query, list[i].label, list[i].shortcut); score >= 0)
-            order.push_back({score, i});
-    std::stable_sort(order.begin(), order.end(), [](auto &a, auto &b) { return a.first < b.first; });
-    std::vector<size_t> indices;
-    for (auto &entry : order)
-        indices.push_back(entry.second);
-    return indices;
-}
-} // namespace
-
 void Editor::saveCommand() {
     auto path = s.projectPath.empty() ? dialog(true, L"ShaderixFrame\0*.sframe\0\0", L"sframe") : s.projectPath;
     if (!path.empty()) {
@@ -240,79 +196,19 @@ std::vector<Editor::Command> Editor::commands() {
         add("Panel: " + name, "", [this, panel = name] { openPanel(panel); });
     return list;
 }
-std::vector<std::string> Editor::paletteMatches(const std::string &query) {
-    auto list = commands();
-    std::vector<std::string> labels;
-    for (auto i : matching(list, query))
-        labels.push_back(list[i].label);
-    return labels;
+std::vector<std::string> Editor::paletteMatches(const std::string& query) {
+    auto list=commands(); auto model=commandModel(list); std::vector<std::string> result;
+    for(auto index:cyui::rankCommands(model,searchText(query))) result.push_back(list[index].label);
+    return result;
 }
 void Editor::commandPalette() {
-    if (paletteFocus)
-        ImGui::OpenPopup("##palette");
-    auto *vp = ImGui::GetMainViewport();
-    float width = std::min(560.f, vp->WorkSize.x - 32);
-    ImGui::SetNextWindowPos({vp->WorkPos.x + (vp->WorkSize.x - width) / 2, vp->WorkPos.y + 60});
-    ImGui::SetNextWindowSize({width, 0});
-    if (!ImGui::BeginPopup("##palette")) {
-        paletteOpen = false;
-        return;
-    }
-    std::function<void()> chosen;
-    auto list = commands();
-    auto order = matching(list, paletteQuery);
-    if (paletteFocus) {
-        ImGui::SetKeyboardFocusHere();
-        paletteFocus = false;
-    }
-    ImGui::SetNextItemWidth(-1);
-    if (ImGui::InputTextWithHint("##query", "Command, tool, panel, workspace...", &paletteQuery))
-        paletteIndex = 0;
-    int count = int(order.size());
-    bool moved = false;
-    if (count) {
-        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) {
-            paletteIndex = (paletteIndex + 1) % count;
-            moved = true;
-        }
-        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow)) {
-            paletteIndex = (paletteIndex + count - 1) % count;
-            moved = true;
-        }
-        paletteIndex = std::clamp(paletteIndex, 0, count - 1);
-    }
-    float rows = std::min(12, std::max(1, count)) * ImGui::GetTextLineHeightWithSpacing() + 6;
-    if (ImGui::BeginChild("##commands", {0, rows})) {
-        for (int n = 0; n < count; ++n) {
-            auto &command = list[order[n]];
-            ImGui::PushID(n);
-            ImGui::BeginDisabled(!command.enabled);
-            if (ImGui::Selectable(command.label.c_str(), n == paletteIndex) && command.enabled)
-                chosen = command.run;
-            ImGui::EndDisabled();
-            if (n == paletteIndex && moved)
-                ImGui::SetScrollHereY();
-            if (!command.shortcut.empty()) {
-                ImGui::SameLine(ImGui::GetContentRegionMax().x - ImGui::CalcTextSize(command.shortcut.c_str()).x);
-                ImGui::TextDisabled("%s", command.shortcut.c_str());
-            }
-            ImGui::PopID();
-        }
-        if (!count)
-            ImGui::TextDisabled("No matching commands.");
-    }
-    ImGui::EndChild();
-    if (count && (ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter))) {
-        auto &command = list[order[paletteIndex]];
-        if (command.enabled)
-            chosen = command.run;
-    }
-    if (chosen || ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-        ImGui::CloseCurrentPopup();
-        paletteOpen = false;
-    }
-    ImGui::EndPopup();
-    if (chosen)
-        chosen();
+    if(!paletteOpen&&!paletteState.wasOpen)return;
+    auto list=commands(); auto model=commandModel(list);
+    paletteState.query=searchText(paletteState.query);
+    auto chosen=cyui::commandPalette("Command Palette###palette",paletteOpen,paletteState,model);
+    if(!chosen&&paletteOpen&&ImGui::IsKeyPressed(ImGuiKey_KeypadEnter)) {auto rows=cyui::rankCommands(model,paletteState.query);if(paletteState.selected>=0&&paletteState.selected<int(rows.size())&&model[rows[paletteState.selected]].enabled){chosen=model[rows[paletteState.selected]].id;paletteOpen=false;}}
+    if(paletteFocus) { paletteState.query=searchText(paletteQuery); paletteFocus=false; }
+    for(std::size_t i=0; chosen && i<model.size(); ++i)
+        if(model[i].id==chosen && model[i].enabled) { list[i].run(); break; }
 }
 } // namespace sf

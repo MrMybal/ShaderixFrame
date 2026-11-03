@@ -397,6 +397,81 @@ void Renderer::bindGradeLut(const Effect &e) {
         gradeLuts.clear();
     gradeLuts[hash] = {gradeLut, gradeLut1};
 }
+ID3D11ShaderResourceView *Renderer::evaluateComposition(LayerComposition &composition, std::map<Id, Target> &nodes,
+                                                        const std::map<Id, Target> &sources, Target &empty,
+                                                        const Project &p, double time, bool bypassGrading, Id id) {
+    if (!id)
+        return empty.srv.Get();
+    if (auto it = nodes.find(id); it != nodes.end())
+        return it->second.srv.Get();
+    auto &n = *composition.graph.Find(id);
+    ID3D11ShaderResourceView *inputs[4] = {empty.srv.Get(), empty.srv.Get(), empty.srv.Get(),
+                                           empty.srv.Get()};
+    std::vector<Target> channels(n.inputs.size());
+    for (size_t k = 0; k < n.inputs.size(); ++k) {
+        inputs[k] = evaluateComposition(composition, nodes, sources, empty, p, time, bypassGrading, n.inputs[k]);
+        auto ch = sx::InputChannel(n, k);
+        if (ch) {
+            createTarget(channels[k]);
+            draw(channels[k],
+                 "//@param channel int 1 1 4\nfloat4 Effect(EffectContext ctx){float "
+                 "v=Input(0,ctx.px)[(int)channel-1];return float4(v,v,v,1);}",
+                 inputs[k], {{"channel", {float(ch)}}}, time, time, width, height);
+            inputs[k] = channels[k].srv.Get();
+        }
+    }
+    auto &target = nodes[id];
+    createTarget(target);
+    if (n.kind == sx::NodeKind::Surface) {
+        auto it = sources.find(n.surface);
+        draw(target, copy, it == sources.end() ? empty.srv.Get() : it->second.srv.Get(), {},
+             time, time, width, height);
+    } else if (n.kind == sx::NodeKind::Output || n.kind == sx::NodeKind::Split || n.bypass) {
+        draw(target, copy, inputs[0], {}, time, time, width, height);
+    } else if (n.kind == sx::NodeKind::Blend) {
+        std::string shader = shaderixelComposite;
+        auto params = composition.parameters[n.id];
+        params["gOpacity"] = params.contains("opacity") ? params.at("opacity") : Parameter{n.opacity};
+        params["gMode"] = {float(n.blend)};
+        params["gFlags"] = {float(12u | (n.inputs[2] ? 1u : 0u) | (n.clip ? 16u : 0u) |
+                                  (n.blendIf.Active() ? 32u : 0u) | (unsigned(n.channelOff) << 8))};
+        params["sfSrgb"] = {p.workingSpace == "srgb" ? 1.f : 0.f};
+        for (int c = 0; c < 4; ++c)
+            for (int k = 0; k < 4; ++k) {
+                params["sfSelf" + std::to_string(c) + std::to_string(k)] = {n.blendIf.self[c][k] /
+                                                                            255.f};
+                params["sfUnder" + std::to_string(c) + std::to_string(k)] = {n.blendIf.under[c][k] /
+                                                                             255.f};
+            }
+        draw(target, shader, inputs[0], params, time, time, width, height, nullptr, nullptr, inputs[1], 0, 0,
+             nullptr, nullptr, inputs[2]);
+    } else {
+        auto &e = composition.effects.at(n.id);
+        if (!e.enabled || (bypassGrading && e.id == "grading"))
+            draw(target, copy, inputs[0], {}, time, time, width, height);
+        else if (e.id == "grading") {
+            bindGradeLut(e);
+            ID3D11ShaderResourceView *luts[] = {gradeLut.Get(), gradeLut1.Get()};
+            context->PSSetShaderResources(5, 2, luts);
+            draw(target, gradeShader(e, p.workingSpace), inputs[0], e.params, time, time, width, height);
+            luts[0] = luts[1] = nullptr;
+            context->PSSetShaderResources(5, 2, luts);
+        } else {
+            auto code = effectCode(e);
+            context->CopyResource(originalInput.texture.Get(), target.texture.Get());
+            // An unconnected side input is absent (HasInput false), so an optional mask reads white.
+            auto linked = [&](size_t k) { return k < n.inputs.size() && n.inputs[k] ? inputs[k] : nullptr; };
+            for (int pass = 0; pass < effectPasses(code); ++pass) {
+                draw(working[0], code, inputs[0], e.params, time, time, width, height, nullptr, nullptr,
+                     linked(1), e.params.contains("progress") ? e.params.at("progress").at(time) : 0,
+                     unsigned(pass), pass ? target.srv.Get() : inputs[0], nullptr, linked(2),
+                     linked(3));
+                context->CopyResource(target.texture.Get(), working[0].texture.Get());
+            }
+        }
+    }
+    return target.srv.Get();
+}
 void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, unsigned h,
                       bool bypassGrading, Id matteClip, int matteEffect) {
     capturedGradeInput = {};
@@ -436,11 +511,17 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
     const bool nodal = true;
     auto compositionDocument = p.layerGraph.IsNull() ? defaultLayerGraph(p) : p.layerGraph;
     compositionNodes.clear();
+    trackNodes.clear();
     std::map<Id, Target> timelineSources;
     Target graphBackground, automaticBelow;
     if (nodal) {
         auto decoded = decodeLayerGraph(compositionDocument, p);
-        if (uint64_t(w) * h * 8 * (decoded.graph.nodes.size() + p.tracks.size() + 4) > 512ull * 1024 * 1024)
+        size_t trackGraphNodes = 0;
+        for (auto &t : p.tracks)
+            if (!t.graph.IsNull())
+                trackGraphNodes += t.graph["nodes"].Size();
+        if (uint64_t(w) * h * 8 * (decoded.graph.nodes.size() + trackGraphNodes + p.tracks.size() + 4) >
+            512ull * 1024 * 1024)
             throw std::runtime_error("Video graph: 512 MiB GPU budget exceeded");
         createTarget(graphBackground);
         context->CopyResource(graphBackground.texture.Get(), composite.texture.Get());
@@ -601,10 +682,14 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
                 }
                 context->CopyResource(originalInput.texture.Get(), working[current].texture.Get());
                 auto old = history.find(c.id);
+                // A blend shader reads the picture below as its background (input 0) and the clip as
+                // its layer (input 1); other effects get the clip first and the picture below second.
+                auto *below = p.layerGraph.IsNull() ? automaticBelow.srv.Get() : composite.srv.Get();
+                bool blendShader = code.find("//@blend") != std::string::npos;
                 for (int passIndex = 0; passIndex < effectPasses(code); ++passIndex) {
-                    draw(working[1 - current], code, originalInput.srv.Get(), e.params, time,
+                    draw(working[1 - current], code, blendShader ? below : originalInput.srv.Get(), e.params, time,
                          c.sourceTime(time), w, h, nullptr, nullptr,
-                         p.layerGraph.IsNull() ? automaticBelow.srv.Get() : composite.srv.Get(), 0,
+                         blendShader ? originalInput.srv.Get() : below, 0,
                          unsigned(passIndex), working[current].srv.Get(),
                          old == history.end() || !old->second.valid ? nullptr
                                                                     : old->second.previous.srv.Get());
@@ -657,6 +742,22 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
             auto &source = timelineSources[ti->id];
             createTarget(source);
             context->CopyResource(source.texture.Get(), composite.texture.Get());
+            // The track's own effect graph: its picture (and tracks below, already rendered) in, the
+            // processed picture out, before it is blended with the tracks below.
+            if (!ti->graph.IsNull()) {
+                auto trackGraph = decodeTrackGraph(ti->graph, p, ti->id);
+                Target none;
+                createTarget(none);
+                const float clearNone[] = {0, 0, 0, 0};
+                context->ClearRenderTargetView(none.rtv.Get(), clearNone);
+                auto &nodes = trackNodes[ti->id];
+                auto *processed = evaluateComposition(trackGraph, nodes, timelineSources, none, p, time,
+                                                      bypassGrading, trackGraph.graph.output);
+                Target result;
+                createTarget(result);
+                draw(result, copy, processed, {}, time, time, w, h);
+                context->CopyResource(source.texture.Get(), result.texture.Get());
+            }
             if (p.layerGraph.IsNull()) {
                 Clip mix;
                 for (auto &clip : ti->clips)
@@ -676,7 +777,8 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
                     auto *source = composition.graph.Find(node.inputs[1]);
                     auto track = std::find_if(p.tracks.begin(), p.tracks.end(),
                                               [&](auto &t) { return t.id == source->surface; });
-                    if (track != p.tracks.end())
+                    // A track's own blend mode wins over the clips' quick blend.
+                    if (track != p.tracks.end() && track->blend == 0)
                         for (auto &clip : track->clips)
                             if (clip.live(time)) {
                                 int mode =
@@ -690,79 +792,8 @@ void Renderer::render(const Project &p, MediaCache &m, double time, unsigned w, 
         context->ClearRenderTargetView(empty.rtv.Get(), clear);
         if (p.layerGraph.IsNull())
             context->CopyResource(empty.texture.Get(), graphBackground.texture.Get());
-        std::function<ID3D11ShaderResourceView *(Id)> evaluate;
-        evaluate = [&](Id id) -> ID3D11ShaderResourceView * {
-            if (!id)
-                return empty.srv.Get();
-            if (auto it = compositionNodes.find(id); it != compositionNodes.end())
-                return it->second.srv.Get();
-            auto &n = *composition.graph.Find(id);
-            ID3D11ShaderResourceView *inputs[4] = {empty.srv.Get(), empty.srv.Get(), empty.srv.Get(),
-                                                   empty.srv.Get()};
-            std::vector<Target> channels(n.inputs.size());
-            for (size_t k = 0; k < n.inputs.size(); ++k) {
-                inputs[k] = evaluate(n.inputs[k]);
-                auto ch = sx::InputChannel(n, k);
-                if (ch) {
-                    createTarget(channels[k]);
-                    draw(channels[k],
-                         "//@param channel int 1 1 4\nfloat4 Effect(EffectContext ctx){float "
-                         "v=Input(0,ctx.px)[(int)channel-1];return float4(v,v,v,1);}",
-                         inputs[k], {{"channel", {float(ch)}}}, time, time, w, h);
-                    inputs[k] = channels[k].srv.Get();
-                }
-            }
-            auto &target = compositionNodes[id];
-            createTarget(target);
-            if (n.kind == sx::NodeKind::Surface) {
-                auto it = timelineSources.find(n.surface);
-                draw(target, copy, it == timelineSources.end() ? empty.srv.Get() : it->second.srv.Get(), {},
-                     time, time, w, h);
-            } else if (n.kind == sx::NodeKind::Output || n.kind == sx::NodeKind::Split || n.bypass) {
-                draw(target, copy, inputs[0], {}, time, time, w, h);
-            } else if (n.kind == sx::NodeKind::Blend) {
-                std::string shader = shaderixelComposite;
-                auto params = composition.parameters[n.id];
-                params["gOpacity"] = params.contains("opacity") ? params.at("opacity") : Parameter{n.opacity};
-                params["gMode"] = {float(n.blend)};
-                params["gFlags"] = {float(12u | (n.inputs[2] ? 1u : 0u) | (n.clip ? 16u : 0u) |
-                                          (n.blendIf.Active() ? 32u : 0u) | (unsigned(n.channelOff) << 8))};
-                params["sfSrgb"] = {p.workingSpace == "srgb" ? 1.f : 0.f};
-                for (int c = 0; c < 4; ++c)
-                    for (int k = 0; k < 4; ++k) {
-                        params["sfSelf" + std::to_string(c) + std::to_string(k)] = {n.blendIf.self[c][k] /
-                                                                                    255.f};
-                        params["sfUnder" + std::to_string(c) + std::to_string(k)] = {n.blendIf.under[c][k] /
-                                                                                     255.f};
-                    }
-                draw(target, shader, inputs[0], params, time, time, w, h, nullptr, nullptr, inputs[1], 0, 0,
-                     nullptr, nullptr, inputs[2]);
-            } else {
-                auto &e = composition.effects.at(n.id);
-                if (!e.enabled || (bypassGrading && e.id == "grading"))
-                    draw(target, copy, inputs[0], {}, time, time, w, h);
-                else if (e.id == "grading") {
-                    bindGradeLut(e);
-                    ID3D11ShaderResourceView *luts[] = {gradeLut.Get(), gradeLut1.Get()};
-                    context->PSSetShaderResources(5, 2, luts);
-                    draw(target, gradeShader(e, p.workingSpace), inputs[0], e.params, time, time, w, h);
-                    luts[0] = luts[1] = nullptr;
-                    context->PSSetShaderResources(5, 2, luts);
-                } else {
-                    auto code = effectCode(e);
-                    context->CopyResource(originalInput.texture.Get(), target.texture.Get());
-                    for (int pass = 0; pass < effectPasses(code); ++pass) {
-                        draw(working[0], code, inputs[0], e.params, time, time, w, h, nullptr, nullptr,
-                             inputs[1], e.params.contains("progress") ? e.params.at("progress").at(time) : 0,
-                             unsigned(pass), pass ? target.srv.Get() : inputs[0], nullptr, inputs[2],
-                             inputs[3]);
-                        context->CopyResource(target.texture.Get(), working[0].texture.Get());
-                    }
-                }
-            }
-            return target.srv.Get();
-        };
-        auto output = evaluate(composition.graph.output);
+        auto output = evaluateComposition(composition, compositionNodes, timelineSources, empty, p, time,
+                                          bypassGrading, composition.graph.output);
         draw(composite, compose, output, {}, time, time, w, h, nullptr, graphBackground.srv.Get());
     }
 

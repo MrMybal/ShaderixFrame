@@ -41,3 +41,5 @@ workspace.ini
 *.pending
 *.tmp
 *.pyc
+
+/ui-preferences.json

@@ -13,10 +13,6 @@ using namespace style;
 std::string timecode(double time, int fps);
 std::string laneLabel(const std::string &key, const std::string &effect);
 namespace {
-constexpr ImU32 curveColours[] = {IM_COL32(240, 201, 79, 255),  IM_COL32(198, 154, 236, 255),
-                                  IM_COL32(92, 180, 239, 255),  IM_COL32(95, 211, 164, 255),
-                                  IM_COL32(239, 139, 58, 255),  IM_COL32(240, 98, 146, 255),
-                                  IM_COL32(127, 209, 232, 255), IM_COL32(156, 204, 101, 255)};
 const char *curveNames[] = {"Linear", "Smooth", "Step", "CyDAW"};
 std::string paramId(int effect, const std::string &key) { return std::to_string(effect) + "/" + key; }
 } // namespace
@@ -86,7 +82,7 @@ void Editor::animations() {
         for (auto &[key, param] : clip->effects[i].params)
             entries.push_back({i, key, clip->effects[i].id + " / " + key, 0});
     for (size_t i = 0; i < entries.size(); ++i) {
-        entries[i].colour = curveColours[i % IM_ARRAYSIZE(curveColours)];
+        entries[i].colour = cyui::categorical(int(i % 8));
         auto *params = curveParams(*clip, entries[i].effect);
         auto &param = params->at(entries[i].key);
         if (curveVisible.empty() && !param.keys.empty())
@@ -137,7 +133,7 @@ void Editor::animations() {
             curveTable = !curveTable;
         if (locked) {
             ImGui::SameLine();
-            ImGui::TextDisabled("Track is locked");
+            ImGui::TextDisabled(cyui::tr("Track is locked").c_str());
         }
     }
 
@@ -175,7 +171,7 @@ void Editor::animations() {
     if (curveTable) {
         ImGui::BeginChild("curveTable", {0, 0});
         if (!active) {
-            ImGui::TextDisabled("Choose a parameter.");
+            ImGui::TextDisabled(cyui::tr("Choose a parameter.").c_str());
         } else if (ImGui::BeginTable("keys", 5, ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_RowBg)) {
             ImGui::TableSetupColumn("Time");
             ImGui::TableSetupColumn("Value");
@@ -220,11 +216,11 @@ void Editor::animations() {
                 ImGui::EndDisabled();
                 ImGui::EndDisabled();
                 ImGui::TableNextColumn();
-                if (ImGui::SmallButton("Go"))
+                if (ImGui::SmallButton(cyui::trLabel("Go").c_str()))
                     s.time = k.time;
                 ImGui::SameLine();
                 ImGui::BeginDisabled(locked);
-                bool erase = ImGui::SmallButton("X");
+                bool erase = ImGui::SmallButton(cyui::trLabel("X").c_str());
                 ImGui::EndDisabled();
                 ImGui::PopID();
                 if (erase) {
@@ -365,7 +361,7 @@ void Editor::animations() {
     for (int i = 0; i < int(points.size()); ++i) {
         auto &point = points[i];
         auto *param = find(point.effect, point.key);
-        ImU32 colour = curveColours[0];
+        ImU32 colour = cyui::categorical(int(0));
         for (size_t e = 0; e < entries.size(); ++e)
             if (entries[e].effect == point.effect && entries[e].key == point.key)
                 colour = entries[e].colour;
@@ -480,7 +476,7 @@ void Editor::animations() {
         if (moved && curveSelection.size() == 1)
             if (auto *param = find(curveSelection[0].effect, curveSelection[0].key);
                 param && curveSelection[0].index < int(param->keys.size()))
-                ImGui::SetTooltip("%s  ·  %.3f", timecode(param->keys[curveSelection[0].index].time, p.fps).c_str(),
+                ImGui::SetTooltip(cyui::tr("%s  ·  %.3f").c_str(), timecode(param->keys[curveSelection[0].index].time, p.fps).c_str(),
                                   param->keys[curveSelection[0].index].value);
     }
     if (curveGesture == 3 && ImGui::IsMouseDown(0) && active && curveBend + 1 < int(active->keys.size())) {
@@ -495,7 +491,7 @@ void Editor::animations() {
             key.shape = shape;
             s.dirty = true;
         }
-        ImGui::SetTooltip("Curvature %.2f", shape);
+        ImGui::SetTooltip(cyui::tr("Curvature %.2f").c_str(), shape);
     }
     if (curveGesture == 2) {
         ImVec2 low{std::min(curveAnchor.x, mouse.x), std::min(curveAnchor.y, mouse.y)};
@@ -555,13 +551,13 @@ void Editor::animations() {
         ImGui::Separator();
         if (curveSelection.size() == 1)
             if (auto *param = find(curveSelection[0].effect, curveSelection[0].key);
-                param && curveSelection[0].index < int(param->keys.size()) && ImGui::MenuItem("Go to Keyframe"))
+                param && curveSelection[0].index < int(param->keys.size()) && ImGui::MenuItem(cyui::trLabel("Go to Keyframe").c_str()))
                 s.time = param->keys[curveSelection[0].index].time;
-        if (ImGui::MenuItem("Copy", "Ctrl+C"))
+        if (ImGui::MenuItem(cyui::trLabel("Copy").c_str(), "Ctrl+C"))
             curveCopy = true;
-        if (ImGui::MenuItem("Paste at Playhead", "Ctrl+V", false, !locked && !curveClipboard.empty()))
+        if (ImGui::MenuItem(cyui::trLabel("Paste at Playhead").c_str(), "Ctrl+V", false, !locked && !curveClipboard.empty()))
             curvePaste = true;
-        if (ImGui::MenuItem("Delete", "Delete", false, !locked))
+        if (ImGui::MenuItem(cyui::trLabel("Delete").c_str(), "Delete", false, !locked))
             curveDelete = true;
         ImGui::EndPopup();
     }
@@ -660,12 +656,12 @@ void Editor::animations() {
             double hi = index + 1 < int(param->keys.size()) ? param->keys[index + 1].time - frame : 86400.;
             auto before = p;
             ImGui::SetNextItemWidth(110);
-            ImGui::DragScalar("Time", ImGuiDataType_Double, &k.time, .01f, &lo, &hi, "%.3f s", ImGuiSliderFlags_AlwaysClamp);
+            ImGui::DragScalar(cyui::trLabel("Time").c_str(), ImGuiDataType_Double, &k.time, .01f, &lo, &hi, "%.3f s", ImGuiSliderFlags_AlwaysClamp);
             editCheckpoint(before);
             ImGui::SameLine();
             before = p;
             ImGui::SetNextItemWidth(90);
-            ImGui::DragFloat("Value", &k.value, .01f);
+            ImGui::DragFloat(cyui::trLabel("Value").c_str(), &k.value, .01f);
             editCheckpoint(before);
             ImGui::SameLine();
             int curve = int(k.curve);
@@ -679,7 +675,7 @@ void Editor::animations() {
             ImGui::BeginDisabled(k.curve != Curve::Shaped);
             before = p;
             ImGui::SetNextItemWidth(100);
-            ImGui::SliderFloat("Curvature", &k.shape, -1, 1, "%.2f");
+            ImGui::SliderFloat(cyui::trLabel("Curvature").c_str(), &k.shape, -1, 1, "%.2f");
             editCheckpoint(before);
             ImGui::EndDisabled();
             ImGui::EndDisabled();

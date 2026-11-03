@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "artifact": "CyDAWPluginWorker.exe",
-  "sha256": "bf9f926f3ebf1a112888103d7299244d3944e98da38d90ed1e962cce522686e7",
-  "version": "0.13.0-alpha.1",
+  "sha256": "2e366a073da4fadb305c5d250d0d7698fcbf37d281af5923f16b5e0240b1c3f6",
+  "version": "0.14.0-alpha.1",
   "juce": {
     "version": "8.0.15",
     "commit": "91ad83ae34a81e0833b1a2b0866f54846370ae53"

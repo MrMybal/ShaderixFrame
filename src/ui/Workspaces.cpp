@@ -38,17 +38,18 @@ ImGuiID dockRoot(ImGuiID id) {
 std::set<std::string> defaultOpen(Editor::Mode mode) {
     switch (mode) {
     case Editor::Mode::Edit:
-        return {"Media & Effects", "Shaderixel Library", "Composition", "Layers", "Properties", "Timeline",
-                "Animation"};
+        return {"Media & Effects", "Effects Browser", "Shaderixel Library", "Composition", "Layers", "Properties",
+                "Timeline", "Animation"};
     case Editor::Mode::Effects:
-        return {"Shaderixel Library", "Media & Effects", "Composition", "Layers", "Properties",
-                "Shader Graph", "Layer Graph", "HLSL", "Timeline"};
+        return {"Effects Browser", "Shaderixel Library", "Media & Effects", "Composition", "Layers", "Properties",
+                "Shader Graph", "Layer Graph", "Track Graph", "HLSL", "Timeline"};
     case Editor::Mode::Motion:
         return {"Composition", "Layers", "Properties", "Motion Design", "Timeline", "Animation"};
     case Editor::Mode::Color:
         return {"Composition", "Video Scopes", "Color Grading", "Timeline", "Layers"};
     case Editor::Mode::Audio:
-        return {"Media & Effects", "Properties", "Mixer & Audio Graph", "DSP Graph", "Timeline"};
+        return {"Media & Effects", "Effects Browser", "Properties", "Mixer & Audio Graph", "DSP Graph", "Timeline",
+                "Track Effects"};
     case Editor::Mode::Deliver:
         return {"Composition", "Plugins & MCP", "Exports", "Timeline", "Video Scopes"};
     }
@@ -205,7 +206,7 @@ void Editor::buildLayout(ImGuiID dock, ImVec2 size) {
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Right, .27f, &right, &centre);
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Down, .48f, &bottom, &centre);
         ImGui::DockBuilderSplitNode(right, ImGuiDir_Up, .32f, &upperRight, &right);
-        for (auto name : {"Media & Effects", "Shaderixel Library", "Plugins & MCP"})
+        for (auto name : {"Media & Effects", "Effects Browser", "Shaderixel Library", "Plugins & MCP"})
             place(name, left);
         place("Composition", centre);
         place("Source", centre);
@@ -221,10 +222,10 @@ void Editor::buildLayout(ImGuiID dock, ImVec2 size) {
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Right, .25f, &right, &centre);
         ImGui::DockBuilderSplitNode(right, ImGuiDir_Up, .35f, &upperRight, &right);
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Right, .52f, &side, &centre);
-        for (auto name : {"Shaderixel Library", "Media & Effects", "Plugins & MCP"})
+        for (auto name : {"Effects Browser", "Shaderixel Library", "Media & Effects", "Plugins & MCP"})
             place(name, left);
         place("Composition", centre);
-        for (auto name : {"Shader Graph", "Layer Graph", "HLSL"})
+        for (auto name : {"Track Graph", "Shader Graph", "Layer Graph", "HLSL"})
             place(name, side);
         place("Layers", upperRight);
         place("Properties", right);
@@ -263,9 +264,16 @@ void Editor::buildLayout(ImGuiID dock, ImVec2 size) {
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Left, .18f, &left, &centre);
         ImGui::DockBuilderSplitNode(centre, ImGuiDir_Right, .27f, &right, &centre);
         place("Media & Effects", left);
+        place("Effects Browser", left);
         for (auto name : {"Mixer & Audio Graph", "DSP Graph"})
             place(name, centre);
         place("Properties", right);
+        {
+            // The insert chain under the timeline, as CyDAW's device panel.
+            ImGuiID devices = 0;
+            ImGui::DockBuilderSplitNode(bottom, ImGuiDir_Down, .42f, &devices, &bottom);
+            place("Track Effects", devices);
+        }
         place("Timeline", bottom);
         break;
     case Mode::Deliver:
@@ -363,10 +371,10 @@ void Editor::modeBar() {
         }
         ImGui::SameLine(0, 10);
         ImGui::AlignTextToFramePadding();
-        ImGui::TextDisabled("%d × %d  ·  %d fps", s.project.width, s.project.height, s.project.fps);
+        ImGui::TextDisabled(cyui::tr("%d × %d  ·  %d fps").c_str(), s.project.width, s.project.height, s.project.fps);
         if (s.project.hasWorkArea()) {
             ImGui::SameLine(0, 10);
-            ImGui::TextDisabled("zone %s → %s", timecode(s.project.workIn, s.project.fps).c_str(),
+            ImGui::TextDisabled(cyui::tr("zone %s → %s").c_str(), timecode(s.project.workIn, s.project.fps).c_str(),
                                 timecode(s.project.workOut, s.project.fps).c_str());
         }
         auto title = s.project.name + (s.dirty ? "  •" : "");

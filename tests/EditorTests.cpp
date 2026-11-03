@@ -195,6 +195,89 @@ int main(int argc, char **argv) {
             for (int i = 0; i < 2; ++i)
                 frame("Timeline");
         }
+        {
+            // Track Effects follows the selected clip's sound and shows the chain without editing it.
+            auto saved = s.project;
+            auto &voice = s.project.addTrack(sf::TrackKind::Audio);
+            sf::Clip line;
+            line.id = s.project.allocate();
+            line.source = "voice.wav";
+            line.duration = 2;
+            voice.clips.push_back(line);
+            sf::Id voiceTrack = voice.id;
+            sf::Json add = sf::Json::Object();
+            add["scope"] = "track";
+            add["target"] = voiceTrack;
+            add["id"] = "cydaw.comp-pro";
+            sf::Protocol(s).execute("add_mix_effect", add);
+            add["id"] = "cydaw.limiter";
+            sf::Protocol(s).execute("add_mix_effect", add);
+            s.selectClip(line.id);
+            editor.openPanel("Track Effects");
+            for (int i = 0; i < 3; ++i)
+                frame("Track Effects");
+            auto shown = s.project.json().Dump(0);
+            frame("Track Effects");
+            auto channel = editor.chainChannel();
+            require(channel.first == "track" && channel.second == voiceTrack &&
+                        s.project.findTrack(voiceTrack)->mix.effects.size() == 2 && s.project.json().Dump(0) == shown &&
+                        !editor.hasError(),
+                    "Track Effects follows the selected clip's audio track and shows its chain without editing it");
+            s.project = saved;
+            s.history.clear();
+            s.dirty = false;
+            s.selectClip(0);
+            for (int i = 0; i < 2; ++i)
+                frame("Timeline");
+        }
+        {
+            // Track Graph: a library effect added to a whole video track shows in its graph, undone in one step.
+            auto saved = s.project;
+            sf::Id videoTrack = 0;
+            for (auto &t : s.project.tracks)
+                if (t.kind == sf::TrackKind::Video) {
+                    videoTrack = t.id;
+                    break;
+                }
+            std::string effectId;
+            for (auto &d : s.renderer.library.definitions)
+                if (d.kind == "effect" && !d.generator && d.id.starts_with("shaderixel.")) {
+                    effectId = d.id;
+                    break;
+                }
+            editor.openTrackGraph(videoTrack);
+            sf::Json add = sf::Json::Object();
+            add["track"] = videoTrack;
+            add["id"] = effectId;
+            bool added = editor.runAction("add_track_effect", add);
+            for (int i = 0; i < 3; ++i)
+                frame("Track Graph");
+            auto *t = s.project.findTrack(videoTrack);
+            bool shown = editor.trackGraphShown() == videoTrack && t && !t->graph.IsNull() &&
+                         t->graph["nodes"].Size() == 3 && !editor.hasError();
+            bool undone = s.history.undo(s.project) && s.project.findTrack(videoTrack)->graph.IsNull();
+            require(added && shown && undone,
+                    "A library effect added to a video track appears in its Track Graph and undoes in one step");
+            s.project = saved;
+            s.history.clear();
+            s.dirty = false;
+            for (int i = 0; i < 2; ++i)
+                frame("Timeline");
+        }
+        {
+            // The Effects Browser shows each family of cards (previews come from its own worker) without editing.
+            auto shown = s.project.json().Dump(0);
+            editor.openPanel("Effects Browser");
+            for (int kind = 0; kind < 5; ++kind) {
+                editor.setBrowserKind(kind);
+                for (int i = 0; i < 3; ++i)
+                    frame("Effects Browser");
+            }
+            require(s.project.json().Dump(0) == shown && !editor.hasError(),
+                    "The Effects Browser shows effects, blends, generators, transitions and audio without editing");
+            editor.setBrowserKind(0);
+            frame("Timeline");
+        }
         auto point = [&](float seconds, int track) { return editor.timelinePoint(seconds, track); };
         auto click = [&](ImVec2 at, bool ctrl = false) {
             io.AddMousePosEvent(at.x, at.y);
@@ -858,22 +941,21 @@ int main(int argc, char **argv) {
         auto *graphCanvas = canvas("Shader Graph", "graphCanvas");
         auto graphOrigin = graphCanvas->DC.CursorStartPos;
         auto available = graphCanvas->InnerRect.Max - graphOrigin - graphCanvas->WindowPadding;
-        sf::CanvasView view;
-        view.fit({-100, -80}, {565, 163}, {available.x, available.y});
+        sf::CanvasView view=editor.shaderNavigation();
         auto center = graphOrigin + available * .5f;
         original = s.project.json().Dump(0);
         io.AddMousePosEvent(center.x, center.y);
         frame();
         io.AddMouseWheelEvent(0, 1);
         frame();
-        view.zoomAt({center.x - graphOrigin.x, center.y - graphOrigin.y}, view.zoom * 1.15f);
+        view.zoomAt({center.x - graphOrigin.x, center.y - graphOrigin.y}, view.zoom * std::exp(.15f));
         io.AddMouseButtonEvent(2, true);
         frame();
         io.AddMousePosEvent(center.x + 30, center.y + 20);
         frame();
         io.AddMouseButtonEvent(2, false);
         frame();
-        view.pan = view.pan + sx::float2{30, 20};
+        view=editor.shaderNavigation();
         require(s.project.json().Dump(0) == original && !s.dirty && !s.history.undo(s.project),
                 "Graph wheel zoom and middle pan preserve the upstream graph and history");
         auto header = view.screen({-90, -70});
@@ -894,6 +976,26 @@ int main(int argc, char **argv) {
         require(s.history.undo(s.project) && s.project.json().Dump(0) == original &&
                     !s.history.undo(s.project),
                 "Graph drag is a single undo step after navigation");
+        {
+            auto restored=s.project.json().Dump(0);auto view=editor.shaderNavigation();auto header=view.screen({-90,-70});
+            ImVec2 grab=graphOrigin+ImVec2(header.x,header.y);
+            io.AddMousePosEvent(grab.x,grab.y);frame();io.AddMouseButtonEvent(0,true);frame();
+            io.AddMousePosEvent(grab.x+30,grab.y+15);frame();io.AddKeyEvent(ImGuiKey_Escape,true);frame();
+            io.AddKeyEvent(ImGuiKey_Escape,false);io.AddMouseButtonEvent(0,false);frame();
+            require(s.project.json().Dump(0)==restored&&!s.history.undo(s.project),"Escape cancels a shared shader-node drag without a history entry");
+        }
+        {
+            auto document=s.project.json().Dump(0);auto selected=s.selected;bool playing=s.playing;
+            editor.openPanel("HLSL");for(int i=0;i<4;++i)frame("HLSL");
+            auto* text=canvas("HLSL","##code");auto click=text->DC.CursorStartPos+ImVec2(65,35);
+            io.AddMousePosEvent(click.x,click.y);frame();io.AddMouseButtonEvent(0,true);frame();io.AddMouseButtonEvent(0,false);frame();
+            io.AddKeyEvent(ImGuiKey_S,true);io.AddInputCharactersUTF8("s");frame();io.AddKeyEvent(ImGuiKey_S,false);frame();
+            io.AddKeyEvent(ImGuiKey_Space,true);frame();io.AddKeyEvent(ImGuiKey_Space,false);frame();
+            io.AddKeyEvent(ImGuiKey_Delete,true);frame();io.AddKeyEvent(ImGuiKey_Delete,false);frame();
+            io.AddKeyEvent(ImGuiMod_Ctrl,true);io.AddKeyEvent(ImGuiKey_Z,true);frame();io.AddKeyEvent(ImGuiKey_Z,false);io.AddKeyEvent(ImGuiMod_Ctrl,false);frame();
+            require(s.project.json().Dump(0)==document&&s.selected==selected&&s.playing==playing&&!s.history.undo(s.project),"Typing, Delete, Space and local code undo do not edit or play the sequence");
+            frame("Shader Graph");
+        }
         {
             // The Animations curve editor drags a key on whole frames, as one undo step.
             s.dirty = false;
@@ -1425,6 +1527,40 @@ int main(int argc, char **argv) {
             frame("Composition");
             require(editor.previewNavigation().zoom > old && s.project.json().Dump(0) == original,
                     "Composition wheel zoom enlarges the video view without changing its render");
+            {
+                // Once zoomed, the view moves: Shift + wheel, and a left drag with the Hand tool (H).
+                for (int i = 0; i < 3; ++i) {
+                    io.AddMouseWheelEvent(0, 1);
+                    frame("Composition");
+                }
+                auto panBefore = editor.previewNavigation().pan;
+                io.AddKeyEvent(ImGuiMod_Shift, true);
+                io.AddMouseWheelEvent(0, 1);
+                frame("Composition");
+                io.AddKeyEvent(ImGuiMod_Shift, false);
+                frame("Composition");
+                auto panWheel = editor.previewNavigation().pan;
+                io.AddKeyEvent(ImGuiKey_H, true);
+                frame("Composition");
+                io.AddKeyEvent(ImGuiKey_H, false);
+                frame("Composition");
+                io.AddMouseButtonEvent(0, true);
+                frame("Composition");
+                io.AddMousePosEvent(at.x - 50, at.y - 30);
+                frame("Composition");
+                io.AddMouseButtonEvent(0, false);
+                frame("Composition");
+                auto panDrag = editor.previewNavigation().pan;
+                io.AddKeyEvent(ImGuiKey_H, true);
+                frame("Composition");
+                io.AddKeyEvent(ImGuiKey_H, false);
+                frame("Composition");
+                io.AddMousePosEvent(at.x, at.y);
+                frame("Composition");
+                require(std::abs(panWheel.x - panBefore.x - 60) < 1 && std::abs(panDrag.x - panWheel.x + 50) < 1 &&
+                            std::abs(panDrag.y - panWheel.y + 30) < 1 && s.project.json().Dump(0) == original,
+                        "A zoomed final image moves with Shift + wheel and with a Hand tool drag, without editing");
+            }
             io.AddKeyEvent(ImGuiMod_Ctrl, true);
             io.AddKeyEvent(ImGuiKey_1, true);
             frame("Composition");

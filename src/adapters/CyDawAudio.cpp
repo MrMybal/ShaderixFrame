@@ -30,7 +30,48 @@ const EffectDescriptor *audioEffect(const std::string &id) {
     if (!id.starts_with("cydaw."))
         return nullptr;
     auto *e = effectForType(id.substr(6));
-    return e && !e->convertsChannels() ? e : nullptr;
+    return e && audioInsert(*e) ? e : nullptr;
+}
+// As CyDAW's render plan runs a device: while its values glide (automation, a knob), in 32-frame pieces
+// with the values a little further each, so the direct chain sounds exactly like a DSP graph.
+static void processDevice(AudioProcessor &processor, AudioBlockView in, AudioBlockView out,
+                          const ProcessContext &context) {
+    if (!processor.valuesGliding()) {
+        processor.process(in, out, context);
+        return;
+    }
+    auto piece = [](const AudioBlockView &view, std::uint32_t offset, std::uint32_t frames) {
+        return AudioBlockView{view.data ? view.data + offset : nullptr, view.channelCount, frames, view.channelStride};
+    };
+    for (std::uint32_t offset = 0; offset < in.frameCount; offset += 32) {
+        auto count = std::min(32u, in.frameCount - offset);
+        processor.glideValues(count, 48000);
+        auto at = context;
+        if (offset) {
+            at.transport.samplePosition += offset;
+            at.transport.quarterNotePosition += offset / 48000. * context.transport.beatsPerMinute / 60;
+        }
+        processor.process(piece(in, offset, count), piece(out, offset, count), at);
+    }
+}
+bool audioInsert(const EffectDescriptor &d) {
+    return !d.convertsChannels() && !d.midi && !d.control && !d.container;
+}
+void AudioEffects::prepareNative(Instance &entry, const Effect &effect, const EffectDescriptor &d, double time) {
+    if (entry.id == effect.id)
+        return;
+    entry.node = std::make_unique<NativeDspNode>();
+    entry.node->kind = d.kind;
+    for (auto &p : d.parameters) {
+        auto it = effect.params.find(std::string(p.key));
+        float value = it == effect.params.end() ? p.defaultValue : it->second.at(time);
+        setEffectValue(entry.node->parameters, p, std::clamp(value, p.minimum, p.maximum));
+    }
+    entry.processor = makeEffectProcessor(*entry.node);
+    entry.id = effect.id;
+    entry.external.reset();
+    if (entry.processor)
+        entry.processor->prepare({48000, 1024, 2});
 }
 Effect instantiateAudioEffect(const std::string &id) {
     auto *d = audioEffect(id);
@@ -49,8 +90,20 @@ unsigned AudioEffects::latency(Id owner, const std::vector<Effect> &chain) {
     unsigned total = 0;
     for (int index = 0; index < int(chain.size()); ++index) {
         auto &effect = chain[index];
-        if (!effect.enabled || !externalAudio(effect.id))
+        if (!effect.enabled)
             continue;
+        // Native look-ahead devices (pro limiter, pitch, spectral freeze) report their own delay.
+        if (!externalAudio(effect.id)) {
+            auto *d = audioEffect(effect.id);
+            if (!d || effect.id == "cydaw.graph")
+                continue;
+            auto &entry = instances[{owner, index}];
+            used.insert({owner, index});
+            prepareNative(entry, effect, *d, 0);
+            if (entry.processor)
+                total += entry.processor->latencySamples();
+            continue;
+        }
         auto &entry = instances[{owner, index}];
         auto identity = effect.id + ":" + effect.code;
         used.insert({owner, index});
@@ -97,13 +150,16 @@ void AudioEffects::process(Id owner, const std::vector<Effect> &chain, double ti
                         processor = std::make_unique<TimelineGraphInput>();
                     else {
                         auto *d = audioEffect(item.effect.id);
-                        NativeDspNode node;
-                        node.kind = d->kind;
+                        auto node = std::make_unique<NativeDspNode>();
+                        node->kind = d->kind;
                         for (auto &parameter : d->parameters)
-                            setEffectValue(node.parameters, parameter,
-                                           item.effect.params.at(std::string(parameter.key)).value);
-                        processor = makeEffectProcessor(node);
-                        entry.graphProcessors[item.id] = processor.get();
+                            setEffectValue(node->parameters, parameter,
+                                           item.effect.params.at(std::string(parameter.key)).at(time));
+                        processor = makeEffectProcessor(*node);
+                        if (!processor)
+                            processor = std::make_unique<TimelineGraphInput>();
+                        else
+                            entry.graphProcessors[item.id] = processor.get();
                     }
                     add(item.id, std::move(processor));
                 }
@@ -120,13 +176,15 @@ void AudioEffects::process(Id owner, const std::vector<Effect> &chain, double ti
                 entry.processor.reset();
                 entry.external.reset();
             }
+            if (!entry.node)
+                entry.node = std::make_unique<NativeDspNode>();
             for (unsigned offset = 0; offset < frames; offset += 64) {
                 unsigned count = std::min(64u, frames - offset);
                 double now = time + offset / 48000.;
                 for (auto &item : decoded.nodes)
-                    if (item.effect.id != "sf.sum") {
+                    if (item.effect.id != "sf.sum" && entry.graphProcessors.contains(item.id)) {
                         auto *d = audioEffect(item.effect.id);
-                        NativeDspNode node;
+                        auto &node = *entry.node;
                         node.kind = d->kind;
                         for (auto &parameter : d->parameters)
                             setEffectValue(node.parameters, parameter,
@@ -160,20 +218,13 @@ void AudioEffects::process(Id owner, const std::vector<Effect> &chain, double ti
             entry.external->process(time, frames, data, effect.params);
             continue;
         }
-        if (entry.id != effect.id) {
-            NativeDspNode node;
-            node.kind = d->kind;
-            for (auto &p : d->parameters)
-                setEffectValue(node.parameters, p, p.defaultValue);
-            entry.processor = makeEffectProcessor(node);
-            entry.id = effect.id;
-            entry.processor->prepare({48000, 1024, 2});
-        }
+        prepareNative(entry, effect, *d, time);
+        if (!entry.processor)
+            continue; // nothing ShaderixFrame can run: the sound passes through
         for (unsigned offset = 0; offset < frames; offset += 64) {
             unsigned count = std::min(64u, frames - offset);
             double now = time + offset / 48000.;
-            NativeDspNode node;
-            node.kind = d->kind;
+            auto &node = *entry.node;
             for (auto &param : d->parameters) {
                 auto it = effect.params.find(std::string(param.key));
                 float value = it == effect.params.end() ? param.defaultValue : it->second.at(now);
@@ -189,7 +240,7 @@ void AudioEffects::process(Id owner, const std::vector<Effect> &chain, double ti
             context.transport.state = PlaybackState::playing;
             context.transport.samplePosition = int64_t(now * 48000);
             context.transport.quarterNotePosition = now * 2;
-            entry.processor->process(in, out, context);
+            processDevice(*entry.processor, in, out, context);
             for (unsigned n = 0; n < count; ++n) {
                 data[(offset + n) * 2] = out.channel(0)[n];
                 data[(offset + n) * 2 + 1] = out.channel(1)[n];

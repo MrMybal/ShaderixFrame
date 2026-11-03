@@ -1,13 +1,13 @@
 # Building ShaderixFrame
 
 Use Windows 10/11 x64, Visual Studio 2022 C++ x64 tools, CMake, Ninja and Python 3.
-The copied Shaderixel, CyDAW v2, Dear ImGui and OpenFX sources are in `vendor/`.
+The copied CyUI, Shaderixel, CyDAW v2, Dear ImGui and OpenFX sources are in `vendor/`.
 Their original files, licences and SHA-256 fingerprints are retained. The upstream
 projects are read only; video-specific code and English labels live in adapters.
 
 ## Complete alpha from corresponding source
 
-Download `ShaderixFrame-0.13.0-alpha.1-source.zip` from the matching GitHub prerelease.
+Download `ShaderixFrame-0.14.0-alpha.1-source.zip` from the matching GitHub prerelease.
 It includes this repository and the exact JUCE 8.0.15 dependency. Extract it and
 open an x64 Visual Studio developer terminal in `ShaderixFrame-source`:
 
@@ -70,3 +70,43 @@ Updates are explicit, preserve prior snapshots under ignored `vendor-history/`,
 and reject unrelated local vendor edits. Rebuild and run compatibility checks after
 regeneration. The source-built release worker is a separate, accepted artifact;
 upstream fingerprints remain available for the original binary.
+
+## Modular CyUI
+
+The pinned source is included in `vendor/cyui`; no network download is required.
+`cyui.lock.json` records the exact revision and SHA-256 of every vendored file.
+The application supplies its existing Dear ImGui 1.93 docking target through
+`CYUI_IMGUI_TARGET`. CyUI's bundled ImGui is deliberately omitted.
+
+Production selects `Core`, `Audio`, `Canvas`, `Plots`, `AudioViews`, `Nodes`,
+`Curves`, `Commands`, `CodeEditor`, `Images`, `Inspector` and `Timeline` using
+explicit `CyUI::<Module>` targets. CodeEditor pulls `Code`, the pinned TextEditor,
+Lexilla and Threads automatically and requires C++20, already used by the app.
+Demo, Gallery, tests, CEF, Web, Unreal, ImGuizmo and Python UI adapters are disabled
+or absent. Core/Canvas are also needed by the existing engine/presentation bridge;
+the remaining module targets belong to the UI targets.
+
+A separate clean configuration is useful when checking this migration:
+
+```powershell
+python tools/sync_cyui.py --check
+python tools/generate_ui_translations.py --check
+python tools/extract_composition.py --check
+cmake -S . -B build/CyUIRelease -G Ninja -DCMAKE_BUILD_TYPE=Release -DSF_BUILD_VST3_WORKER=OFF
+cmake --build build/CyUIRelease --parallel 4
+ctest --test-dir build/CyUIRelease --output-on-failure
+```
+
+For an explicit dependency update, first read the new upstream `docs/AI_GUIDE.md`,
+`docs/MODULES.md` and `docs/LOCALIZATION.md`, then archive a chosen full commit from
+an unmodified local CyUI checkout:
+
+```powershell
+python tools/sync_cyui.py --source path/to/CyUI --revision FULL_40_CHARACTER_COMMIT_SHA
+```
+
+The tool reads a Git archive, rejects modified current snapshots, saves the old
+snapshot under ignored `vendor-history/`, and refreshes the lock. It never writes
+to the source checkout. Run the clean build and all compatibility tests after an
+update. The native backend still supports Windows 10/11 only; this migration does
+not add a Linux/macOS backend.

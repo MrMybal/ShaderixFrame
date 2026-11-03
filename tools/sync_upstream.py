@@ -3,6 +3,7 @@
 python tools/sync_upstream.py --bootstrap
 python tools/sync_upstream.py --check
 python tools/sync_upstream.py --update --component shaderixel
+python tools/sync_upstream.py --update --component cydaw2 --only include/cydaw/engine/HaloReverb.h ...
 Never modifies either upstream. Locally modified vendored files are refused.
 """
 import argparse
@@ -49,6 +50,23 @@ FILES['cydaw2'] += ['include/cydaw/engine/AudioGraph.h','include/cydaw/engine/Au
                    'src/engine/AudioGraph.cpp','src/engine/AudioRenderPlan.cpp',
                    'src/v2/Theme.cpp','src/v2/MixerView.cpp','src/v2/MixerView.h','resources/i18n/fr.json']
 
+# CyDAW's stereo insert effects (reverbs, delays, dynamics, amp/cab, pitch, utility). PrismSynth and
+# KickSynth are linked for the default values of NativeDspNodeParameters only; containers stay out
+# (src/adapters/CyDawUnavailable.cpp stands in for their factory).
+CYDAW_EFFECTS = ['AddedEffects', 'AmpDesign', 'AmpEffects', 'Convolver', 'HaloReverb', 'MixEffects',
+                 'MotionEffects', 'PitchEffects', 'ProEffects', 'ResonanceEffects', 'RhythmEffects',
+                 'SpaceEffects', 'SuiteEffects', 'UtilityEffects', 'VoiceEffects', 'KickSynth', 'PrismSynth']
+CYDAW_EFFECT_HEADERS = CYDAW_EFFECTS + ['BuiltinProcessors', 'ContainerProcessors', 'Containers', 'DrumKit', 'Fft',
+                                        'HaloDesign', 'InstrumentContainers', 'MidiEffects', 'MidiEffectsDesign',
+                                        'MixDesign', 'MotionDesign', 'PitchDesign', 'PitchTracker', 'PolySynthGraph',
+                                        'PolyVoice', 'PolyVoiceFilter', 'PolyVoiceOscillator', 'ProEffectsDesign',
+                                        'ResonanceDesign', 'RhythmDesign', 'SpaceDesign', 'SuiteDesign', 'SynthFamily',
+                                        'UtilityDesign', 'VoiceDesign', 'VoiceLive']
+FILES['cydaw2'] += ['src/engine/' + name + '.cpp' for name in CYDAW_EFFECTS]
+FILES['cydaw2'] += sorted({'include/cydaw/engine/' + name + '.h' for name in CYDAW_EFFECT_HEADERS if name != 'Convolver'} |
+                          {'include/cydaw/engine/Convolver.h'})
+FILES['cydaw2'] += ['include/cydaw/realtime/RtPublisher.h', 'src/engine/DspParts.h']
+
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -59,7 +77,11 @@ def main():
     mode.add_argument('--check', action='store_true')
     mode.add_argument('--update', action='store_true')
     parser.add_argument('--component', choices=FILES)
+    parser.add_argument('--only', nargs='+', metavar='PATH',
+                        help='limit an update to these paths of the component (same hash guards)')
     args = parser.parse_args()
+    if args.only and not (args.update and args.component):
+        raise SystemExit('--only needs --update and --component.')
     lock_path = ROOT / 'upstream.lock.json'
     lock = json.loads(lock_path.read_text('utf-8')) if lock_path.exists() else {'schema': 1, 'files': {}}
     if args.bootstrap and lock['files']:
@@ -70,6 +92,8 @@ def main():
         if args.component and component != args.component:
             continue
         for relative in paths:
+            if args.only and relative not in args.only:
+                continue
             source = SOURCES[component] / relative
             target = ROOT / 'vendor' / component / relative
             key = f'{component}/{relative}'

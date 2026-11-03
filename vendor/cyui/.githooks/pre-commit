@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+if command -v gitleaks >/dev/null 2>&1; then
+    scanner=gitleaks
+elif [ -x build/tools/gitleaks/gitleaks.exe ]; then
+    scanner=build/tools/gitleaks/gitleaks.exe
+else
+    echo "Gitleaks is required before committing. Install it and add it to PATH." >&2
+    exit 1
+fi
+
+exec "$scanner" git --pre-commit --staged --config .gitleaks.toml --redact --ignore-gitleaks-allow --no-banner .

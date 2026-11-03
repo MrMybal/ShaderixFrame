@@ -74,9 +74,9 @@ void Editor::motionPanel() {
             add(type);
         ImGui::SameLine();
     }
-    if (ImGui::Button("Fit"))
+    if (ImGui::Button(cyui::trLabel("Fit").c_str()))
         motionView = {};
-    ImGui::TextDisabled("Hierarchy - anchors - pixels - K: key at current time - wheel / middle: view");
+    ImGui::TextDisabled(cyui::tr("Hierarchy - anchors - pixels - K: key at current time - wheel / middle: view").c_str());
     ImGui::BeginChild("WidgetHierarchy", {230, 0}, true);
     auto tree = [&](auto &&self, Id parent, int depth) -> void {
         if (depth > 64)
@@ -98,10 +98,10 @@ void Editor::motionPanel() {
     if (auto *c = s.project.findClip(s.selected); c && !c->widget.IsNull()) {
         const Json layout = c->widget;
         auto before = s.project;
-        ImGui::InputText("Name", &c->name);
+        ImGui::InputText(cyui::trLabel("Name").c_str(), &c->name);
         editCheckpoint(before);
-        if (ImGui::BeginCombo("Parent", layout["parent"].U() ? "Widget" : "Canvas")) {
-            if (ImGui::Selectable("Canvas")) {
+        if (ImGui::BeginCombo(cyui::trLabel("Parent").c_str(), layout["parent"].U() ? "Widget" : "Canvas")) {
+            if (ImGui::Selectable(cyui::trLabel("Canvas").c_str())) {
                 before = s.project;
                 c->widget["parent"] = 0;
                 commit(before);
@@ -122,14 +122,14 @@ void Editor::motionPanel() {
         }
         float anchor[2] = {layout["anchorX"].F(), layout["anchorY"].F()};
         before = s.project;
-        if (ImGui::SliderFloat2("Anchor", anchor, 0, 1)) {
+        if (ImGui::SliderFloat2(cyui::trLabel("Anchor").c_str(), anchor, 0, 1)) {
             c->widget["anchorX"] = anchor[0];
             c->widget["anchorY"] = anchor[1];
         }
         editCheckpoint(before);
         float pivot[2] = {layout["pivotX"].F(), layout["pivotY"].F()};
         before = s.project;
-        if (ImGui::SliderFloat2("Pivot", pivot, 0, 1)) {
+        if (ImGui::SliderFloat2(cyui::trLabel("Pivot").c_str(), pivot, 0, 1)) {
             c->widget["pivotX"] = pivot[0];
             c->widget["pivotY"] = pivot[1];
         }
@@ -159,7 +159,7 @@ void Editor::motionPanel() {
             }
             editCheckpoint(before);
             ImGui::SameLine();
-            if (ImGui::SmallButton("K")) {
+            if (ImGui::SmallButton(cyui::trLabel("K").c_str())) {
                 before = s.project;
                 c->params[key].setKey({s.time, value, Curve::Smooth, 0});
                 commit(before);
@@ -176,7 +176,7 @@ void Editor::motionPanel() {
         }
         if (c->title.enabled) {
             before = s.project;
-            ImGui::InputTextMultiline("Text", &c->title.text, {200, 60});
+            ImGui::InputTextMultiline(cyui::trLabel("Text").c_str(), &c->title.text, {200, 60});
             editCheckpoint(before);
             parameter("Text Size", "font_size", 4, 1024, 48);
         }
@@ -187,7 +187,7 @@ void Editor::motionPanel() {
                 color[k] = it == c->effects[0].params.end() ? 1 : it->second.at(s.time);
             }
             before = s.project;
-            if (ImGui::ColorEdit4("Color", color)) {
+            if (ImGui::ColorEdit4(cyui::trLabel("Color").c_str(), color)) {
                 for (int k = 0; k < 4; ++k) {
                     auto &p = c->effects[0].params["fill." + std::to_string(k)];
                     if (p.keys.empty())
@@ -198,15 +198,15 @@ void Editor::motionPanel() {
             }
             editCheckpoint(before);
         }
-        if (ImGui::Button("Widget Animation")) {
+        if (ImGui::Button(cyui::trLabel("Widget Animation").c_str())) {
             panels["Animation"] = true;
             animationKey = "widget_x";
             openPanel("Animation");
         }
-        if (ImGui::Button("Edit Content / VFX"))
+        if (ImGui::Button(cyui::trLabel("Edit Content / VFX").c_str()))
             openClipEditor(c->id);
     } else
-        ImGui::TextWrapped("Add a widget or select one in the hierarchy.");
+        ImGui::TextWrapped(cyui::tr("Add a widget or select one in the hierarchy.").c_str());
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("WidgetCanvas", {0, 0}, true,
@@ -214,28 +214,21 @@ void Editor::motionPanel() {
     auto origin = ImGui::GetCursorScreenPos(), size = ImGui::GetContentRegionAvail();
     size.x = std::max(1.f, size.x);
     size.y = std::max(1.f, size.y);
-    ImGui::InvisibleButton("MotionViewport", size,
-                           ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle);
-    bool hover = ImGui::IsItemHovered();
-    auto &io = ImGui::GetIO();
-    float fit = std::min(size.x / s.project.width, size.y / s.project.height), scale = fit * motionView.zoom;
-    auto top = origin +
-               ImVec2((size.x - s.project.width * fit) * .5f, (size.y - s.project.height * fit) * .5f) +
-               ImVec2(motionView.pan.x, motionView.pan.y);
-    if (hover && io.MouseWheel) {
-        auto local = io.MousePos - top;
-        float old = motionView.zoom;
-        motionView.zoom = std::clamp(old * std::pow(1.15f, io.MouseWheel), .125f, 32.f);
-        float ratio = motionView.zoom / old;
-        motionView.pan.x += local.x * (1 - ratio);
-        motionView.pan.y += local.y * (1 - ratio);
-    }
-    if (ImGui::IsItemActive() && ImGui::IsMouseDragging(2, 0)) {
-        motionView.pan.x += io.MouseDelta.x;
-        motionView.pan.y += io.MouseDelta.y;
-    }
+    {
+    auto &io=ImGui::GetIO();
+    float fit=std::min(size.x/s.project.width,size.y/s.project.height);
+    ImVec2 margin{(size.x-s.project.width*fit)*.5f,(size.y-s.project.height*fit)*.5f};
+    motionCanvas.view.zoom=fit*motionView.zoom;
+    motionCanvas.view.origin={-(margin.x+motionView.pan.x)/motionCanvas.view.zoom,-(margin.y+motionView.pan.y)/motionCanvas.view.zoom};
+    cyui::CanvasOptions options;options.grid=false;options.minZoom=fit*.125f;options.maxZoom=fit*32;
+    cyui::CanvasScope scope("MotionViewport",motionCanvas,size,options);
+    bool hover=scope.frame().hovered;
+    motionView.zoom=float(motionCanvas.view.zoom/fit);
+    motionView.pan={float(-motionCanvas.view.origin.x*motionCanvas.view.zoom-margin.x),float(-motionCanvas.view.origin.y*motionCanvas.view.zoom-margin.y)};
+    float scale=float(motionCanvas.view.zoom);
+    auto top=motionCanvas.view.screen({0,0},origin);
     auto *dl = ImGui::GetWindowDrawList();
-    dl->AddRectFilled(origin, origin + size, IM_COL32(20, 21, 25, 255));
+    dl->AddRectFilled(origin, origin + size, cyui::palette().bg0);
     dl->AddImage((ImTextureID)(intptr_t)s.renderer.view(), top,
                  top + ImVec2(s.project.width * scale, s.project.height * scale));
     Id hit = 0, resizeHit = 0;
@@ -251,9 +244,9 @@ void Editor::motionPanel() {
                     io.MousePos.y <= b.y)
                     hit = c.id;
                 if (c.id == s.selected) {
-                    dl->AddRect(a, b, IM_COL32(245, 151, 65, 255), 0.f, 2.f, ImDrawFlags_None);
-                    dl->AddCircleFilled(a, 4, IM_COL32(245, 151, 65, 255));
-                    dl->AddRectFilled(b - ImVec2(5, 5), b + ImVec2(5, 5), IM_COL32(245, 151, 65, 255));
+                    dl->AddRect(a, b, cyui::palette().accent, 0.f, 2.f, ImDrawFlags_None);
+                    dl->AddCircleFilled(a, 4, cyui::palette().accent);
+                    dl->AddRectFilled(b - ImVec2(5, 5), b + ImVec2(5, 5), cyui::palette().accent);
                     if (hover && std::abs(io.MousePos.x - b.x) < 10 && std::abs(io.MousePos.y - b.y) < 10) {
                         resizeHit = c.id;
                         ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNWSE);
@@ -262,7 +255,7 @@ void Editor::motionPanel() {
             }
     if (resizeHit)
         hit = resizeHit;
-    if (hover && hit && ImGui::IsMouseClicked(0)) {
+    if (hover && hit && !motionCanvas.panning && ImGui::IsMouseClicked(0)) {
         motionResizing = resizeHit != 0;
         s.selectClip(hit);
         motionDragging = hit;
@@ -295,6 +288,7 @@ void Editor::motionPanel() {
             commit(*motionBefore);
         motionBefore.reset();
         motionDragging = 0;
+    }
     }
     ImGui::EndChild();
     ImGui::End();

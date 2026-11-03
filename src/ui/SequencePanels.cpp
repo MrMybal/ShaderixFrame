@@ -21,7 +21,7 @@ void Editor::markersPanel() {
     if (!panels["Markers"] || !beginPanel("Markers"))
         return;
     auto &p = s.project;
-    if (ImGui::Button("+ Marker")) {
+    if (ImGui::Button(cyui::trLabel("+ Marker").c_str())) {
         Json a = Json::Object();
         a["time"] = s.time;
         action("add_marker", a);
@@ -29,11 +29,11 @@ void Editor::markersPanel() {
     tooltip("Marker at Playhead [M in Timeline]");
     ImGui::SameLine();
     ImGui::BeginDisabled(p.markers.empty());
-    if (ImGui::Button("Chapters"))
+    if (ImGui::Button(cyui::trLabel("Chapters").c_str()))
         ImGui::SetClipboardText(p.markerChapters().c_str());
     tooltip("Copy Markers as YouTube Chapters (0:00 Title)");
     ImGui::SameLine();
-    if (ImGui::Button("CSV…")) {
+    if (ImGui::Button(cyui::trLabel("CSV…").c_str())) {
         auto path = dialog(true, L"CSV\0*.csv\0\0", L"csv");
         if (!path.empty()) {
             Json a = Json::Object();
@@ -44,7 +44,7 @@ void Editor::markersPanel() {
     }
     tooltip("Export each marker's name, timecode, color and note");
     ImGui::SameLine();
-    if (ImGui::Button("Images…")) {
+    if (ImGui::Button(cyui::trLabel("Images…").c_str())) {
         auto path = dialog(true, L"PNG image\0*.png\0Half-float EXR 16-bit\0*.exr\0\0", L"png");
         if (!path.empty()) {
             Json a = Json::Object();
@@ -54,17 +54,17 @@ void Editor::markersPanel() {
     }
     tooltip("One final rendered frame per marker: chosen name + number + marker name");
     ImGui::SameLine();
-    ImGui::Checkbox("Images", &markerPictures);
+    ImGui::Checkbox(cyui::trLabel("Images").c_str(), &markerPictures);
     tooltip("Thumbnail of the final render at each marker");
     ImGui::SameLine();
-    if (ImGui::Button("Cut"))
+    if (ImGui::Button(cyui::trLabel("Cut").c_str()))
         action("split_at_markers", s.selection.empty() ? Json::Object() : selectionArgs());
     tooltip("Split selection (or all tracks) at each marker");
     ImGui::SetNextItemWidth(-1);
     ImGui::InputTextWithHint("##markerFilter", "Search names or notes", &markerFilter);
     ImGui::EndDisabled();
     if (p.markers.empty()) {
-        ImGui::TextDisabled("No markers: press M in the timeline or + Marker.");
+        ImGui::TextDisabled(cyui::tr("No markers: press M in the timeline or + Marker.").c_str());
         ImGui::End();
         return;
     }
@@ -128,7 +128,7 @@ void Editor::markersPanel() {
                     ImGui::PopStyleColor();
                     ImGui::PopID();
                 }
-                if (ImGui::MenuItem("Default Color", nullptr, marker.color == 0)) {
+                if (ImGui::MenuItem(cyui::trLabel("Default Color").c_str(), nullptr, marker.color == 0)) {
                     recoloured = marker.id;
                     colour = 0;
                 }
@@ -168,7 +168,7 @@ void Editor::markersPanel() {
             ImGui::InputTextWithHint("##note", "Note", &marker.note);
             textEdit();
             ImGui::TableNextColumn();
-            if (ImGui::SmallButton("×"))
+            if (ImGui::SmallButton(cyui::trLabel("×").c_str()))
                 removed = marker.id;
             tooltip("Delete Marker");
             ImGui::PopID();
@@ -200,18 +200,18 @@ void Editor::historyPanel() {
     auto &future = s.history.redoSteps();
     int current = int(past.size()), total = current + int(future.size()), target = -1;
     ImGui::BeginDisabled(!current);
-    if (ImGui::Button("Undo"))
+    if (ImGui::Button(cyui::trLabel("Undo").c_str()))
         target = current - 1;
     ImGui::EndDisabled();
     tooltip("Undo Last Step [Ctrl+Z]");
     ImGui::SameLine();
     ImGui::BeginDisabled(future.empty());
-    if (ImGui::Button("Redo"))
+    if (ImGui::Button(cyui::trLabel("Redo").c_str()))
         target = current + 1;
     ImGui::EndDisabled();
     tooltip("Redo Step [Ctrl+Y]");
     ImGui::SameLine();
-    ImGui::TextDisabled("%d step%s", total, total > 1 ? "s" : "");
+    ImGui::TextDisabled(cyui::tr("%d step%s").c_str(), total, total > 1 ? "s" : "");
     ImGui::Separator();
     ImGui::BeginChild("historySteps");
     bool follow = historySeen != total * 1000 + current;
@@ -282,7 +282,7 @@ void Editor::subtitlesPanel() {
         ImGui::EndCombo();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Import…")) {
+    if (ImGui::Button(cyui::trLabel("Import…").c_str())) {
         auto path = dialog(false, L"SubRip subtitles\0*.srt\0\0", L"srt");
         if (!path.empty()) {
             Json a = Json::Object();
@@ -294,7 +294,7 @@ void Editor::subtitlesPanel() {
     tooltip("SubRip file (.srt): a new track, one title clip per cue");
     ImGui::SameLine();
     ImGui::BeginDisabled(!track || !titles(*track));
-    if (ImGui::Button("Export…")) {
+    if (ImGui::Button(cyui::trLabel("Export…").c_str())) {
         auto path = dialog(true, L"SubRip subtitles\0*.srt\0\0", L"srt");
         if (!path.empty()) {
             Json a = Json::Object();
@@ -305,13 +305,13 @@ void Editor::subtitlesPanel() {
     }
     ImGui::EndDisabled();
     if (!track) {
-        ImGui::TextDisabled("Import an SRT file or choose a video track to write subtitle cues.");
+        ImGui::TextDisabled(cyui::tr("Import an SRT file or choose a video track to write subtitle cues.").c_str());
         ImGui::End();
         return;
     }
     subtitleTrack = track->id;
     ImGui::BeginDisabled(track->locked);
-    if (ImGui::Button("+ Cue at Playhead")) {
+    if (ImGui::Button(cyui::trLabel("+ Cue at Playhead").c_str())) {
         Json a = Json::Object();
         a["track"] = track->id;
         a["start"] = s.time;
@@ -396,9 +396,9 @@ void Editor::subtitlesPanel() {
             }
             ImGui::EndDisabled();
             ImGui::TableNextColumn();
-            ImGui::TextDisabled("%.1f s", clip->duration);
+            ImGui::TextDisabled(cyui::tr("%.1f s").c_str(), clip->duration);
             ImGui::TableNextColumn();
-            if (!track->locked && ImGui::SmallButton("×"))
+            if (!track->locked && ImGui::SmallButton(cyui::trLabel("×").c_str()))
                 removed = clip->id;
             ImGui::PopID();
         }
@@ -429,7 +429,7 @@ void Editor::anglesPanel() {
         ImGui::End();
         return;
     }
-    ImGui::Checkbox("Audio Follows Angle", &angleSound);
+    ImGui::Checkbox(cyui::trLabel("Audio Follows Angle").c_str(), &angleSound);
     tooltip("Split and enable each take's linked audio with its video");
     int chosen = 0;
     float cell = std::max(80.f, (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2);
@@ -467,6 +467,50 @@ void Editor::anglesPanel() {
 
 namespace sf {
 using namespace style;
+void Editor::loadSoundOutput() {
+    if (audioDeviceRead || !panelSuffix.empty())
+        return;
+    audioDeviceRead = true;
+    std::string text;
+    Json saved;
+    if (sx::ReadTextFile(sx::Narrow((root / "audio-output.json").wstring()), text) && Json::Parse(text, saved))
+        AudioOutput::chosenDevice() = saved["device"].S();
+}
+void Editor::soundOutputMenu() {
+    auto file = root / "audio-output.json";
+    if (!ImGui::BeginMenu(cyui::trLabel("Sound Output").c_str()))
+        return;
+    auto choose = [&](const std::string &name) {
+        AudioOutput::chosenDevice() = name;
+        if (s.playing)
+            audio.start(s.time); // reopened on the new device at once
+        if (!panelSuffix.empty() || !ImGui::GetIO().IniFilename)
+            return;
+        try {
+            AtomicFile output(sx::Narrow(file.wstring()));
+            {
+                Json saved = Json::Object();
+                saved["device"] = name;
+                std::ofstream stream(output.path(), std::ios::binary);
+                stream << saved.Dump(2);
+            }
+            output.commit();
+        } catch (const std::exception &) {
+            // The choice still applies for this session.
+        }
+    };
+    auto &chosen = AudioOutput::chosenDevice();
+    if (ImGui::MenuItem(cyui::trLabel("Windows Default Device").c_str(), nullptr, chosen.empty()))
+        choose({});
+    ImGui::Separator();
+    for (auto &name : AudioOutput::devices())
+        if (!name.empty() && ImGui::MenuItem(name.c_str(), nullptr, name == chosen))
+            choose(name);
+    ImGui::Separator();
+    ImGui::TextDisabled(cyui::tr("48 kHz stereo; virtual devices and an audio interface").c_str());
+    ImGui::TextDisabled(cyui::tr("held by ASIO at another rate stay silent").c_str());
+    ImGui::EndMenu();
+}
 void Editor::saveKeymap() {
     // Written like the panel settings: not by previews or tests without an ini file.
     if (!panelSuffix.empty() || !ImGui::GetIO().IniFilename)
@@ -514,14 +558,14 @@ void Editor::shortcutsPanel() {
     }
     if (!panels["Keyboard Shortcuts"] || !beginPanel("Keyboard Shortcuts"))
         return;
-    if (ImGui::Button("Restore Default Shortcuts")) {
+    if (ImGui::Button(cyui::trLabel("Restore Default Shortcuts").c_str())) {
         keymap.reset();
         keymapCapture.clear();
         saveKeymap();
     }
     tooltip("ShaderixFrame's Default Shortcuts");
     ImGui::SameLine();
-    ImGui::TextDisabled("Click a shortcut, then press the new key (Esc: cancel)");
+    ImGui::TextDisabled(cyui::tr("Click a shortcut, then press the new key (Esc: cancel)").c_str());
     std::string group;
     if (ImGui::BeginTable("shortcutList", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY)) {
         ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthStretch);
@@ -545,7 +589,7 @@ void Editor::shortcutsPanel() {
                     std::string names;
                     for (auto &other : clashes)
                         names += "\n" + keymap.get(other).label;
-                    ImGui::SetTooltip("Same Shortcut as:%s", names.c_str());
+                    ImGui::SetTooltip(cyui::tr("Same Shortcut as:%s").c_str(), names.c_str());
                 }
             }
             ImGui::TableNextColumn();

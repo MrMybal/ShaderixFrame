@@ -138,11 +138,19 @@ class AudioOutput {
     double origin = 0;
     uint64_t queued = 0;
     bool running = false;
+    std::string failure; // why the last start or write could not reach the sound device
+    void close();
 
   public:
     cydaw::engine::AudioAnalysisFrame analysis;
     ~AudioOutput();
     bool available();
+    // Empty while the sound device plays; otherwise the reason it is silent.
+    const std::string &problem() const { return failure; }
+    // Output devices by name; an empty choice is the Windows default device. Shared by every output
+    // and applied at the next start.
+    static std::vector<std::string> devices();
+    static std::string &chosenDevice();
     void start(double time);
     void stop();
     void pump(const Project &p, MediaCache &media);

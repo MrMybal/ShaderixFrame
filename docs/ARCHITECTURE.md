@@ -19,8 +19,9 @@ de document/fermeture. Il nécessite un dossier accessible et ne remplace pas le
 
 ## Interface et médias
 
-Win32, ImGui docking et Direct3D 11 ; thème Shaderixel adapté et timeline inspirée
-de CyDAW v2. WIC lit les images ; Media Foundation décode vidéos BGRA et audio
+Win32, une seule instance ImGui docking et Direct3D 11 ; composants modulaires CyUI
+verrouillés et timeline vidéo spécifique inspirée de CyDAW v2. Voir
+[CYUI_MIGRATION.md](CYUI_MIGRATION.md) pour les modules et limites du contrat. WIC lit les images ; Media Foundation décode vidéos BGRA et audio
 float stéréo 48 kHz. L'aperçu conserve le ratio et plafonne à 1280×720. `--warp` ou
 `SF_FORCE_WARP=1` force D3D11 logiciel pour les essais.
 
@@ -118,7 +119,14 @@ comme les .cube 3D. PNG/TIFF/EXR préservent les pixels de précision disponible
 
 ## Audio et adaptateur CyDAW v2
 
-Les 15 DSP, buffers, analyses et types de graphes sont copiés de CyDAW v2. Le routage
+Les 50 inserts stéréo de CyDAW (bibliothèque `cydaw_effects` : EffectProcessors, ProEffects,
+AmpEffects, MixEffects, SuiteEffects, HaloReverb, Voice/Pitch/Space/Rhythm/Motion/Resonance/
+UtilityEffects ; PrismSynth et KickSynth ne servent qu'aux valeurs par défaut des paramètres),
+buffers, analyses et types de graphes sont copiés de CyDAW v2. Les conteneurs, effets MIDI et
+modulateurs ne sont pas proposés (`audioInsert`) ; leur fabrique est remplacée par
+`src/adapters/CyDawUnavailable.cpp`. `tools/sync_upstream.py --only` met à jour ces fichiers sans
+toucher au protocole du worker VST3 ni aux sources v2. La chaîne directe fait glisser les valeurs
+comme l'AudioRenderPlan, et la latence des appareils à look-ahead est compensée. Le routage
 du mixeur utilise des ports stéréo validés, un tri de dépendances et le refus des
 cycles (même avec sends désactivés). Son graphe global est une vue du mixeur ;
 les piles acceptent en plus un graphe DSP JSON schema 2 éditable/importable :

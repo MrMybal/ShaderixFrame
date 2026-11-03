@@ -25,10 +25,16 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=ROOT / 'dist') as tempor
     for folder in ('shaders', 'plugins', 'examples', 'docs','sdk'):
         shutil.copytree(ROOT / folder, package / folder,
                         ignore=shutil.ignore_patterns('VALIDATION_*.md', '__pycache__', '*.pyc', '.env', '*.log'))
-    for name in ('README.md', 'LICENSE', 'NOTICE.md', 'upstream.lock.json', 'openfx.lock.json', 'release-worker.lock.json'):
+    for name in ('README.md', 'LICENSE', 'NOTICE.md', 'upstream.lock.json', 'openfx.lock.json', 'release-worker.lock.json', 'cyui.lock.json'):
         shutil.copy2(ROOT / name, package)
     shutil.copy2(ROOT / 'vendor/cydaw2/LICENSE', package / 'CYDAW-LICENSE.txt')
     shutil.copy2(ROOT / 'vendor/imgui/LICENSE.txt', package / 'IMGUI-LICENSE.txt')
+    for notice in ('LICENSE', 'THIRD_PARTY_NOTICES.md', 'third_party/texteditor/LICENSE',
+                   'third_party/lexilla/License.txt', 'third_party/scintilla/License.txt',
+                   'third_party/SciTE-Properties-License.txt'):
+        target = package / 'licenses/cyui' / notice
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / 'vendor/cyui' / notice, target)
     shutil.copy2(ROOT / 'vendor/juce-license/LICENSE.md', package / 'JUCE-LICENSE.md')
     shutil.copy2(ROOT / 'vendor/openfx/LICENSE.md', package / 'OPENFX-LICENSE.txt')
     shutil.copytree(ROOT / 'vendor/openfx/include', package / 'sdk/openfx')

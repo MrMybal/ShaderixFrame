@@ -148,6 +148,8 @@ static std::string actionLabel(const std::string &name) {
         {"set_parameter", "Parameter"},
         {"set_keyframe", "Point d'animation"},
         {"add_effect", "Add effect"},
+        {"set_track_graph", "Track effect graph"},
+        {"add_track_effect", "Add track effect"},
         {"add_audio_effect", "Add audio effect"},
         {"set_effect", "Effect Settings"},
         {"remove_effect", "Remove effect"},
@@ -224,6 +226,16 @@ Json Protocol::tools() const {
         schema({}));
     add("set_layer_graph", "Replace the composition graph; Shaderixel validation, undo and HDR rendering",
         schema({{"graph", "object"}}, {"graph"}));
+    add("get_track_graph",
+        "Effect graph of a video track (its clips composited, then its effect nodes, before blending with the "
+        "tracks below); returns graph and explicit (false: no track effects yet)",
+        schema({{"track", "integer"}}, {"track"}));
+    add("set_track_graph",
+        "Replace a video track's effect graph (same schema as the layer graph; surfaces: the track or tracks below "
+        "it); graph null removes the track effects",
+        schema({{"track", "integer"}, {"graph", "object"}}, {"track"}));
+    add("add_track_effect", "Append a library effect to the end of a video track's effect chain; returns node",
+        schema({{"track", "integer"}, {"id", "string"}}, {"track", "id"}));
     add("set_layer_parameter", "Base value of a composition node parameter",
         schema({{"node", "integer"}, {"key", "string"}, {"value", "number"}}, {"node", "key", "value"}));
     add("set_layer_keyframe", "Animate the blending graph in sequence time",
@@ -308,8 +320,14 @@ Json Protocol::tools() const {
         schema({}));
     add("add_track", "Add a video or audio track",
         schema({{"kind", "string"}, {"name", "string"}}, {"kind"}));
-    add("set_track", "Rename a track; set its 0xRRGGBB color, height, mute, solo and lock",
+    add("set_track",
+        "Rename a track; set its 0xRRGGBB color, height, mute, solo and lock; for a video track its blending "
+        "over the tracks below: blend (0-26 or a mode name such as Multiply, Screen, Overlay), opacity 0-1, "
+        "blend_effect (a library blend effect id, empty to go back to the mode)",
         schema({{"track", "integer"},
+                {"blend", "string"},
+                {"opacity", "number"},
+                {"blend_effect", "string"},
                 {"name", "string"},
                 {"color", "integer"},
                 {"enabled", "boolean"},
@@ -1034,6 +1052,34 @@ Json Protocol::execute(const std::string &name, const Json &a) {
             decodeLayerGraph(a["graph"], p);
             p.layerGraph = a["graph"];
             changed = true;
+        } else if (name == "get_track_graph" || name == "set_track_graph" || name == "add_track_effect") {
+            auto *t = p.findTrack(a["track"].U());
+            if (!t || t->kind != TrackKind::Video)
+                throw std::runtime_error("Video track not found");
+            if (name == "get_track_graph") {
+                result["graph"] = t->graph.IsNull() ? defaultTrackGraph(p, t->id) : t->graph;
+                result["explicit"] = !t->graph.IsNull();
+                return result;
+            }
+            if (name == "set_track_graph") {
+                if (!a["graph"].IsNull())
+                    decodeTrackGraph(a["graph"], p, t->id);
+                t->graph = a["graph"];
+            } else {
+                auto id = a["id"].S();
+                auto def = std::find_if(s.renderer.library.definitions.begin(), s.renderer.library.definitions.end(),
+                                        [&](auto &d) { return d.id == id; });
+                if (def == s.renderer.library.definitions.end() || def->kind != "effect" || def->generator)
+                    throw std::runtime_error("Unknown video effect: " + id);
+                auto effect = s.renderer.library.instantiate(id);
+                if (effect.id != "grading")
+                    effect.code = def->code;
+                auto graph = t->graph.IsNull() ? defaultTrackGraph(p, t->id) : t->graph;
+                result["node"] = appendTrackEffect(graph, effect, def->name);
+                decodeTrackGraph(graph, p, t->id);
+                t->graph = graph;
+            }
+            changed = true;
         } else if (name == "set_layer_parameter" || name == "set_layer_keyframe") {
             if (p.layerGraph.IsNull())
                 p.layerGraph = defaultLayerGraph(p);
@@ -1303,6 +1349,36 @@ Json Protocol::execute(const std::string &name, const Json &a) {
             }
             if (a.Has("color"))
                 t->color = a["color"].U();
+            if ((a.Has("blend") || a.Has("opacity") || a.Has("blend_effect")) && t->kind != TrackKind::Video)
+                throw std::runtime_error("Only a video track has a blend mode");
+            if (a.Has("blend")) {
+                int mode = -1;
+                if (a["blend"].GetType() == Json::Type::Number)
+                    mode = a["blend"].I();
+                else
+                    for (int m = 0; m < int(sx::BlendMode::Count); ++m)
+                        if (a["blend"].S() == sx::BlendModeName(sx::BlendMode(m)))
+                            mode = m;
+                if (mode < 0 || mode >= int(sx::BlendMode::Count))
+                    throw std::runtime_error("Unknown blend mode");
+                t->blend = mode;
+                t->blendEffect = Effect{.id = {}};
+            }
+            if (a.Has("opacity"))
+                t->opacity = std::clamp(a["opacity"].F(), 0.f, 1.f);
+            if (a.Has("blend_effect")) {
+                auto id = a["blend_effect"].S();
+                if (id.empty())
+                    t->blendEffect = Effect{.id = {}};
+                else {
+                    auto *def = s.renderer.library.find(id);
+                    if (!def || def->kind != "effect" || def->inputs < 2)
+                        throw std::runtime_error("Not a blend effect: " + id);
+                    t->blendEffect = s.renderer.library.instantiate(id);
+                    t->blendEffect.code = def->code;
+                    t->blend = 0;
+                }
+            }
             if (a.Has("height"))
                 t->height = a["height"].F();
             if (a.Has("muted"))
@@ -3021,7 +3097,7 @@ Json Protocol::execute(const std::string &name, const Json &a) {
                 result["effects"].Push(e);
             }
             for (auto &d : cydaw::engine::effectCatalogue)
-                if (!d.convertsChannels()) {
+                if (audioInsert(d)) {
                     Json e = Json::Object();
                     e["id"] = "cydaw." + std::string(d.typeKey);
                     e["name"] = std::string(d.displayName);

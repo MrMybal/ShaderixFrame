@@ -2,7 +2,9 @@
 // toolbar, navigator band, timecode ruler with markers and work area, resizable track headers,
 // per-track automation lanes and custom scrollbars. Time is in seconds, snapped to video frames.
 #include "ui/Editor.h"
-#include "adapters/CyDawWidgets.h"
+#include "adapters/CyDawParameters.h"
+#include <cyui/modules/Audio.h>
+#include "ui/MixerStrip.h"
 #include "ui/FrameStyle.h"
 #include "ui/Theme.h"
 #include <cmath>
@@ -215,7 +217,7 @@ void Editor::effectMenu(Id clipId) {
     };
     if (audio) {
         for (auto &d : cydaw::engine::effectCatalogue)
-            if (!d.convertsChannels() && matches(std::string(d.displayName), "CyDAW"))
+            if (audioInsert(d) && matches(std::string(d.displayName), "CyDAW"))
                 if (ImGui::MenuItem(std::string(d.displayName).c_str()))
                     add("cydaw." + std::string(d.typeKey));
         return;
@@ -225,7 +227,7 @@ void Editor::effectMenu(Id clipId) {
         if (d.kind == "effect" && !d.generator && matches(d.name, d.category))
             categories[d.category.empty() ? "Other" : d.category].push_back(&d);
     if (categories.empty())
-        ImGui::TextDisabled("No matching effects.");
+        ImGui::TextDisabled(cyui::tr("No matching effects.").c_str());
     // A search lists the results flat; otherwise one submenu per category.
     for (auto &[category, list] : categories) {
         bool open = !query.empty() || ImGui::BeginMenu(category.c_str());
@@ -307,7 +309,7 @@ void Editor::crossfadeAtPlayhead() {
 }
 // Durations offered to open the sequence at a point, on every track.
 void Editor::insertGapMenu(double at) {
-    if (!ImGui::BeginMenu("Insert Gap"))
+    if (!ImGui::BeginMenu(cyui::trLabel("Insert Gap").c_str()))
         return;
     double frame = 1. / s.project.fps;
     for (auto [label, length] : {std::pair{"1 image", frame}, {"1 second", 1.}, {"2 seconds", 2.},
@@ -466,22 +468,22 @@ void Editor::timelineToolbar() {
     if (iconButton(icon::add, "Add Track or Clip"))
         ImGui::OpenPopup("timelineAdd");
     if (ImGui::BeginPopup("timelineAdd")) {
-        if (ImGui::MenuItem("Video Track")) {
+        if (ImGui::MenuItem(cyui::trLabel("Video Track").c_str())) {
             Json a = Json::Object();
             a["kind"] = "video";
             action("add_track", a);
         }
-        if (ImGui::MenuItem("Audio Track")) {
+        if (ImGui::MenuItem(cyui::trLabel("Audio Track").c_str())) {
             Json a = Json::Object();
             a["kind"] = "audio";
             action("add_track", a);
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("HLSL Generator"))
+        if (ImGui::MenuItem(cyui::trLabel("HLSL Generator").c_str()))
             action("add_generator");
-        if (ImGui::MenuItem("Title / Text"))
+        if (ImGui::MenuItem(cyui::trLabel("Title / Text").c_str()))
             action("add_title");
-        if (ImGui::MenuItem("Lower Third...")) {
+        if (ImGui::MenuItem(cyui::trLabel("Lower Third...").c_str())) {
             lowerStart = s.time;
             openLowerThird = true;
         }
@@ -567,7 +569,7 @@ void Editor::timelineToolbar() {
     ImGui::EndDisabled();
     ImGui::SameLine(0, 6);
     ImGui::AlignTextToFramePadding();
-    ImGui::TextDisabled("%zu clip%s", s.selection.size(), s.selection.size() > 1 ? "s" : "");
+    ImGui::TextDisabled(cyui::tr("%zu clip%s").c_str(), s.selection.size(), s.selection.size() > 1 ? "s" : "");
     toolbarSeparator();
     if (iconButton(icon::tag, "Add Marker at Playhead [M]")) {
         Json a = Json::Object();
@@ -588,12 +590,12 @@ void Editor::timelineToolbar() {
     if (iconButton(icon::view, "View: rows, thumbnails, waveforms, groups, lanes and heights"))
         ImGui::OpenPopup("timelineView");
     if (ImGui::BeginPopup("timelineView")) {
-        ImGui::SeparatorText("Show");
-        ImGui::Checkbox("FRAME Row (Final Render)", &showFilmstrip);
-        ImGui::Checkbox("Video Clip Thumbnails", &showClipThumbnails);
-        ImGui::Checkbox("Waveforms", &showWaveforms);
-        ImGui::Checkbox("Clip Keyframes", &showKeyframes);
-        ImGui::SeparatorText("Tracks");
+        ImGui::SeparatorText(cyui::tr("Show").c_str());
+        ImGui::Checkbox(cyui::trLabel("FRAME Row (Final Render)").c_str(), &showFilmstrip);
+        ImGui::Checkbox(cyui::trLabel("Video Clip Thumbnails").c_str(), &showClipThumbnails);
+        ImGui::Checkbox(cyui::trLabel("Waveforms").c_str(), &showWaveforms);
+        ImGui::Checkbox(cyui::trLabel("Clip Keyframes").c_str(), &showKeyframes);
+        ImGui::SeparatorText(cyui::tr("Tracks").c_str());
         const std::pair<const char *, float> heights[] = {{"Compact", .6f}, {"Normal", 1.f}, {"Large", 1.6f}};
         for (auto [label, value] : heights) {
             if (ImGui::RadioButton(label, std::abs(laneZoom - value) < 1e-3f))
@@ -609,15 +611,15 @@ void Editor::timelineToolbar() {
             s.dirty = true;
         };
         ImGui::BeginDisabled(s.project.groups.empty());
-        if (ImGui::Button("Collapse groups"))
+        if (ImGui::Button(cyui::trLabel("Collapse groups").c_str()))
             foldAll(true);
         ImGui::SameLine();
-        if (ImGui::Button("Expand Groups"))
+        if (ImGui::Button(cyui::trLabel("Expand Groups").c_str()))
             foldAll(false);
         ImGui::EndDisabled();
         bool anyLane = std::any_of(lanes.begin(), lanes.end(), [](auto &entry) { return entry.second.visible; });
         ImGui::BeginDisabled(!anyLane);
-        if (ImGui::Button("Hide All Automation Lanes"))
+        if (ImGui::Button(cyui::trLabel("Hide All Automation Lanes").c_str()))
             for (auto &[track, lane] : lanes)
                 lane.visible = false;
         ImGui::EndDisabled();
@@ -630,11 +632,11 @@ void Editor::timelineToolbar() {
     if (iconButton(icon::more, "Advanced Editing: Numeric Trims, Crossfade, Range Removal"))
         ImGui::OpenPopup("Advanced Editing");
     if (ImGui::BeginPopup("Advanced Editing")) {
-        ImGui::TextUnformatted("Trim Selected Clip");
-        ImGui::InputFloat("Duration Change (s)", &trimDelta, .1f, 1.f);
-        ImGui::Checkbox("Adjust Source In", &leftTrim);
+        ImGui::TextUnformatted(cyui::tr("Trim Selected Clip").c_str());
+        ImGui::InputFloat(cyui::trLabel("Duration Change (s)").c_str(), &trimDelta, .1f, 1.f);
+        ImGui::Checkbox(cyui::trLabel("Adjust Source In").c_str(), &leftTrim);
         ImGui::BeginDisabled(!s.selected);
-        if (ImGui::Button("Ripple Trim")) {
+        if (ImGui::Button(cyui::trLabel("Ripple Trim").c_str())) {
             auto args = clipArgs(s.selected);
             args["delta"] = trimDelta;
             args["left"] = leftTrim;
@@ -648,14 +650,14 @@ void Editor::timelineToolbar() {
                     break;
                 }
         ImGui::BeginDisabled(!next);
-        if (ImGui::Button("Roll Trim with Next Clip")) {
+        if (ImGui::Button(cyui::trLabel("Roll Trim with Next Clip").c_str())) {
             auto args = clipArgs(s.selected);
             args["next"] = next;
             args["delta"] = trimDelta;
             action("roll_trim", args);
         }
-        ImGui::InputFloat("Overlap (s)", &transitionOverlap, .1f, 1.f);
-        if (ImGui::Button("Create Crossfade with Next Clip")) {
+        ImGui::InputFloat(cyui::trLabel("Overlap (s)").c_str(), &transitionOverlap, .1f, 1.f);
+        if (ImGui::Button(cyui::trLabel("Create Crossfade with Next Clip").c_str())) {
             auto args = clipArgs(s.selected);
             args["next"] = next;
             args["duration"] = transitionOverlap;
@@ -663,14 +665,14 @@ void Editor::timelineToolbar() {
         }
         ImGui::EndDisabled();
         ImGui::EndDisabled();
-        ImGui::SeparatorText("Remove Range on All Tracks");
-        if (s.project.hasWorkArea() && ImGui::SmallButton("Use Work Area")) {
+        ImGui::SeparatorText(cyui::tr("Remove Range on All Tracks").c_str());
+        if (s.project.hasWorkArea() && ImGui::SmallButton(cyui::trLabel("Use Work Area").c_str())) {
             rangeBegin = s.project.workIn;
             rangeEnd = s.project.workOut;
         }
-        ImGui::InputDouble("Start", &rangeBegin, .1, 1, "%.3f");
-        ImGui::InputDouble("End", &rangeEnd, .1, 1, "%.3f");
-        if (ImGui::Button("Split and Close Gap")) {
+        ImGui::InputDouble(cyui::trLabel("Start").c_str(), &rangeBegin, .1, 1, "%.3f");
+        ImGui::InputDouble(cyui::trLabel("End").c_str(), &rangeEnd, .1, 1, "%.3f");
+        if (ImGui::Button(cyui::trLabel("Split and Close Gap").c_str())) {
             Json args = Json::Object();
             args["begin"] = rangeBegin;
             args["end"] = rangeEnd;
@@ -744,7 +746,7 @@ void Editor::timelineToolbar() {
                 }
                 ImGui::TextUnformatted(keys);
                 ImGui::TableNextColumn();
-                ImGui::TextDisabled("%s", meaning);
+                ImGui::TextDisabled(cyui::tr("%s").c_str(), meaning);
             }
             ImGui::EndTable();
         }
@@ -752,7 +754,7 @@ void Editor::timelineToolbar() {
         bool custom = keymap.json().Size() > 0;
         ImGui::TextDisabled(custom ? "Default shortcuts: some have been customized." : "Default shortcuts.");
         ImGui::SameLine();
-        if (ImGui::SmallButton("Personnaliser…")) {
+        if (ImGui::SmallButton(cyui::trLabel("Personnaliser…").c_str())) {
             panels["Keyboard Shortcuts"] = true;
             ImGui::SetWindowFocus("Keyboard Shortcuts");
             ImGui::CloseCurrentPopup();
@@ -771,7 +773,7 @@ void Editor::timelineToolbar() {
         ImGui::AlignTextToFramePadding();
         ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(s.playing ? play : accent), "%s", code.c_str());
         ImGui::SameLine(0, 6);
-        ImGui::TextDisabled("%s", total.c_str());
+        ImGui::TextDisabled(cyui::tr("%s").c_str(), total.c_str());
     } else
         ImGui::NewLine();
     ImGui::PopFont();
@@ -1130,11 +1132,19 @@ void Editor::timeline() {
     if (ImGui::BeginDragDropTarget()) {
         int target = trackAt(mouse.y);
         if (auto *payload = ImGui::AcceptDragDropPayload("MEDIA")) {
-            Json a = Json::Object();
-            a["path"] = static_cast<const char *>(payload->Data);
-            a["start"] = snapToGrid(rawTime(mouse.x), true);
-            a["proxy"] = autoProxies;
-            action("import_media", a);
+            // A medium still loading is placed once known, so its sound track is not forgotten.
+            std::string path = static_cast<const char *>(payload->Data);
+            double at = snapToGrid(rawTime(mouse.x), true);
+            if (s.media.get(path).loading) {
+                pendingImports.push_back({path, at});
+                say("Placed as soon as the medium has loaded");
+            } else {
+                Json a = Json::Object();
+                a["path"] = path;
+                a["start"] = at;
+                a["proxy"] = autoProxies;
+                action("import_media", a);
+            }
         }
         if (auto *payload = ImGui::AcceptDragDropPayload("EFFECT")) {
             if (target >= 0)
@@ -1288,7 +1298,7 @@ void Editor::timeline() {
                               : hit.zone >= 2                 ? ImGuiMouseCursor_Hand
                                                               : ImGuiMouseCursor_Arrow);
     if (hit.clip && tool == Tool::Select && hit.zone == 4)
-        ImGui::SetTooltip("Keyframe - %s\nClick: move playhead here", timecode(hit.key, p.fps).c_str());
+        ImGui::SetTooltip(cyui::tr("Keyframe - %s\nClick: move playhead here").c_str(), timecode(hit.key, p.fps).c_str());
     if (hovered && tool == Tool::Hand)
         ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
     bool clickedClip = false;
@@ -1500,9 +1510,9 @@ void Editor::timeline() {
             if (!nudging) {
                 auto *moved = p.findClip(timelineDragging);
                 if (moved && timelineTrim == 0)
-                    ImGui::SetTooltip("%s  (%+.2f s)", timecode(moved->start, p.fps).c_str(), moved->start - timelineStart);
+                    ImGui::SetTooltip(cyui::tr("%s  (%+.2f s)").c_str(), timecode(moved->start, p.fps).c_str(), moved->start - timelineStart);
                 else if (moved)
-                    ImGui::SetTooltip("Duration %s - %s -> %s", timecode(moved->duration, p.fps).c_str(),
+                    ImGui::SetTooltip(cyui::tr("Duration %s - %s -> %s").c_str(), timecode(moved->duration, p.fps).c_str(),
                                       timecode(moved->start, p.fps).c_str(),
                                       timecode(moved->start + moved->duration, p.fps).c_str());
             }
@@ -1559,7 +1569,7 @@ void Editor::timeline() {
             } catch (const std::exception &e) {
                 error = e.what();
             }
-            ImGui::SetTooltip("Source : %s", timecode(in, p.fps).c_str());
+            ImGui::SetTooltip(cyui::tr("Source : %s").c_str(), timecode(in, p.fps).c_str());
         }
         if (!ImGui::IsMouseDown(0)) {
             if (gestureBefore && p.json().Dump(0) != gestureBefore->json().Dump(0))
@@ -1588,7 +1598,7 @@ void Editor::timeline() {
                 } catch (const std::exception &e) {
                     error = e.what();
                 }
-                ImGui::SetTooltip("Ripple %+.2f s", change);
+                ImGui::SetTooltip(cyui::tr("Ripple %+.2f s").c_str(), change);
             }
         }
         if (!ImGui::IsMouseDown(0)) {
@@ -1615,7 +1625,7 @@ void Editor::timeline() {
                 s.dirty = true;
                 s.media.resetAudio();
             }
-            ImGui::SetTooltip("%s fade: %.2f s", gestureIndex == 0 ? "incoming" : "outgoing", value);
+            ImGui::SetTooltip(cyui::tr("%s fade: %.2f s").c_str(), gestureIndex == 0 ? "incoming" : "outgoing", value);
         }
         if (!ImGui::IsMouseDown(0)) {
             gestureBefore.reset();
@@ -1636,7 +1646,7 @@ void Editor::timeline() {
                 s.dirty = true;
                 s.renderer.clearHistory();
             }
-            ImGui::SetTooltip("Transition %s", timecode(length, p.fps).c_str());
+            ImGui::SetTooltip(cyui::tr("Transition %s").c_str(), timecode(length, p.fps).c_str());
         }
         if (!ImGui::IsMouseDown(0)) {
             gestureBefore.reset();
@@ -1664,7 +1674,7 @@ void Editor::timeline() {
                     s.dirty = true;
                     s.media.resetAudio();
                 }
-                ImGui::SetTooltip("Clip Gain %+.1f dB - double-click: 0 dB", gain.value);
+                ImGui::SetTooltip(cyui::tr("Clip Gain %+.1f dB - double-click: 0 dB").c_str(), gain.value);
             }
         }
         if (!ImGui::IsMouseDown(0)) {
@@ -1681,7 +1691,7 @@ void Editor::timeline() {
                 changed.validate();
                 p = std::move(changed);
                 error.clear();
-                ImGui::SetTooltip("%s", tip.c_str());
+                ImGui::SetTooltip(cyui::tr("%s").c_str(), tip.c_str());
             } catch (const std::exception &e) {
                 error = e.what();
             }
@@ -1785,7 +1795,7 @@ void Editor::timeline() {
                 } catch (const std::exception &e) {
                     error = e.what();
                 }
-                ImGui::SetTooltip("Roll %+.2f s - cut at %s", change, timecode(cut, p.fps).c_str());
+                ImGui::SetTooltip(cyui::tr("Roll %+.2f s - cut at %s").c_str(), change, timecode(cut, p.fps).c_str());
             }
         }
         ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
@@ -1939,7 +1949,7 @@ void Editor::timeline() {
                         k.value = value;
                         s.dirty = true;
                     }
-                    ImGui::SetTooltip("%s  ·  %.3f", timecode(k.time, p.fps).c_str(), k.value);
+                    ImGui::SetTooltip(cyui::tr("%s  ·  %.3f").c_str(), timecode(k.time, p.fps).c_str(), k.value);
                 }
             if (!ImGui::IsMouseDown(0)) {
                 gestureBefore.reset();
@@ -2627,7 +2637,39 @@ void Editor::timeline() {
             if (toggle("C", target == t.id, accent, toggleSize,
                        "Target Track for Source Monitor Edits (Insert / Overwrite)"))
                 target = target == t.id ? 0 : t.id;
+            if (t.kind == TrackKind::Video) {
+                // FX: the track's effect graph; lit when it has one. Effects dropped on it join the chain.
+                ImGui::SameLine(0, 3);
+                if (toggle("FX", !t.graph.IsNull(), accent, {26, 17},
+                           "Track effects graph (drop an effect here to add it to the whole track)"))
+                    openTrackGraph(t.id);
+                if (ImGui::BeginDragDropTarget()) {
+                    if (auto *payload = ImGui::AcceptDragDropPayload("EFFECT")) {
+                        Json a = Json::Object();
+                        a["track"] = t.id;
+                        a["id"] = static_cast<const char *>(payload->Data);
+                        if (action("add_track_effect", a))
+                            openTrackGraph(t.id);
+                    }
+                    // A blend card dropped here sets how the track lies over the tracks below.
+                    if (auto *payload = ImGui::AcceptDragDropPayload("BLEND")) {
+                        Json a = Json::Object();
+                        a["track"] = t.id;
+                        a["blend_effect"] = static_cast<const char *>(payload->Data);
+                        action("set_track", a);
+                    }
+                    ImGui::EndDragDropTarget();
+                }
+            }
             if (t.kind == TrackKind::Audio) {
+                // FX: the track's insert chain in the Track Effects panel; lit when it has devices.
+                ImGui::SameLine(0, 3);
+                auto fxTip = std::to_string(t.mix.effects.size()) + " insert effect(s): open Track Effects";
+                if (toggle("FX", !t.mix.effects.empty(), style::audio, {26, 17}, fxTip.c_str())) {
+                    mixScope = "track";
+                    mixTarget = t.id;
+                    openPanel("Track Effects");
+                }
                 ImGui::SameLine(0, 6);
                 auto at = ImGui::GetCursorScreenPos();
                 float width = left - at.x - 10;
@@ -2651,13 +2693,13 @@ void Editor::timeline() {
                             const char *format, int flags) {
                 float &value = gain ? t.gain : t.pan;
                 float old = value;
-                cydaw::v2::ui::KnobStyle look;
+                cyui::KnobStyle look;
                 look.diameter = 22;
                 look.label = label;
                 look.format = format;
                 look.flags = flags;
                 look.colour = style::audio;
-                bool changed = cydaw::v2::ui::knob(id, &value, low, high, fallback, look);
+                bool changed = cyui::knob(id, &value, low, high, fallback, look);
                 headerWheelHovered = headerWheelHovered || ImGui::IsItemHovered();
                 bool started = ImGui::IsItemActivated() || (changed && !ImGui::IsItemActive());
                 if (started && !t.locked) {
@@ -2675,7 +2717,7 @@ void Editor::timeline() {
             ImGui::SetCursorScreenPos({origin.x + 12 + indent, top + 50});
             knob("##gain", true, -60, 12, 0, "Gain", "%.1f dB", 0);
             ImGui::SameLine(0, 10);
-            knob("##pan", false, -1, 1, 0, "Pan", "%.2f", cydaw::v2::ui::knobBipolar);
+            knob("##pan", false, -1, 1, 0, "Pan", "%.2f", cyui::knobBipolar);
         }
         if (lanes.count(t.id) && lanes[t.id].visible) {
             float bandTop = top + rows[i];
@@ -2848,13 +2890,13 @@ void Editor::timeline() {
         if (y < lanesBottom - 20) {
             ImGui::SetCursorScreenPos({origin.x + 10, y});
             ImGui::PushStyleColor(ImGuiCol_Button, bg2);
-            if (ImGui::SmallButton("+ Video")) {
+            if (ImGui::SmallButton(cyui::trLabel("+ Video").c_str())) {
                 Json a = Json::Object();
                 a["kind"] = "video";
                 action("add_track", a);
             }
             ImGui::SameLine(0, 4);
-            if (ImGui::SmallButton("+ Audio")) {
+            if (ImGui::SmallButton(cyui::trLabel("+ Audio").c_str())) {
                 Json a = Json::Object();
                 a["kind"] = "audio";
                 action("add_track", a);
@@ -2955,7 +2997,7 @@ void Editor::timeline() {
             ImGui::PopStyleColor(2);
             ImGui::PopID();
         }
-        if (ImGui::MenuItem("Default Color", nullptr, current == 0))
+        if (ImGui::MenuItem(cyui::trLabel("Default Color").c_str(), nullptr, current == 0))
             apply(0u);
     };
     if (openLowerThird) {
@@ -2963,14 +3005,14 @@ void Editor::timeline() {
         openLowerThird = false;
     }
     if (ImGui::BeginPopup("lowerThird")) {
-        ImGui::TextDisabled("Lower Third at %s", timecode(lowerStart, p.fps).c_str());
+        ImGui::TextDisabled(cyui::tr("Lower Third at %s").c_str(), timecode(lowerStart, p.fps).c_str());
         if (ImGui::IsWindowAppearing())
             ImGui::SetKeyboardFocusHere();
         ImGui::SetNextItemWidth(240);
         bool entered = ImGui::InputTextWithHint("Name", "First Last", &lowerName, ImGuiInputTextFlags_EnterReturnsTrue);
         ImGui::SetNextItemWidth(240);
         entered |= ImGui::InputTextWithHint("Function", "facultative", &lowerRole, ImGuiInputTextFlags_EnterReturnsTrue);
-        if ((ImGui::Button("Add") || entered) && !lowerName.empty()) {
+        if ((ImGui::Button(cyui::trLabel("Add").c_str()) || entered) && !lowerName.empty()) {
             Json a = Json::Object();
             a["start"] = lowerStart;
             a["name"] = lowerName;
@@ -2979,7 +3021,7 @@ void Editor::timeline() {
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Undo"))
+        if (ImGui::Button(cyui::trLabel("Undo").c_str()))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
@@ -2989,23 +3031,23 @@ void Editor::timeline() {
     }
     if (ImGui::BeginPopup("pasteAttributes")) {
         if (!clipboard.empty())
-            ImGui::TextDisabled("From '%s' to %zu clip(s)", clipboard.front().second.name.c_str(), s.selection.size());
-        ImGui::Checkbox("Effects", &attributeChoice.effects);
+            ImGui::TextDisabled(cyui::tr("From '%s' to %zu clip(s)").c_str(), clipboard.front().second.name.c_str(), s.selection.size());
+        ImGui::Checkbox(cyui::trLabel("Effects").c_str(), &attributeChoice.effects);
         ImGui::SameLine();
         ImGui::BeginDisabled(!attributeChoice.effects);
-        ImGui::Checkbox("replace existing ones", &attributeChoice.replaceEffects);
+        ImGui::Checkbox(cyui::trLabel("replace existing ones").c_str(), &attributeChoice.replaceEffects);
         ImGui::EndDisabled();
-        ImGui::Checkbox("Transforms (Position, Scale, Rotation)", &attributeChoice.transform);
-        ImGui::Checkbox("Opacity", &attributeChoice.opacity);
-        ImGui::Checkbox("Audio (Gain, Pan)", &attributeChoice.audio);
-        ImGui::Checkbox("Mask", &attributeChoice.mask);
-        ImGui::TextDisabled("Animation follows each clip's start.");
-        if (ImGui::Button("Paste")) {
+        ImGui::Checkbox(cyui::trLabel("Transforms (Position, Scale, Rotation)").c_str(), &attributeChoice.transform);
+        ImGui::Checkbox(cyui::trLabel("Opacity").c_str(), &attributeChoice.opacity);
+        ImGui::Checkbox(cyui::trLabel("Audio (Gain, Pan)").c_str(), &attributeChoice.audio);
+        ImGui::Checkbox(cyui::trLabel("Mask").c_str(), &attributeChoice.mask);
+        ImGui::TextDisabled(cyui::tr("Animation follows each clip's start.").c_str());
+        if (ImGui::Button(cyui::trLabel("Paste").c_str())) {
             pasteAttributes();
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Undo"))
+        if (ImGui::Button(cyui::trLabel("Undo").c_str()))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
@@ -3014,13 +3056,13 @@ void Editor::timeline() {
         openRename = false;
     }
     if (ImGui::BeginPopup("clipRename")) {
-        ImGui::TextDisabled("%zu clip%s, in timeline order", s.selection.size(),
+        ImGui::TextDisabled(cyui::tr("%zu clip%s, in timeline order").c_str(), s.selection.size(),
                             s.selection.size() > 1 ? "s" : "");
         ImGui::SetNextItemWidth(220);
-        ImGui::InputText("Template", &renamePattern);
+        ImGui::InputText(cyui::trLabel("Template").c_str(), &renamePattern);
         ImGui::SetNextItemWidth(220);
-        ImGui::InputInt("First Number", &renameFirst);
-        ImGui::TextDisabled("#: number (##: 01, 02...) / {nom}: current name");
+        ImGui::InputInt(cyui::trLabel("First Number").c_str(), &renameFirst);
+        ImGui::TextDisabled(cyui::tr("#: number (##: 01, 02...) / {nom}: current name").c_str());
         // Preview of the first names on a copy of the document.
         try {
             auto preview = p;
@@ -3028,11 +3070,11 @@ void Editor::timeline() {
             for (size_t i = 0; i < names.size() && i < 3; ++i)
                 ImGui::BulletText("%s", names[i].c_str());
             if (names.size() > 3)
-                ImGui::TextDisabled("…");
+                ImGui::TextDisabled(cyui::tr("…").c_str());
         } catch (const std::exception &failure) {
             ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(warn), "%s", failure.what());
         }
-        if (ImGui::Button("Rename")) {
+        if (ImGui::Button(cyui::trLabel("Rename").c_str())) {
             auto a = selectionArgs();
             a["pattern"] = renamePattern;
             a["first"] = renameFirst;
@@ -3040,7 +3082,7 @@ void Editor::timeline() {
             ImGui::CloseCurrentPopup();
         }
         ImGui::SameLine();
-        if (ImGui::Button("Undo"))
+        if (ImGui::Button(cyui::trLabel("Undo").c_str()))
             ImGui::CloseCurrentPopup();
         ImGui::EndPopup();
     }
@@ -3073,7 +3115,7 @@ void Editor::timeline() {
             }
         std::sort(found.begin(), found.end(), [](auto &a, auto &b) { return a.first->start < b.first->start; });
         Id chosen = enter && !found.empty() ? found.front().first->id : 0;
-        ImGui::TextDisabled("%zu clip%s", found.size(), found.size() > 1 ? "s" : "");
+        ImGui::TextDisabled(cyui::tr("%zu clip%s").c_str(), found.size(), found.size() > 1 ? "s" : "");
         float rowHeight = ImGui::GetTextLineHeightWithSpacing();
         ImGui::BeginChild("findResults", {420, std::clamp(rowHeight * float(found.size()) + 8, rowHeight + 8, 320.f)});
         for (auto &[c, t] : found) {
@@ -3082,7 +3124,7 @@ void Editor::timeline() {
             if (ImGui::Selectable(label.c_str(), c->id == s.selected))
                 chosen = c->id;
             ImGui::SameLine(300);
-            ImGui::TextDisabled("%s", t->name.c_str());
+            ImGui::TextDisabled(cyui::tr("%s").c_str(), t->name.c_str());
             ImGui::PopID();
         }
         ImGui::EndChild();
@@ -3103,16 +3145,16 @@ void Editor::timeline() {
         // The source span stays: a faster clip is shorter, a slower one longer.
         if (auto *c = p.findClip(speedClip)) {
             double span = c->duration * c->speed;
-            ImGui::TextDisabled("%s", c->name.c_str());
+            ImGui::TextDisabled(cyui::tr("%s").c_str(), c->name.c_str());
             ImGui::SetNextItemWidth(140);
-            if (ImGui::DragFloat("Speed", &speedDraft, .5f, 5, 1600, "%.1f %%", ImGuiSliderFlags_AlwaysClamp))
+            if (ImGui::DragFloat(cyui::trLabel("Speed").c_str(), &speedDraft, .5f, 5, 1600, "%.1f %%", ImGuiSliderFlags_AlwaysClamp))
                 durationDraft = span / (speedDraft / 100);
             ImGui::SetNextItemWidth(140);
             double low = 1. / p.fps, high = span / .05;
-            if (ImGui::DragScalar("Duration", ImGuiDataType_Double, &durationDraft, .01f, &low, &high, "%.3f s",
+            if (ImGui::DragScalar(cyui::trLabel("Duration").c_str(), ImGuiDataType_Double, &durationDraft, .01f, &low, &high, "%.3f s",
                                   ImGuiSliderFlags_AlwaysClamp))
                 speedDraft = float(std::clamp(span / durationDraft * 100, 5., 1600.));
-            ImGui::TextDisabled("%s  ·  source %s", timecode(durationDraft, p.fps).c_str(), timecode(span, p.fps).c_str());
+            ImGui::TextDisabled(cyui::tr("%s  ·  source %s").c_str(), timecode(durationDraft, p.fps).c_str(), timecode(span, p.fps).c_str());
             for (float preset : {25.f, 50.f, 100.f, 200.f, 400.f}) {
                 char label[16];
                 snprintf(label, sizeof(label), "%.0f %%", preset);
@@ -3126,7 +3168,7 @@ void Editor::timeline() {
                 ImGui::SameLine();
             }
             ImGui::NewLine();
-            bool apply = ImGui::Button("Apply");
+            bool apply = ImGui::Button(cyui::trLabel("Apply").c_str());
             speedButtons[1] = (ImGui::GetItemRectMin() + ImGui::GetItemRectMax()) * .5f;
             if (apply) {
                 auto a = clipArgs(c->id);
@@ -3136,7 +3178,7 @@ void Editor::timeline() {
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
-            if (ImGui::Button("Undo"))
+            if (ImGui::Button(cyui::trLabel("Undo").c_str()))
                 ImGui::CloseCurrentPopup();
         } else
             ImGui::CloseCurrentPopup();
@@ -3145,7 +3187,7 @@ void Editor::timeline() {
     if (ImGui::BeginPopup("effectStack")) {
         if (auto *c = p.findClip(effectClip)) {
             bool locked = p.owner(c->id)->locked;
-            ImGui::TextDisabled("Effects  ·  %s", c->name.c_str());
+            ImGui::TextDisabled(cyui::tr("Effects  ·  %s").c_str(), c->name.c_str());
             ImGui::Separator();
             for (int i = 0; i < int(c->effects.size()); ++i) {
                 ImGui::PushID(i);
@@ -3181,16 +3223,16 @@ void Editor::timeline() {
                     action("set_effect", a);
                 };
                 ImGui::BeginDisabled(i == 0);
-                if (ImGui::SmallButton("\xee\x9c\x8e"))
+                if (ImGui::SmallButton(cyui::trLabel("\xee\x9c\x8e").c_str()))
                     move(i - 1);
                 ImGui::EndDisabled();
                 ImGui::SameLine(0, 2);
                 ImGui::BeginDisabled(i + 1 >= int(c->effects.size()));
-                if (ImGui::SmallButton("\xee\x9c\x8d"))
+                if (ImGui::SmallButton(cyui::trLabel("\xee\x9c\x8d").c_str()))
                     move(i + 1);
                 ImGui::EndDisabled();
                 ImGui::SameLine(0, 2);
-                bool remove = ImGui::SmallButton("\xee\x9c\x91");
+                bool remove = ImGui::SmallButton(cyui::trLabel("\xee\x9c\x91").c_str());
                 style::tooltip("Remove Effect and Its Animation");
                 ImGui::EndDisabled();
                 ImGui::PopID();
@@ -3203,7 +3245,7 @@ void Editor::timeline() {
             }
             if (!locked) {
                 ImGui::Separator();
-                if (ImGui::BeginMenu("Add Effect")) {
+                if (ImGui::BeginMenu(cyui::trLabel("Add Effect").c_str())) {
                     effectMenu(c->id);
                     ImGui::EndMenu();
                 }
@@ -3225,53 +3267,53 @@ void Editor::timeline() {
         if (auto *c = p.findClip(s.selected))
             for (auto member : p.linked(c->id))
                 sounding = sounding || (p.owner(member)->kind == TrackKind::Audio && !p.findClip(member)->source.empty());
-        if (ImGui::MenuItem("Split at Playhead", "S")) {
+        if (ImGui::MenuItem(cyui::trLabel("Split at Playhead").c_str(), "S")) {
             auto a = selectionArgs();
             a["time"] = s.time;
             action("split_clips", a);
         }
-        if (ImGui::MenuItem("Split Here"))
+        if (ImGui::MenuItem(cyui::trLabel("Split Here").c_str()))
             blade(s.selected, contextTime);
-        if (ImGui::MenuItem("Copy", "Ctrl+C"))
+        if (ImGui::MenuItem(cyui::trLabel("Copy").c_str(), "Ctrl+C"))
             copyClips(false);
-        if (ImGui::MenuItem("Cut", "Ctrl+X"))
+        if (ImGui::MenuItem(cyui::trLabel("Cut").c_str(), "Ctrl+X"))
             copyClips(true);
-        if (ImGui::MenuItem("Paste at Playhead", "Ctrl+V", false, !clipboard.empty()))
+        if (ImGui::MenuItem(cyui::trLabel("Paste at Playhead").c_str(), "Ctrl+V", false, !clipboard.empty()))
             pasteClips(s.time);
-        if (ImGui::MenuItem("Duplicate", "Ctrl+D"))
+        if (ImGui::MenuItem(cyui::trLabel("Duplicate").c_str(), "Ctrl+D"))
             action("duplicate_clips", selectionArgs());
         if (auto *c = p.findClip(s.selected); c && ImGui::MenuItem(c->enabled ? "Disable" : "Enable", "Shift+E"))
             toggleClipsEnabled();
         ImGui::Separator();
-        if (ImGui::BeginMenu("Edit")) {
-            if (ImGui::MenuItem("Trim Start to Playhead", "Q"))
+        if (ImGui::BeginMenu(cyui::trLabel("Edit").c_str())) {
+            if (ImGui::MenuItem(cyui::trLabel("Trim Start to Playhead").c_str(), "Q"))
                 trimToPlayhead(true, true);
-            if (ImGui::MenuItem("Trim End to Playhead", "W"))
+            if (ImGui::MenuItem(cyui::trLabel("Trim End to Playhead").c_str(), "W"))
                 trimToPlayhead(false, true);
-            if (ImGui::MenuItem("Split at Markers", nullptr, false, !p.markers.empty()))
+            if (ImGui::MenuItem(cyui::trLabel("Split at Markers").c_str(), nullptr, false, !p.markers.empty()))
                 action("split_at_markers", selectionArgs());
-            if (ImGui::MenuItem("Align to Markers", nullptr, false, !p.markers.empty()))
+            if (ImGui::MenuItem(cyui::trLabel("Align to Markers").c_str(), nullptr, false, !p.markers.empty()))
                 action("fit_to_markers", selectionArgs());
             if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
                 ImGui::SetTooltip("Arrange selected clips from one marker to the next (use audio "
                                   "transient markers to edit to the beat)");
-            if (ImGui::MenuItem("Crossfade at Nearest Cut", "Shift+D"))
+            if (ImGui::MenuItem(cyui::trLabel("Crossfade at Nearest Cut").c_str(), "Shift+D"))
                 crossfadeAtPlayhead();
             if (auto *c = p.findClip(s.selected); c && p.owner(c->id)->kind == TrackKind::Video &&
-                                                      ImGui::BeginMenu("Freeze Frame at Playhead")) {
+                                                      ImGui::BeginMenu(cyui::trLabel("Freeze Frame at Playhead").c_str())) {
                 for (auto [label, length] : {std::pair{"1 second", 1.}, {"2 Seconds (Shift+F)", 2.}, {"5 seconds", 5.}})
                     if (ImGui::MenuItem(label))
                         freezeAtPlayhead(length);
                 ImGui::EndMenu();
             }
-            if (auto *c = p.findClip(s.selected); c && ImGui::MenuItem("Speed / Duration...", "Ctrl+R")) {
+            if (auto *c = p.findClip(s.selected); c && ImGui::MenuItem(cyui::trLabel("Speed / Duration...").c_str(), "Ctrl+R")) {
                 speedClip = c->id;
                 speedDraft = float(c->speed * 100);
                 durationDraft = c->duration;
                 openSpeed = true;
             }
             if (auto *c = p.findClip(s.selected); c && !c->source.empty() && !c->hold &&
-                                                      ImGui::MenuItem("Play Backward", nullptr, c->reverse)) {
+                                                      ImGui::MenuItem(cyui::trLabel("Play Backward").c_str(), nullptr, c->reverse)) {
                 auto a = clipArgs(c->id);
                 a["reverse"] = !c->reverse;
                 action("set_clip", a);
@@ -3284,7 +3326,7 @@ void Editor::timeline() {
                     if (id != s.selected && std::find(group.begin(), group.end(), id) == group.end())
                         syncReference = id;
             }
-            if (syncReference && ImGui::MenuItem("Synchronize to Other Clip by Audio")) {
+            if (syncReference && ImGui::MenuItem(cyui::trLabel("Synchronize to Other Clip by Audio").c_str())) {
                 auto a = clipArgs(s.selected);
                 a["reference"] = syncReference;
                 if (action("sync_audio", a)) {
@@ -3297,7 +3339,7 @@ void Editor::timeline() {
             ImGui::EndMenu();
         }
         if (auto *c = p.findClip(s.selected); c && p.owner(c->id)->kind == TrackKind::Video &&
-                                                  ImGui::BeginMenu("Image")) {
+                                                  ImGui::BeginMenu(cyui::trLabel("Image").c_str())) {
             // Two video clips selected: the right-clicked one takes the other's colours.
             Id colourReference = 0;
             for (auto id : s.selection)
@@ -3305,7 +3347,7 @@ void Editor::timeline() {
                                                   !other->title.enabled && !other->adjustment)
                     colourReference = id;
             if (colourReference && !c->title.enabled && !c->adjustment &&
-                ImGui::MenuItem("Match Color to Other Clip")) {
+                ImGui::MenuItem(cyui::trLabel("Match Color to Other Clip").c_str())) {
                 auto a = clipArgs(c->id);
                 a["reference"] = colourReference;
                 a["time"] = s.time >= c->start && s.time < c->start + c->duration ? s.time : c->start + c->duration / 2;
@@ -3323,14 +3365,14 @@ void Editor::timeline() {
                                                   !other->title.enabled && !other->adjustment)
                     ++others;
             if (others >= 2 && !c->title.enabled && !c->adjustment &&
-                ImGui::MenuItem("Match Entire Selection to This Clip")) {
+                ImGui::MenuItem(cyui::trLabel("Match Entire Selection to This Clip").c_str())) {
                 auto a = selectionArgs();
                 a["reference"] = c->id;
                 if (action("match_grade", a))
                     say(std::to_string(actionResult["clips"].I()) + " clip(s) matched to ' " + c->name + " »" +
                         (actionResult["clamped"].B() ? "  - difference too large for some clips" : ""));
             }
-            if (!c->title.enabled && !c->adjustment && ImGui::MenuItem("Auto Color (White Balance, Exposure)")) {
+            if (!c->title.enabled && !c->adjustment && ImGui::MenuItem(cyui::trLabel("Auto Color (White Balance, Exposure)").c_str())) {
                 if (action("auto_grade", clipArgs(c->id))) {
                     char text[120];
                     snprintf(text, sizeof(text), "Auto color: exposure %+.2f EV, white balance adjusted",
@@ -3339,13 +3381,13 @@ void Editor::timeline() {
                 }
             }
             if (auto *c = p.findClip(s.selected); c && p.owner(c->id)->kind == TrackKind::Video && !c->source.empty() &&
-                                                      ImGui::BeginMenu("Framing")) {
-                if (ImGui::MenuItem("Fill Frame (Crop)")) {
+                                                      ImGui::BeginMenu(cyui::trLabel("Framing").c_str())) {
+                if (ImGui::MenuItem(cyui::trLabel("Fill Frame (Crop)").c_str())) {
                     auto a = selectionArgs();
                     a["mode"] = "fill";
                     action("fit_clips", a);
                 }
-                if (ImGui::MenuItem("Fit Frame (Letterbox)")) {
+                if (ImGui::MenuItem(cyui::trLabel("Fit Frame (Letterbox)").c_str())) {
                     auto a = selectionArgs();
                     a["mode"] = "fit";
                     action("fit_clips", a);
@@ -3353,7 +3395,7 @@ void Editor::timeline() {
                 ImGui::EndMenu();
             }
             if (auto *c = p.findClip(s.selected); c && p.owner(c->id)->kind == TrackKind::Video &&
-                                                      ImGui::BeginMenu("Keying")) {
+                                                      ImGui::BeginMenu(cyui::trLabel("Keying").c_str())) {
                 for (auto [label, position] :
                      {std::pair{"Top Left", "top_left"}, {"Top Right", "top_right"},
                       {"Bottom Left", "bottom_left"}, {"Bottom Right", "bottom_right"}, {"Center", "center"},
@@ -3383,7 +3425,7 @@ void Editor::timeline() {
                     }
                 ImGui::EndMenu();
             }
-            if (auto *c = p.findClip(s.selected); c && c->title.enabled && ImGui::BeginMenu("Title Style")) {
+            if (auto *c = p.findClip(s.selected); c && c->title.enabled && ImGui::BeginMenu(cyui::trLabel("Title Style").c_str())) {
                 for (auto [label, style] : {std::pair{"Classic (white, outline, shadow)", "classic"},
                                             {"Yellow subtitle", "subtitle_yellow"}, {"Black Box", "boxed"},
                                             {"Cinema (Serif, Soft Shadow)", "cinema"}, {"Neon (Cyan Glow)", "neon"}})
@@ -3395,7 +3437,7 @@ void Editor::timeline() {
                 ImGui::EndMenu();
             }
             if (auto *c = p.findClip(s.selected); c && p.owner(c->id)->kind == TrackKind::Video && !c->source.empty() &&
-                                                      !c->title.enabled && ImGui::BeginMenu("Detect Scenes")) {
+                                                      !c->title.enabled && ImGui::BeginMenu(cyui::trLabel("Detect Scenes").c_str())) {
                 for (auto [label, split] : {std::pair{"Split at Each Scene Change", true}, {"Marker at Each Scene", false}})
                     if (ImGui::MenuItem(label, nullptr, false, !analysis))
                         detectScenesInBackground(c->id, split);
@@ -3403,26 +3445,26 @@ void Editor::timeline() {
             }
             ImGui::EndMenu();
         }
-        if (sounding && ImGui::BeginMenu("Audio")) {
+        if (sounding && ImGui::BeginMenu(cyui::trLabel("Audio").c_str())) {
             if (auto *c = p.findClip(s.selected); c && p.owner(c->id)->kind == TrackKind::Audio &&
-                                                      ImGui::MenuItem("Normalize (-1 dBFS)"))
+                                                      ImGui::MenuItem(cyui::trLabel("Normalize (-1 dBFS)").c_str()))
                 action("normalize_audio", selectionArgs());
             if (auto *c = p.findClip(s.selected); c && p.owner(c->id)->kind == TrackKind::Audio &&
-                                                      ImGui::MenuItem("Enhance Voice (Gate, EQ, Compressor)")) {
+                                                      ImGui::MenuItem(cyui::trLabel("Enhance Voice (Gate, EQ, Compressor)").c_str())) {
                 if (action("enhance_voice", selectionArgs()))
                     say("Voice enhanced on " + std::to_string(actionResult["clips"].I()) + " clip(s): effects added");
             }
-            if (sounding && ImGui::BeginMenu("Remove Silence")) {
+            if (sounding && ImGui::BeginMenu(cyui::trLabel("Remove Silence").c_str())) {
                 for (auto [label, threshold, length] :
                      {std::tuple{"Prudent  ·  -45 dB, 0,8 s", -45., .8}, {"Normal  ·  -40 dB, 0,5 s", -40., .5},
                       {"Tight / -35 dB, 0.3 s", -35., .3}})
                     if (ImGui::MenuItem(label, nullptr, false, !analysis))
                         removeSilencesInBackground(s.selected, threshold, length);
-                ImGui::TextDisabled("Close the gaps across all tracks");
+                ImGui::TextDisabled(cyui::tr("Close the gaps across all tracks").c_str());
                 ImGui::EndMenu();
             }
             if (auto *c = p.findClip(s.selected); c && p.owner(c->id)->kind == TrackKind::Audio &&
-                                                      ImGui::BeginMenu("Transient Markers")) {
+                                                      ImGui::BeginMenu(cyui::trLabel("Transient Markers").c_str())) {
                 for (auto [label, sensitivity] :
                      {std::pair{"Few: strong transients", .2}, {"Normal", .5}, {"Many: every note", .85}})
                     if (ImGui::MenuItem(label)) {
@@ -3434,7 +3476,7 @@ void Editor::timeline() {
             }
             ImGui::EndMenu();
         }
-        if (auto *c = p.findClip(s.selected); c && ImGui::BeginMenu("Animation Preset")) {
+        if (auto *c = p.findClip(s.selected); c && ImGui::BeginMenu(cyui::trLabel("Animation Preset").c_str())) {
             bool video = p.owner(c->id)->kind == TrackKind::Video;
             auto preset = [&](const char *label, const char *id, bool enabled = true) {
                 if (ImGui::MenuItem(label, nullptr, false, enabled)) {
@@ -3459,16 +3501,16 @@ void Editor::timeline() {
             preset("Speed: Accelerate (100 -> 300%)", "ramp_up");
             preset("Speed: slow down (100 → 25 %)", "ramp_down");
             preset("Speed: Slow in Middle", "ramp_middle");
-            ImGui::TextDisabled("Edit Keyframes in Animation");
+            ImGui::TextDisabled(cyui::tr("Edit Keyframes in Animation").c_str());
             ImGui::EndMenu();
         }
-        if (auto *c = p.findClip(s.selected); c && ImGui::BeginMenu("Effects")) {
+        if (auto *c = p.findClip(s.selected); c && ImGui::BeginMenu(cyui::trLabel("Effects").c_str())) {
             if (!p.owner(c->id)->locked) {
-                if (ImGui::BeginMenu("Add Effect")) {
+                if (ImGui::BeginMenu(cyui::trLabel("Add Effect").c_str())) {
                     effectMenu(c->id);
                     ImGui::EndMenu();
                 }
-                if (!c->effects.empty() && ImGui::BeginMenu("Clip Effects")) {
+                if (!c->effects.empty() && ImGui::BeginMenu(cyui::trLabel("Clip Effects").c_str())) {
                     for (int i = 0; i < int(c->effects.size()); ++i) {
                         ImGui::PushID(i);
                         auto &effect = c->effects[i];
@@ -3484,14 +3526,14 @@ void Editor::timeline() {
                     ImGui::EndMenu();
                 }
             }
-            if (ImGui::MenuItem("Paste Attributes...", "Ctrl+Alt+V", false, !clipboard.empty()))
+            if (ImGui::MenuItem(cyui::trLabel("Paste Attributes...").c_str(), "Ctrl+Alt+V", false, !clipboard.empty()))
                 openAttributes = true;
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Clip")) {
-            if (ImGui::MenuItem("Batch Rename Selection..."))
+        if (ImGui::BeginMenu(cyui::trLabel("Clip").c_str())) {
+            if (ImGui::MenuItem(cyui::trLabel("Batch Rename Selection...").c_str()))
                 openRename = true;
-            if (auto *c = p.findClip(s.selected); c && ImGui::MenuItem("Select Same Color")) {
+            if (auto *c = p.findClip(s.selected); c && ImGui::MenuItem(cyui::trLabel("Select Same Color").c_str())) {
                 std::vector<Id> same;
                 for (auto &t : p.tracks)
                     for (auto &other : t.clips)
@@ -3500,13 +3542,13 @@ void Editor::timeline() {
                 s.setSelection(same);
             }
             if (auto *c = p.findClip(s.selected)) {
-                if (!c->source.empty() && ImGui::MenuItem("Match Frame in Source", "F"))
+                if (!c->source.empty() && ImGui::MenuItem(cyui::trLabel("Match Frame in Source").c_str(), "F"))
                     matchFrame();
-                if (p.owner(c->id)->kind == TrackKind::Video && ImGui::MenuItem("Edit Content"))
+                if (p.owner(c->id)->kind == TrackKind::Video && ImGui::MenuItem(cyui::trLabel("Edit Content").c_str()))
                     openClipEditor(c->id);
-                if (c->link && ImGui::MenuItem("Unlink Group"))
+                if (c->link && ImGui::MenuItem(cyui::trLabel("Unlink Group").c_str()))
                     action("unlink_clip", clipArgs(s.selected));
-                if (ImGui::BeginMenu("Link with...")) {
+                if (ImGui::BeginMenu(cyui::trLabel("Link with...").c_str())) {
                     Id other = 0;
                     for (auto &track : p.tracks)
                         for (auto &candidate : track.clips) {
@@ -3524,7 +3566,7 @@ void Editor::timeline() {
                     }
                     ImGui::EndMenu();
                 }
-                if (ImGui::BeginMenu("Color")) {
+                if (ImGui::BeginMenu(cyui::trLabel("Color").c_str())) {
                     colourMenu(c->color, [&](std::uint32_t colour) {
                         s.history.checkpoint(p, "Edit");
                         for (auto id : s.selection)
@@ -3546,15 +3588,15 @@ void Editor::timeline() {
                     a["end"] = end;
                     action("set_work_area", a);
                 }
-                if (ImGui::MenuItem("Zoom to Selection", "Z"))
+                if (ImGui::MenuItem(cyui::trLabel("Zoom to Selection").c_str(), "Z"))
                     fitSelection(clipMenuWidth);
             }
             ImGui::EndMenu();
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("Delete", "Delete"))
+        if (ImGui::MenuItem(cyui::trLabel("Delete").c_str(), "Delete"))
             action("delete_clips", selectionArgs());
-        if (ImGui::MenuItem("Delete and Close Gap", "Shift+Delete")) {
+        if (ImGui::MenuItem(cyui::trLabel("Delete and Close Gap").c_str(), "Shift+Delete")) {
             auto args = selectionArgs();
             args["ripple"] = true;
             action("delete_clips", args);
@@ -3563,14 +3605,14 @@ void Editor::timeline() {
     }
     if (ImGui::BeginPopup("trackContext")) {
         if (auto *t = p.findTrack(contextTrack)) {
-            ImGui::TextDisabled("%s", t->name.c_str());
+            ImGui::TextDisabled(cyui::tr("%s").c_str(), t->name.c_str());
             ImGui::Separator();
-            if (ImGui::MenuItem("Rename")) {
+            if (ImGui::MenuItem(cyui::trLabel("Rename").c_str())) {
                 renamingTrack = t->id;
                 renameDraft = t->name;
                 renameFocus = true;
             }
-            if (ImGui::BeginMenu("Color")) {
+            if (ImGui::BeginMenu(cyui::trLabel("Color").c_str())) {
                 colourMenu(t->color, [&](std::uint32_t colour) {
                     Json a = Json::Object();
                     a["track"] = contextTrack;
@@ -3579,20 +3621,75 @@ void Editor::timeline() {
                 });
                 ImGui::EndMenu();
             }
+            if (t->kind == TrackKind::Video) {
+                if (ImGui::MenuItem(cyui::trLabel("Track Effects Graph...").c_str()))
+                    openTrackGraph(t->id);
+                // How the track lies over the tracks below: Shaderixel's modes, library blends, opacity.
+                std::string current = t->blendEffect.id.empty()
+                                          ? sx::BlendModeName(sx::BlendMode(t->blend))
+                                          : (s.renderer.library.find(t->blendEffect.id)
+                                                 ? s.renderer.library.find(t->blendEffect.id)->name
+                                                 : t->blendEffect.id);
+                if (ImGui::BeginMenu(("Blend: " + current).c_str())) {
+                    for (int k = 0; k < sx::kBlendMenuCount; ++k) {
+                        int mode = sx::kBlendMenuOrder[k];
+                        if (mode < 0) {
+                            ImGui::Separator();
+                            continue;
+                        }
+                        if (ImGui::MenuItem(sx::BlendModeName(sx::BlendMode(mode)), nullptr,
+                                            t->blendEffect.id.empty() && t->blend == mode)) {
+                            Json a = Json::Object();
+                            a["track"] = contextTrack;
+                            a["blend"] = mode;
+                            action("set_track", a);
+                        }
+                    }
+                    ImGui::Separator();
+                    if (ImGui::BeginMenu(cyui::trLabel("Blend Effects").c_str())) {
+                        for (auto &d : s.renderer.library.definitions)
+                            if (d.kind == "effect" && d.code.find("//@blend") != std::string::npos &&
+                                ImGui::MenuItem(d.name.c_str(), nullptr, t->blendEffect.id == d.id)) {
+                                Json a = Json::Object();
+                                a["track"] = contextTrack;
+                                a["blend_effect"] = d.id;
+                                action("set_track", a);
+                            }
+                        ImGui::EndMenu();
+                    }
+                    ImGui::EndMenu();
+                }
+                if (trackOpacityFor != t->id) {
+                    trackOpacityFor = t->id;
+                    trackOpacityDraft = t->opacity * 100;
+                }
+                ImGui::SetNextItemWidth(160);
+                ImGui::SliderFloat(cyui::trLabel("Opacity").c_str(), &trackOpacityDraft, 0, 100, "%.0f %%");
+                if (ImGui::IsItemDeactivatedAfterEdit()) {
+                    Json a = Json::Object();
+                    a["track"] = contextTrack;
+                    a["opacity"] = trackOpacityDraft / 100;
+                    action("set_track", a);
+                }
+            } else if (ImGui::MenuItem(cyui::trLabel("Track Effects...").c_str())) {
+                mixScope = "track";
+                mixTarget = t->id;
+                openPanel("Track Effects");
+            }
             int index = int(t - p.tracks.data());
-            if (ImGui::MenuItem("Move Up", nullptr, false, index > 0)) {
+            if (ImGui::MenuItem(cyui::trLabel("Move Up").c_str(), nullptr, false, index > 0)) {
                 Json a = Json::Object();
                 a["track"] = contextTrack;
                 a["index"] = index - 1;
                 action("move_track", a);
             }
-            if (ImGui::MenuItem("Move Down", nullptr, false, index + 1 < int(p.tracks.size()))) {
+            if (ImGui::MenuItem(cyui::trLabel("Move Down").c_str(), nullptr, false, index + 1 < int(p.tracks.size()))) {
                 Json a = Json::Object();
                 a["track"] = contextTrack;
                 a["index"] = index + 1;
                 action("move_track", a);
             }
-            if (ImGui::BeginMenu("Height")) {
+            if (ImGui::BeginMenu(cyui::trLabel("Height").c_str())) {
                 const std::pair<const char *, float> sizes[] = {
                     {"Compact", 34.f}, {"Normal", 0.f}, {"Large", 120.f}, {"Extra Large", 200.f}};
                 for (auto [label, value] : sizes)
@@ -3605,16 +3702,16 @@ void Editor::timeline() {
                 ImGui::EndMenu();
             }
             auto &lane = lanes[t->id];
-            if (ImGui::MenuItem("Lane d'automation", nullptr, lane.visible))
+            if (ImGui::MenuItem(cyui::trLabel("Lane d'automation").c_str(), nullptr, lane.visible))
                 lane.visible = !lane.visible;
             ImGui::Separator();
-            if (ImGui::MenuItem("New Group with This Track", "Ctrl+G")) {
+            if (ImGui::MenuItem(cyui::trLabel("New Group with This Track").c_str(), "Ctrl+G")) {
                 Json a = Json::Object();
                 a["tracks"] = Json::Array();
                 a["tracks"].Push(t->id);
                 action("group_tracks", a);
             }
-            if (!p.groups.empty() && ImGui::BeginMenu("Add to Group")) {
+            if (!p.groups.empty() && ImGui::BeginMenu(cyui::trLabel("Add to Group").c_str())) {
                 for (auto &group : p.groups) {
                     ImGui::PushID(int(group.id));
                     if (ImGui::MenuItem(group.name.c_str(), nullptr, t->group == group.id)) {
@@ -3627,31 +3724,31 @@ void Editor::timeline() {
                 }
                 ImGui::EndMenu();
             }
-            if (t && t->group && ImGui::MenuItem("Remove from Group")) {
+            if (t && t->group && ImGui::MenuItem(cyui::trLabel("Remove from Group").c_str())) {
                 Json a = Json::Object();
                 a["track"] = contextTrack;
                 a["group"] = 0;
                 action("set_track", a);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("New Video Track")) {
+            if (ImGui::MenuItem(cyui::trLabel("New Video Track").c_str())) {
                 Json a = Json::Object();
                 a["kind"] = "video";
                 action("add_track", a);
             }
-            if (ImGui::MenuItem("New Audio Track")) {
+            if (ImGui::MenuItem(cyui::trLabel("New Audio Track").c_str())) {
                 Json a = Json::Object();
                 a["kind"] = "audio";
                 action("add_track", a);
             }
             ImGui::Separator();
-            if (t->kind == TrackKind::Audio && ImGui::MenuItem("Anti-click Fades at Cuts")) {
+            if (t->kind == TrackKind::Audio && ImGui::MenuItem(cyui::trLabel("Anti-click Fades at Cuts").c_str())) {
                 Json a = Json::Object();
                 a["track"] = t->id;
                 if (action("audio_cut_fades", a))
                     say(std::to_string(actionResult["cuts"].I()) + " cut(s) smoothed");
             }
-            if (t->kind == TrackKind::Audio && ImGui::BeginMenu("Duck under Voice")) {
+            if (t->kind == TrackKind::Audio && ImGui::BeginMenu(cyui::trLabel("Duck under Voice").c_str())) {
                 for (auto &other : p.tracks)
                     if (other.kind == TrackKind::Audio && other.id != t->id) {
                         auto label = "Voice: " + other.name + "##duck" + std::to_string(other.id);
@@ -3665,12 +3762,12 @@ void Editor::timeline() {
                     }
                 ImGui::EndMenu();
             }
-            if (ImGui::MenuItem("Duplicate Track")) {
+            if (ImGui::MenuItem(cyui::trLabel("Duplicate Track").c_str())) {
                 Json a = Json::Object();
                 a["track"] = contextTrack;
                 action("duplicate_track", a);
             }
-            if (ImGui::MenuItem("Delete Track", nullptr, false, !t->locked)) {
+            if (ImGui::MenuItem(cyui::trLabel("Delete Track").c_str(), nullptr, false, !t->locked)) {
                 Json a = Json::Object();
                 a["track"] = contextTrack;
                 action("remove_track", a);
@@ -3680,14 +3777,14 @@ void Editor::timeline() {
     }
     if (ImGui::BeginPopup("groupContext")) {
         if (auto *group = p.findGroup(contextGroup)) {
-            ImGui::TextDisabled("%s", group->name.c_str());
+            ImGui::TextDisabled(cyui::tr("%s").c_str(), group->name.c_str());
             ImGui::Separator();
-            if (ImGui::MenuItem("Rename")) {
+            if (ImGui::MenuItem(cyui::trLabel("Rename").c_str())) {
                 renamingGroup = group->id;
                 renameDraft = group->name;
                 renameFocus = true;
             }
-            if (ImGui::BeginMenu("Color")) {
+            if (ImGui::BeginMenu(cyui::trLabel("Color").c_str())) {
                 colourMenu(group->color, [&](std::uint32_t colour) {
                     Json a = Json::Object();
                     a["group"] = contextGroup;
@@ -3703,7 +3800,7 @@ void Editor::timeline() {
                 action("set_group", a);
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Ungroup")) {
+            if (ImGui::MenuItem(cyui::trLabel("Ungroup").c_str())) {
                 Json a = Json::Object();
                 a["group"] = contextGroup;
                 action("ungroup", a);
@@ -3713,9 +3810,9 @@ void Editor::timeline() {
     }
     if (ImGui::BeginPopup("laneContext")) {
         if (auto *t = p.findTrack(contextTrack)) {
-            ImGui::TextDisabled("%s  ·  %s", t->name.c_str(), timecode(contextTime, p.fps).c_str());
+            ImGui::TextDisabled(cyui::tr("%s  ·  %s").c_str(), t->name.c_str(), timecode(contextTime, p.fps).c_str());
             ImGui::Separator();
-            if (ImGui::MenuItem("Move Playhead Here"))
+            if (ImGui::MenuItem(cyui::trLabel("Move Playhead Here").c_str()))
                 s.time = std::clamp(contextTime, 0., p.duration);
             // The empty span around the click on this track, closed on every track when they are all empty there.
             double gapBegin = 0, gapEnd = -1;
@@ -3730,46 +3827,46 @@ void Editor::timeline() {
                     action("remove_range", a);
                 }
                 if (!clear && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                    ImGui::SetTooltip("Other tracks contain clips in this gap");
+                    ImGui::SetTooltip(cyui::tr("Other tracks contain clips in this gap").c_str());
             }
-            if (ImGui::MenuItem("Close All Track Gaps", nullptr, false, !t->clips.empty() && !t->locked)) {
+            if (ImGui::MenuItem(cyui::trLabel("Close All Track Gaps").c_str(), nullptr, false, !t->clips.empty() && !t->locked)) {
                 Json a = Json::Object();
                 a["track"] = t->id;
                 action("close_gaps", a);
             }
-            if (ImGui::MenuItem("Paste Here", "Ctrl+V", false, !clipboard.empty()))
+            if (ImGui::MenuItem(cyui::trLabel("Paste Here").c_str(), "Ctrl+V", false, !clipboard.empty()))
                 pasteClips(contextTime);
             insertGapMenu(contextTime);
-            if (ImGui::MenuItem("Add Marker Here")) {
+            if (ImGui::MenuItem(cyui::trLabel("Add Marker Here").c_str())) {
                 Json a = Json::Object();
                 a["time"] = std::clamp(contextTime, 0., p.duration);
                 action("add_marker", a);
             }
             if (t->kind == TrackKind::Video) {
-                if (ImGui::MenuItem("Adjustment Layer Here")) {
+                if (ImGui::MenuItem(cyui::trLabel("Adjustment Layer Here").c_str())) {
                     Json a = Json::Object();
                     a["start"] = std::max(0., contextTime);
                     action("add_adjustment_layer", a);
                 }
-                if (ImGui::MenuItem("HLSL Generator"))
+                if (ImGui::MenuItem(cyui::trLabel("HLSL Generator").c_str()))
                     action("add_generator");
-                if (ImGui::MenuItem("Title / Text"))
+                if (ImGui::MenuItem(cyui::trLabel("Title / Text").c_str()))
                     action("add_title");
-                if (ImGui::MenuItem("Lower Third Here...")) {
+                if (ImGui::MenuItem(cyui::trLabel("Lower Third Here...").c_str())) {
                     lowerStart = std::max(0., contextTime);
                     openLowerThird = true;
                 }
             }
             auto &lane = lanes[t->id];
-            if (ImGui::MenuItem("Lane d'automation", nullptr, lane.visible))
+            if (ImGui::MenuItem(cyui::trLabel("Lane d'automation").c_str(), nullptr, lane.visible))
                 lane.visible = !lane.visible;
-            if (ImGui::MenuItem("Select All", "Ctrl+A"))
+            if (ImGui::MenuItem(cyui::trLabel("Select All").c_str(), "Ctrl+A"))
                 selectAll();
-            if (ImGui::MenuItem("Select Forward on All Tracks", "A"))
+            if (ImGui::MenuItem(cyui::trLabel("Select Forward on All Tracks").c_str(), "A"))
                 selectFrom(contextTime, true);
-            if (ImGui::MenuItem("Select Forward on This Track"))
+            if (ImGui::MenuItem(cyui::trLabel("Select Forward on This Track").c_str()))
                 selectFrom(contextTime, true, t->id);
-            if (ImGui::MenuItem("Select Backward", "Alt+A"))
+            if (ImGui::MenuItem(cyui::trLabel("Select Backward").c_str(), "Alt+A"))
                 selectFrom(contextTime, false);
         }
         ImGui::EndPopup();
@@ -3797,7 +3894,7 @@ void Editor::timeline() {
                             animated.insert(effect.id + "/" + key);
                     }
             }
-            ImGui::TextDisabled("Lane Parameter");
+            ImGui::TextDisabled(cyui::tr("Lane Parameter").c_str());
             for (auto &key : clipKeys) {
                 auto label = laneLabel(key, "") + (animated.count("/" + key) ? "  ●" : "");
                 if (ImGui::MenuItem(label.c_str(), nullptr, lane.effect.empty() && lane.key == key)) {
@@ -3806,7 +3903,7 @@ void Editor::timeline() {
                 }
             }
             if (!effectKeys.empty())
-                ImGui::SeparatorText("Effects");
+                ImGui::SeparatorText(cyui::tr("Effects").c_str());
             for (auto &[effect, keys] : effectKeys)
                 if (ImGui::BeginMenu(effect.c_str())) {
                     for (auto &key : keys) {
@@ -3819,22 +3916,22 @@ void Editor::timeline() {
                     ImGui::EndMenu();
                 }
             ImGui::Separator();
-            if (ImGui::MenuItem("Hide Lane"))
+            if (ImGui::MenuItem(cyui::trLabel("Hide Lane").c_str()))
                 lane.visible = false;
         }
         ImGui::EndPopup();
     }
     if (ImGui::BeginPopup("rulerContext")) {
-        ImGui::TextDisabled("%s", timecode(contextTime, p.fps).c_str());
+        ImGui::TextDisabled(cyui::tr("%s").c_str(), timecode(contextTime, p.fps).c_str());
         ImGui::Separator();
         if (auto *marker = p.findMarker(contextMarker)) {
-            if (ImGui::MenuItem("Rename Marker")) {
+            if (ImGui::MenuItem(cyui::trLabel("Rename Marker").c_str())) {
                 renamingMarker = marker->id;
                 renameDraft = marker->name;
                 renameFocus = true;
                 ImGui::CloseCurrentPopup();
             }
-            if (ImGui::BeginMenu("Marker Color")) {
+            if (ImGui::BeginMenu(cyui::trLabel("Marker Color").c_str())) {
                 colourMenu(marker->color, [&](std::uint32_t colour) {
                     Json a = Json::Object();
                     a["marker"] = contextMarker;
@@ -3844,13 +3941,13 @@ void Editor::timeline() {
                 ImGui::EndMenu();
             }
             // Regions: a marker with a length, set from the playhead or the work area.
-            if (ImGui::MenuItem("Region to Playhead", nullptr, false, s.time > marker->time + 1e-6)) {
+            if (ImGui::MenuItem(cyui::trLabel("Region to Playhead").c_str(), nullptr, false, s.time > marker->time + 1e-6)) {
                 Json a = Json::Object();
                 a["marker"] = contextMarker;
                 a["duration"] = s.time - marker->time;
                 action("set_marker", a);
             }
-            if (ImGui::MenuItem("Region over Work Area", nullptr, false, p.hasWorkArea())) {
+            if (ImGui::MenuItem(cyui::trLabel("Region over Work Area").c_str(), nullptr, false, p.hasWorkArea())) {
                 Json a = Json::Object();
                 a["marker"] = contextMarker;
                 a["time"] = p.workIn;
@@ -3858,71 +3955,71 @@ void Editor::timeline() {
                 action("set_marker", a);
             }
             if (marker->duration > 0) {
-                if (ImGui::MenuItem("Set Work Area to Region")) {
+                if (ImGui::MenuItem(cyui::trLabel("Set Work Area to Region").c_str())) {
                     Json a = Json::Object();
                     a["begin"] = marker->time;
                     a["end"] = std::min(marker->end(), p.duration);
                     action("set_work_area", a);
                 }
-                if (ImGui::MenuItem("Point Marker (No Duration)")) {
+                if (ImGui::MenuItem(cyui::trLabel("Point Marker (No Duration)").c_str())) {
                     Json a = Json::Object();
                     a["marker"] = contextMarker;
                     a["duration"] = 0;
                     action("set_marker", a);
                 }
             }
-            if (ImGui::MenuItem("Delete Marker")) {
+            if (ImGui::MenuItem(cyui::trLabel("Delete Marker").c_str())) {
                 Json a = Json::Object();
                 a["marker"] = contextMarker;
                 action("remove_marker", a);
             }
             ImGui::Separator();
         }
-        if (ImGui::MenuItem("Move Playhead Here"))
+        if (ImGui::MenuItem(cyui::trLabel("Move Playhead Here").c_str()))
             s.time = contextTime;
-        if (ImGui::MenuItem("Add Marker Here", "M")) {
+        if (ImGui::MenuItem(cyui::trLabel("Add Marker Here").c_str(), "M")) {
             Json a = Json::Object();
             a["time"] = contextTime;
             action("add_marker", a);
         }
-        if (ImGui::MenuItem("Add Region over Work Area", nullptr, false, p.hasWorkArea())) {
+        if (ImGui::MenuItem(cyui::trLabel("Add Region over Work Area").c_str(), nullptr, false, p.hasWorkArea())) {
             Json a = Json::Object();
             a["time"] = p.workIn;
             a["duration"] = p.workOut - p.workIn;
             a["name"] = "Region";
             action("add_marker", a);
         }
-        if (ImGui::MenuItem("Work Area In Here", "I")) {
+        if (ImGui::MenuItem(cyui::trLabel("Work Area In Here").c_str(), "I")) {
             Json a = Json::Object();
             a["begin"] = contextTime;
             a["end"] = p.hasWorkArea() && p.workOut > contextTime ? p.workOut : p.duration;
             action("set_work_area", a);
         }
-        if (ImGui::MenuItem("Work Area Out Here", "O")) {
+        if (ImGui::MenuItem(cyui::trLabel("Work Area Out Here").c_str(), "O")) {
             Json a = Json::Object();
             a["begin"] = p.hasWorkArea() && p.workIn < contextTime ? p.workIn : 0;
             a["end"] = contextTime;
             action("set_work_area", a);
         }
-        if (ImGui::MenuItem("Lift Work Area (Leave Gap)", nullptr, false, p.hasWorkArea())) {
+        if (ImGui::MenuItem(cyui::trLabel("Lift Work Area (Leave Gap)").c_str(), nullptr, false, p.hasWorkArea())) {
             Json a = Json::Object();
             a["begin"] = p.workIn;
             a["end"] = p.workOut;
             action("lift_range", a);
         }
-        if (ImGui::MenuItem("Extract Work Area (Close Gap)", nullptr, false, p.hasWorkArea())) {
+        if (ImGui::MenuItem(cyui::trLabel("Extract Work Area (Close Gap)").c_str(), nullptr, false, p.hasWorkArea())) {
             Json a = Json::Object();
             a["begin"] = p.workIn;
             a["end"] = p.workOut;
             action("remove_range", a);
         }
-        if (ImGui::MenuItem("Clear Work Area", nullptr, false, p.hasWorkArea())) {
+        if (ImGui::MenuItem(cyui::trLabel("Clear Work Area").c_str(), nullptr, false, p.hasWorkArea())) {
             Json a = Json::Object();
             a["begin"] = 0;
             a["end"] = 0;
             action("set_work_area", a);
         }
-        if (!p.markers.empty() && ImGui::BeginMenu("Go to Marker")) {
+        if (!p.markers.empty() && ImGui::BeginMenu(cyui::trLabel("Go to Marker").c_str())) {
             for (auto &marker : p.markers) {
                 ImGui::PushID(int(marker.id));
                 auto label = timecode(marker.time, p.fps) + "   " + marker.name;
@@ -3933,11 +4030,11 @@ void Editor::timeline() {
             ImGui::EndMenu();
         }
         insertGapMenu(s.time);
-        if (ImGui::MenuItem("Split All Tracks at Markers", nullptr, false, !p.markers.empty()))
+        if (ImGui::MenuItem(cyui::trLabel("Split All Tracks at Markers").c_str(), nullptr, false, !p.markers.empty()))
             action("split_at_markers");
-        if (ImGui::MenuItem("Marker List..."))
+        if (ImGui::MenuItem(cyui::trLabel("Marker List...").c_str()))
             openPanel("Markers");
-        if (ImGui::MenuItem("Loop Work Area", "L", loop))
+        if (ImGui::MenuItem(cyui::trLabel("Loop Work Area").c_str(), "L", loop))
             loop = !loop;
         ImGui::EndPopup();
     }

@@ -1,7 +1,13 @@
 #pragma once
 
+#include <cydaw/engine/Convolver.h>
+#include <cydaw/engine/KickSynth.h>
+#include <cydaw/engine/PrismSynth.h>
 #include <cydaw/engine/Sampler.h>
 #include <cydaw/engine/SoundModel.h>
+#include <cydaw/engine/DrumKit.h>
+#include <cydaw/engine/InstrumentContainers.h>
+#include <cydaw/engine/SynthFamily.h>
 #include <cydaw/engine/WavetableShape.h>
 
 #include <array>
@@ -87,8 +93,96 @@ enum class NativeDspNodeKind : std::uint8_t {
     monoToStereo,
     stereoToMono,
     // An analyser: the sound passes untouched, the display reads it.
-    spectrometer
+    spectrometer,
+    // The studio effects (ProEffectsDesign.h): a network reverb, a look-ahead
+    // limiter, four modulated filters.
+    reverbPro,
+    limiterPro,
+    filterPro,
+    ampSim,
+    cabSim,
+    micSim,
+    // The mixing effects (MixDesign.h): compression up and down on three
+    // bands, analog saturation, a tape echo.
+    pression,
+    fournaise,
+    echoBande,
+    // Four bands of dynamics, a resonance suppressor, a vintage colour, a
+    // loudness meter (the sound passes untouched).
+    multibandPro,
+    velours,
+    patine,
+    sonometre,
+    // The suites (SuiteDesign.h): a channel strip, a mastering chain.
+    tranche,
+    finition,
+    // A reverb of characters (HaloDesign.h).
+    halo,
+    // The effects added on 2026-10-14 (VoiceDesign.h, PitchDesign.h,
+    // SpaceDesign.h, RhythmDesign.h, MotionDesign.h, ResonanceDesign.h,
+    // UtilityDesign.h).
+    vocoder,
+    deEsser,
+    tuner,
+    harmonie,
+    justesse,
+    empreinte,
+    givre,
+    grains,
+    saccade,
+    boucleur,
+    pompe,
+    decaleur,
+    anneau,
+    rotor,
+    resonateurs,
+    corps,
+    peigne,
+    utilitaire,
+    stereoscope,
+    // The MIDI effects (MidiEffects.h): their cards carry notes, not sound.
+    arpege,
+    accords,
+    gamme,
+    echoNotes,
+    alea,
+    duree,
+    sequenceur,
+    roulement,
+    // The modulators (Modulators.h): control sources a card carries, as on
+    // every device of Bitwig's.
+    modLfo,
+    modSteps,
+    modRandom,
+    modAdsr,
+    modNote,
+    modExpression,
+    modMacro,
+    modButton,
+    modMath,
+    modFollower,
+    // The containers (Containers.h): a head, the card, holding chains of
+    // devices; the end that mixes them; the part of the sound a branch hears.
+    fxChain,
+    fxLayer,
+    fxSelector,
+    midSideSplit,
+    stereoSplit,
+    multiband2,
+    multiband3,
+    xyFx,
+    replacer,
+    containerEnd,
+    containerTap
 };
+// The last kind: what a stored graph may name (a kind appended moves it).
+inline constexpr NativeDspNodeKind lastNativeDspNodeKind = NativeDspNodeKind::containerTap;
+
+// A modulator's kind.
+[[nodiscard]] constexpr bool isModulatorKind(const NativeDspNodeKind kind) noexcept
+{
+    return kind >= NativeDspNodeKind::modLfo && kind <= NativeDspNodeKind::modFollower;
+}
 
 // A compact, dependency-free parameter payload that travels with a graph node.
 // Fields that are not used by a given node kind keep their defaults. Keeping the
@@ -125,6 +219,9 @@ struct NativeDspNodeParameters {
     // note takes to die away.
     float stringDamping { 0.35f };
     float stringDecaySeconds { 4.0f };
+    // A voice allocator's playing (0 poly, 1 mono, 2 legato) and its glide.
+    float voiceMode {};
+    float glideMilliseconds {};
     float oscillatorWaveform {};
     float oscillatorLevel { 0.14f };
     float attackMilliseconds { 8.0f };
@@ -168,15 +265,33 @@ struct NativeDspNodeParameters {
     float effect6 {};
     float effect7 {};
     float effect8 {};
-    // The parametric equaliser's bands, six values each.
-    std::array<float, 48> eqBands {};
+    // The parametric equaliser's bands, six values each, then their
+    // dynamics, six each; the other effects' slots.
+    std::array<float, 96> eqBands {};
     // A sound-model card's settings, in SoundModelSetting order.
     SoundModelValues soundModel { defaultSoundModelValues() };
     // A sampler card's settings, in SamplerSetting order.
     SamplerValues sampler { defaultSamplerValues() };
+    // A sampler card's controllers, 0..127 (-1: where its map starts them).
+    SamplerControllers samplerControllers { unsetSamplerControllers() };
+    // A Prisme card's settings, in prism::parameter order.
+    prism::PrismValues prism { prism::defaultValues() };
+    // A Kick card's settings, in kick::parameter order.
+    kick::KickValues kick { kick::defaultValues() };
+    // A card of the synth family (SynthFamily.h): the model it is, as a
+    // number (0: none), and its settings in that model's order.
+    float synthModel {};
+    synth::Values synth {};
+    // A Batterie card's mix, piece by piece (DrumKit.h).
+    drum::Values drum { drum::neutralValues() };
+    // An Instrument Selector card's settings (InstrumentContainers.h).
+    instrument_container::Values selector { instrument_container::defaultValues() };
 
     [[nodiscard]] bool operator==(const NativeDspNodeParameters&) const = default;
 };
+
+// An instrument as its voices play it (PolySynthGraph.h).
+struct PolySynthGraphPlan;
 
 struct NativeDspNode {
     std::uint64_t id {};
@@ -190,6 +305,13 @@ struct NativeDspNode {
     // An input node: which of the graph's audio inputs it receives (0 the
     // main one; 1, 2… the others a track is routed into, a sidechain).
     std::uint32_t inputBus {};
+    // The response a convolving effect plays (a cabinet's, loaded from a
+    // file), shared like the table above and beside the payload for the
+    // same reason.
+    ImpulseResponseRef impulse;
+    // The instrument a Replacer plays at each transient (Containers.h),
+    // compiled by the host from the instrument the card holds.
+    std::shared_ptr<const PolySynthGraphPlan> instrument;
 
     [[nodiscard]] bool operator==(const NativeDspNode&) const = default;
 };
@@ -230,11 +352,22 @@ struct NativeDspModulationConnection {
         const NativeDspModulationConnection&) const = default;
 };
 
+// A card switched off: its last node gives out what its first one received
+// (`from` 0: silence, an instrument switched off). Not part of the graph's
+// shape: switching recompiles nothing.
+struct NativeDspBypass {
+    std::uint64_t node {};
+    std::uint64_t from {};
+
+    [[nodiscard]] bool operator==(const NativeDspBypass&) const = default;
+};
+
 struct NativeDspGraph {
     std::vector<NativeDspNode> nodes;
     std::vector<NativeDspConnection> connections;
     std::vector<NativeDspModulationConnection> modulations;
     std::uint64_t outputNodeId {};
+    std::vector<NativeDspBypass> bypasses;
 
     [[nodiscard]] bool operator==(const NativeDspGraph&) const = default;
 };

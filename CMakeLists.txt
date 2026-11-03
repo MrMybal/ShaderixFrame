@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(ShaderixFrame VERSION 0.13.0 LANGUAGES CXX)
+project(ShaderixFrame VERSION 0.14.0 LANGUAGES CXX)
 set(SF_VERSION_SUFFIX "alpha.1")
 set(SF_APPLICATION_VERSION "${PROJECT_VERSION}-${SF_VERSION_SUFFIX}")
 # CMake decodes French cl.exe diagnostics through the OEM codepage on this machine.
@@ -23,16 +23,41 @@ add_library(imgui STATIC ${IMGUI}/imgui.cpp ${IMGUI}/imgui_draw.cpp
     ${IMGUI}/backends/imgui_impl_win32.cpp ${IMGUI}/backends/imgui_impl_dx11.cpp
     ${IMGUI}/misc/cpp/imgui_stdlib.cpp)
 target_include_directories(imgui PUBLIC ${IMGUI} ${IMGUI}/backends ${IMGUI}/misc/cpp)
+# Pinned CyUI snapshot; all native panels share this application's sole ImGui target.
+set(CYUI_IMGUI_TARGET imgui)
+set(CYUI_BUILD_DEMO OFF CACHE BOOL "" FORCE)
+set(CYUI_BUILD_GALLERY OFF CACHE BOOL "" FORCE)
+set(CYUI_BUILD_AUDIO ON CACHE BOOL "" FORCE)
+set(CYUI_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(CYUI_BUILD_WEB_CEF OFF CACHE BOOL "" FORCE)
+set(CYUI_MODULES "Audio;Canvas;Plots;AudioViews;Nodes;Curves;Commands;CodeEditor;Images;Inspector;Timeline" CACHE STRING "" FORCE)
+add_subdirectory(vendor/cyui ${CMAKE_BINARY_DIR}/cyui)
+add_library(frame_ui INTERFACE)
+target_link_libraries(frame_ui INTERFACE CyUI::Core CyUI::Audio CyUI::Canvas CyUI::Plots
+    CyUI::AudioViews CyUI::Nodes CyUI::Curves CyUI::Commands CyUI::CodeEditor CyUI::Images
+    CyUI::Inspector CyUI::Timeline)
+
 add_library(shared_components STATIC
     vendor/shaderixel/src/core/Json.cpp vendor/shaderixel/src/doc/EffectGraph.cpp
-    vendor/shaderixel/src/ui/Theme.cpp src/adapters/ShaderixelPlatform.cpp
-    src/adapters/ShaderixelComposition.cpp src/adapters/CyDawWidgets.cpp
+    src/ui/Theme.cpp src/ui/UiPreferences.cpp src/adapters/ShaderixelPlatform.cpp
+    src/adapters/ShaderixelComposition.cpp src/adapters/CyDawParameters.cpp
     vendor/cydaw2/src/graph/GraphDefinition.cpp
-    vendor/cydaw2/src/engine/EffectProcessors.cpp
     vendor/cydaw2/src/engine/AudioGraph.cpp vendor/cydaw2/src/engine/AudioRenderPlan.cpp
     vendor/cydaw2/src/engine/AudioBuffer.cpp vendor/cydaw2/src/engine/AudioAnalysis.cpp)
-target_include_directories(shared_components PUBLIC vendor/shaderixel/src vendor/cydaw2/include src)
-target_link_libraries(shared_components PUBLIC imgui)
+target_include_directories(shared_components PUBLIC src vendor/shaderixel/src vendor/cydaw2/include)
+# CyDAW's stereo insert effects. PrismSynth and KickSynth only provide NativeDspNodeParameters' default
+# values; the container factory is replaced by src/adapters/CyDawUnavailable.cpp.
+set(CYDAW_ENGINE ${CMAKE_SOURCE_DIR}/vendor/cydaw2/src/engine)
+add_library(cydaw_effects STATIC
+    ${CYDAW_ENGINE}/EffectProcessors.cpp ${CYDAW_ENGINE}/ProEffects.cpp ${CYDAW_ENGINE}/AmpDesign.cpp
+    ${CYDAW_ENGINE}/AmpEffects.cpp ${CYDAW_ENGINE}/Convolver.cpp ${CYDAW_ENGINE}/MixEffects.cpp
+    ${CYDAW_ENGINE}/SuiteEffects.cpp ${CYDAW_ENGINE}/HaloReverb.cpp ${CYDAW_ENGINE}/AddedEffects.cpp
+    ${CYDAW_ENGINE}/VoiceEffects.cpp ${CYDAW_ENGINE}/PitchEffects.cpp ${CYDAW_ENGINE}/SpaceEffects.cpp
+    ${CYDAW_ENGINE}/RhythmEffects.cpp ${CYDAW_ENGINE}/MotionEffects.cpp ${CYDAW_ENGINE}/ResonanceEffects.cpp
+    ${CYDAW_ENGINE}/UtilityEffects.cpp ${CYDAW_ENGINE}/PrismSynth.cpp ${CYDAW_ENGINE}/KickSynth.cpp
+    src/adapters/CyDawUnavailable.cpp)
+target_include_directories(cydaw_effects PUBLIC vendor/cydaw2/include)
+target_link_libraries(shared_components PUBLIC imgui cydaw_effects CyUI::Core CyUI::Canvas)
 add_library(frame_engine STATIC src/core/Project.cpp src/core/Motion.cpp src/core/Recovery.cpp src/media/Media.cpp src/media/MediaBackground.cpp src/media/ExportJobs.cpp
     src/adapters/CyDawAudio.cpp
     src/adapters/DspGraph.cpp
@@ -49,8 +74,8 @@ configure_file(src/core/Version.h.in ${CMAKE_CURRENT_BINARY_DIR}/generated/core/
 target_include_directories(frame_engine PUBLIC src ${CMAKE_CURRENT_BINARY_DIR}/generated)
 target_link_libraries(frame_engine PUBLIC shared_components d3d11 dxgi d3dcompiler
     mfplat mfreadwrite mfuuid ole32 windowscodecs winmm d2d1 dwrite crypt32)
-add_executable(ShaderixFrame WIN32 src/main.cpp src/ui/Editor.cpp src/ui/GradingPanel.cpp src/ui/DspCanvas.cpp src/ui/LayerCanvas.cpp src/ui/ClipPreviews.cpp src/ui/ClipWorkspace.cpp src/ui/MotionPanel.cpp src/ui/ShaderixelLibrary.cpp src/ui/Timeline.cpp src/ui/Workspaces.cpp src/ui/FrameStyle.cpp src/ui/CurveEditor.cpp src/ui/SourceMonitor.cpp src/ui/SequencePanels.cpp src/ui/RenderCache.cpp src/ui/Keymap.cpp src/ui/CommandPalette.cpp)
-target_link_libraries(ShaderixFrame PRIVATE frame_engine comdlg32 shell32 dwmapi)
+add_executable(ShaderixFrame WIN32 src/main.cpp src/ui/Editor.cpp src/ui/GradingPanel.cpp src/ui/DspCanvas.cpp src/ui/LayerCanvas.cpp src/ui/ClipPreviews.cpp src/ui/ClipWorkspace.cpp src/ui/MotionPanel.cpp src/ui/ShaderixelLibrary.cpp src/ui/Timeline.cpp src/ui/Workspaces.cpp src/ui/FrameStyle.cpp src/ui/CurveEditor.cpp src/ui/SourceMonitor.cpp src/ui/SequencePanels.cpp src/ui/RenderCache.cpp src/ui/Keymap.cpp src/ui/CommandPalette.cpp src/ui/AudioChain.cpp src/ui/TrackGraph.cpp src/ui/EffectsBrowser.cpp)
+target_link_libraries(ShaderixFrame PRIVATE frame_ui frame_engine comdlg32 shell32 dwmapi)
 target_link_options(ShaderixFrame PRIVATE /ENTRY:mainCRTStartup)
 add_executable(ShaderixFramePluginWorker src/plugins/NativeWorker.cpp)
 add_executable(ShaderixFrameOfxWorker src/plugins/OfxWorker.cpp)
@@ -92,6 +117,9 @@ endif()
 add_custom_target(frame_assets ALL ${SF_ASSET_COPY} VERBATIM)
 add_dependencies(ShaderixFrame frame_assets)
 enable_testing()
+add_executable(cyui_integration_tests tests/CyUiTests.cpp)
+target_link_libraries(cyui_integration_tests PRIVATE frame_ui frame_engine)
+add_test(NAME cyui_integration COMMAND cyui_integration_tests)
 add_executable(advanced_tests tests/AdvancedTests.cpp)
 target_link_libraries(advanced_tests PRIVATE frame_engine)
 add_test(NAME advanced_workflows COMMAND advanced_tests ${CMAKE_SOURCE_DIR})
@@ -99,8 +127,8 @@ set_tests_properties(advanced_workflows PROPERTIES TIMEOUT 60)
 add_executable(frame_tests tests/CoreTests.cpp)
 target_link_libraries(frame_tests PRIVATE frame_engine)
 add_test(NAME core_and_gpu COMMAND frame_tests ${CMAKE_SOURCE_DIR})
-add_executable(editor_tests tests/EditorTests.cpp src/ui/Editor.cpp src/ui/GradingPanel.cpp src/ui/DspCanvas.cpp src/ui/LayerCanvas.cpp src/ui/ClipPreviews.cpp src/ui/ClipWorkspace.cpp src/ui/MotionPanel.cpp src/ui/ShaderixelLibrary.cpp src/ui/Timeline.cpp src/ui/Workspaces.cpp src/ui/FrameStyle.cpp src/ui/CurveEditor.cpp src/ui/SourceMonitor.cpp src/ui/SequencePanels.cpp src/ui/RenderCache.cpp src/ui/Keymap.cpp src/ui/CommandPalette.cpp)
-target_link_libraries(editor_tests PRIVATE frame_engine comdlg32 shell32 dwmapi)
+add_executable(editor_tests tests/EditorTests.cpp src/ui/Editor.cpp src/ui/GradingPanel.cpp src/ui/DspCanvas.cpp src/ui/LayerCanvas.cpp src/ui/ClipPreviews.cpp src/ui/ClipWorkspace.cpp src/ui/MotionPanel.cpp src/ui/ShaderixelLibrary.cpp src/ui/Timeline.cpp src/ui/Workspaces.cpp src/ui/FrameStyle.cpp src/ui/CurveEditor.cpp src/ui/SourceMonitor.cpp src/ui/SequencePanels.cpp src/ui/RenderCache.cpp src/ui/Keymap.cpp src/ui/CommandPalette.cpp src/ui/AudioChain.cpp src/ui/TrackGraph.cpp src/ui/EffectsBrowser.cpp)
+target_link_libraries(editor_tests PRIVATE frame_ui frame_engine comdlg32 shell32 dwmapi)
 add_test(NAME editor_interactions COMMAND editor_tests ${CMAKE_SOURCE_DIR})
 add_executable(export_tests tests/ExportTests.cpp)
 target_link_libraries(export_tests PRIVATE frame_engine)
@@ -116,7 +144,7 @@ add_test(NAME audio_mixer COMMAND mixer_tests ${CMAKE_SOURCE_DIR})
 set_tests_properties(audio_mixer PROPERTIES TIMEOUT 60)
 find_package(Python3 COMPONENTS Interpreter)
 add_executable(production_tests tests/ProductionTests.cpp src/ui/DspCanvas.cpp src/ui/ClipPreviews.cpp)
-target_link_libraries(production_tests PRIVATE frame_engine)
+target_link_libraries(production_tests PRIVATE frame_engine CyUI::Audio CyUI::Nodes CyUI::Curves)
 add_dependencies(production_tests ShaderixFrameOfxWorker ofx_gain ofx_basic)
 add_test(NAME production_features COMMAND production_tests ${CMAKE_SOURCE_DIR})
 set_tests_properties(production_features PROPERTIES TIMEOUT 90)
@@ -130,6 +158,8 @@ if(SF_BUILD_AUDIO_QUALITY_TESTS)
     set_tests_properties(audio_quality PROPERTIES TIMEOUT 90)
 endif()
 if(Python3_FOUND)
+    add_test(NAME cyui_catalogue COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/generate_ui_translations.py --check)
+    add_test(NAME cyui_snapshot COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/sync_cyui.py --check)
     add_test(NAME mcp_stdio COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/mcp_smoke.py $<TARGET_FILE:ShaderixFrame>)
     set_tests_properties(mcp_stdio PROPERTIES TIMEOUT 60)
     add_test(NAME workspace_modes COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/mode_smoke.py $<TARGET_FILE:ShaderixFrame>)

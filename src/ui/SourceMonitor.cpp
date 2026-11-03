@@ -143,7 +143,7 @@ void Editor::mediaBin() {
         for (auto &clip : track.clips)
             if (!clip.source.empty() && std::find(media.begin(), media.end(), clip.source) == media.end())
                 media.push_back(clip.source);
-    if (ImGui::Button("+ Bin")) {
+    if (ImGui::Button(cyui::trLabel("+ Bin").c_str())) {
         auto path = dialog(false, L"Media\0*.mp4;*.mov;*.mkv;*.avi;*.wmv;*.wav;*.mp3;*.flac;*.aac;*.png;*.jpg;*.jpeg;*.bmp\0All\0*.*\0\0",
                            nullptr);
         if (!path.empty()) {
@@ -158,20 +158,20 @@ void Editor::mediaBin() {
     }
     tooltip("Add media to the bin without placing it; open it in Source next");
     ImGui::SameLine();
-    if (ImGui::SmallButton("Remove Unused")) {
+    if (ImGui::SmallButton(cyui::trLabel("Remove Unused").c_str())) {
         if (action("remove_unused_media"))
             say(std::to_string(actionResult["removed"].Size()) + " media file(s) removed from the bin");
     }
     tooltip("Remove media unused by any clip from the bin (files stay on disk)");
     ImGui::SameLine();
-    ImGui::Checkbox("Automatic Proxies", &autoProxies);
+    ImGui::Checkbox(cyui::trLabel("Automatic Proxies").c_str(), &autoProxies);
     tooltip("Prepare a 720p proxy for videos over 1440 lines on import");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(-1);
     ImGui::InputTextWithHint("##binSearch", "Search…", &binFilter);
     if (media.empty()) {
         ImGui::Spacing();
-        ImGui::TextWrapped("Import video, images or audio to start editing.");
+        ImGui::TextWrapped(cyui::tr("Import video, images or audio to start editing.").c_str());
         return;
     }
     float card = 128, width = ImGui::GetContentRegionAvail().x;
@@ -204,7 +204,7 @@ void Editor::mediaBin() {
             ImGui::EndDragDropSource();
         }
         if (ImGui::BeginPopupContextItem("binCard")) {
-            if (ImGui::MenuItem("Open in Source"))
+            if (ImGui::MenuItem(cyui::trLabel("Open in Source").c_str()))
                 openSource(path);
             // A preview proxy is prepared from a clip that uses the medium.
             Id user = 0;
@@ -212,24 +212,24 @@ void Editor::mediaBin() {
                 for (auto &clip : track.clips)
                     if (clip.source == path && track.kind == TrackKind::Video && !user)
                         user = clip.id;
-            if (ImGui::MenuItem("Prepare Preview Proxy", nullptr, false, user != 0)) {
+            if (ImGui::MenuItem(cyui::trLabel("Prepare Preview Proxy").c_str(), nullptr, false, user != 0)) {
                 Json a = Json::Object();
                 a["clip"] = user;
                 action("prepare_proxy", a);
             }
             if (!user && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-                ImGui::SetTooltip("Place the video media on the timeline first");
+                ImGui::SetTooltip(cyui::tr("Place the video media on the timeline first").c_str());
             bool used = false;
             for (auto &track : s.project.tracks)
                 for (auto &clip : track.clips)
                     used = used || clip.source == path;
-            if (ImGui::MenuItem("Remove from Bin", nullptr, false, !used)) {
+            if (ImGui::MenuItem(cyui::trLabel("Remove from Bin").c_str(), nullptr, false, !used)) {
                 s.history.checkpoint(s.project, "Source editing");
                 std::erase(s.project.bin, path);
                 s.dirty = true;
             }
             if (used)
-                ImGui::TextDisabled("Used in Sequence");
+                ImGui::TextDisabled(cyui::tr("Used in Sequence").c_str());
             ImGui::EndPopup();
         }
         auto *dl = ImGui::GetWindowDrawList();
@@ -277,34 +277,34 @@ void Editor::mediaBin() {
             ImGui::PushFont(boldFont(), 0);
             ImGui::TextUnformatted(name.c_str());
             ImGui::PopFont();
-            ImGui::TextDisabled("%s", path.c_str());
+            ImGui::TextDisabled(cyui::tr("%s").c_str(), path.c_str());
             ImGui::Separator();
-            ImGui::Text("%s", kind.c_str());
+            ImGui::Text(cyui::tr("%s").c_str(), kind.c_str());
             if (width && height)
-                ImGui::Text("%u × %u px", width, height);
+                ImGui::Text(cyui::tr("%u × %u px").c_str(), width, height);
             if (length > 0)
-                ImGui::Text("Duration %s", timecode(length, s.project.fps).c_str());
+                ImGui::Text(cyui::tr("Duration %s").c_str(), timecode(length, s.project.fps).c_str());
             if (sound)
-                ImGui::Text("Stereo 48 kHz Audio");
+                ImGui::Text(cyui::tr("Stereo 48 kHz Audio").c_str());
             std::error_code missing;
             auto bytes = std::filesystem::file_size(sx::Utf8Path(path), missing);
             if (!missing)
-                ImGui::Text("%.1f Mo", double(bytes) / (1024. * 1024.));
+                ImGui::Text(cyui::tr("%.1f Mo").c_str(), double(bytes) / (1024. * 1024.));
             int uses = 0;
             for (auto &track : s.project.tracks)
                 for (auto &clip : track.clips)
                     uses += clip.source == path;
             if (uses)
-                ImGui::Text("Used by %d clip%s", uses, uses > 1 ? "s" : "");
+                ImGui::Text(cyui::tr("Used by %d clip%s").c_str(), uses, uses > 1 ? "s" : "");
             else
-                ImGui::TextDisabled("Not Yet in Sequence");
+                ImGui::TextDisabled(cyui::tr("Not Yet in Sequence").c_str());
             ImGui::EndTooltip();
         }
         ImGui::EndGroup();
         ImGui::PopID();
     }
     ImGui::Spacing();
-    ImGui::TextDisabled("Double-click: Source  ·  drag: timeline");
+    ImGui::TextDisabled(cyui::tr("Double-click: Source  ·  drag: timeline").c_str());
 }
 
 void Editor::centredLabel(ImDrawList *dl, ImVec2 min, ImVec2 max, const char *label) {
@@ -346,7 +346,7 @@ void Editor::sourcePanel() {
         peaks = shared.peaks;
         ceiling = std::max(shared.peakCeiling, 1e-6f);
     } catch (const std::exception &e) {
-        ImGui::TextColored(ImVec4(1, .4f, .3f, 1), "Media Offline: %s", e.what());
+        ImGui::TextColored(cyui::vec(cyui::palette().error), "Media Offline: %s", e.what());
         ImGui::End();
         return;
     }
@@ -436,73 +436,46 @@ void Editor::sourcePanel() {
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(name.c_str());
     ImGui::SameLine();
-    ImGui::TextDisabled("%s%s", still ? "image" : timecode(length, s.project.fps).c_str(),
+    ImGui::TextDisabled(cyui::tr("%s%s").c_str(), still ? "image" : timecode(length, s.project.fps).c_str(),
                         sourceFrameWidth ? ("  ·  " + std::to_string(sourceFrameWidth) + " × " +
                                             std::to_string(sourceFrameHeight)).c_str()
                                          : "");
     // Picture area.
     ImVec2 available = ImGui::GetContentRegionAvail();
-    float pictureHeight = std::max(60.f, available.y - 34 - ImGui::GetFrameHeightWithSpacing() * 2 - 12);
+    float pictureHeight = std::max(60.f, available.y - cyui::dp(62) - ImGui::GetFrameHeightWithSpacing() * 2 - 12);
     ImVec2 origin = ImGui::GetCursorScreenPos();
-    ImGui::InvisibleButton("##sourcePicture", {available.x, pictureHeight});
-    auto *dl = ImGui::GetWindowDrawList();
-    dl->AddRectFilled(origin, origin + ImVec2(available.x, pictureHeight), IM_COL32(0, 0, 0, 255));
-    if (sourceFrame && sourceFrameWidth) {
-        float ratio = float(sourceFrameWidth) / sourceFrameHeight;
-        float w = available.x, h = pictureHeight;
-        if (w / h > ratio)
-            w = h * ratio;
-        else
-            h = w / ratio;
-        ImVec2 at = origin + ImVec2((available.x - w) * .5f, (pictureHeight - h) * .5f);
-        dl->AddImage((ImTextureID)(intptr_t)sourceFrame.Get(), at, at + ImVec2(w, h));
-    } else
-        centredLabel(dl, origin, origin + ImVec2(available.x, pictureHeight), hasAudio ? icon::audio : icon::video);
-    // Dragging the picture places the marked span where it is dropped on the timeline.
-    if (ImGui::BeginDragDropSource()) {
-        ImGui::SetDragDropPayload("SOURCE", sourcePath.c_str(), sourcePath.size() + 1);
-        ImGui::Text("%s  ·  %s", name.c_str(), timecode(out - sourceIn, s.project.fps).c_str());
-        ImGui::EndDragDropSource();
+    auto *dl=ImGui::GetWindowDrawList();
+    if(sourceViewIdentity!=sourcePath){sourceViewIdentity=sourcePath;sourceImage={};sourceTimeline={};sourceTimeline.view={0,std::max(frame,length)};}
+    if(sourceFrame&&sourceFrameWidth) {
+        cyui::imageViewport("##sourcePicture",sourceImage,{(ImTextureID)(intptr_t)sourceFrame.Get(),int(sourceFrameWidth),int(sourceFrameHeight)},{available.x,pictureHeight});
+    } else {
+        ImGui::InvisibleButton("##sourcePicture",{available.x,pictureHeight});
+        dl->AddRectFilled(origin,origin+ImVec2(available.x,pictureHeight),bg0);
+        centredLabel(dl,origin,origin+ImVec2(available.x,pictureHeight),hasAudio?icon::audio:icon::video);
     }
-    // Scrub bar with the in/out span and the sound's peaks.
-    ImVec2 barMin = ImGui::GetCursorScreenPos(), barSize{available.x, 34};
-    ImGui::InvisibleButton("##sourceScrub", barSize);
-    sourceBarMin = barMin;
-    sourceBarSize = barSize;
-    auto barX = [&](double t) { return barMin.x + float(t / std::max(length, frame) * barSize.x); };
-    // The in and out marks are handles; elsewhere the bar scrubs the picture.
-    bool nearIn = std::abs(io.MousePos.x - barX(sourceIn)) < 6, nearOut = std::abs(io.MousePos.x - barX(out)) < 6;
-    if (ImGui::IsItemHovered() && (nearIn || nearOut))
-        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
-    if (ImGui::IsItemActivated())
-        sourceMarkDrag = nearOut && (!nearIn || io.MousePos.x > barX(sourceIn)) ? 2 : nearIn ? 1 : 0;
-    if (ImGui::IsItemActive()) {
-        double t = std::clamp(std::round((io.MousePos.x - barMin.x) / barSize.x * length / frame) * frame, 0., length);
-        if (sourceMarkDrag == 1)
-            sourceIn = std::min(t, out - frame);
-        else if (sourceMarkDrag == 2) {
-            sourceOut = std::max(t, sourceIn + frame);
-            out = sourceOut;
-        } else
-            sourceTime = std::clamp(t, 0., std::max(0., length - frame));
-        if (sourceMarkDrag)
-            ImGui::SetTooltip("%s %s", sourceMarkDrag == 1 ? "Input" : "Output",
-                              timecode(sourceMarkDrag == 1 ? sourceIn : sourceOut, s.project.fps).c_str());
-    } else
-        sourceMarkDrag = 0;
-    dl->AddRectFilled(barMin, barMin + barSize, bg1, 3);
-    if (!peaks.empty() && length > 0) {
-        float mid = barMin.y + barSize.y * .5f;
-        for (float x = 0; x < barSize.x; x += 2) {
-            size_t index = size_t(x / barSize.x * length * 100);
-            float peak = index < peaks.size() ? std::min(1.f, peaks[index] / ceiling) : 0;
-            dl->AddLine({barMin.x + x, mid - peak * 13}, {barMin.x + x, mid + peak * 13}, alpha(style::audio, .55f));
-        }
+    if(ImGui::BeginDragDropSource()) {
+        ImGui::SetDragDropPayload("SOURCE",sourcePath.c_str(),sourcePath.size()+1);
+        ImGui::Text(cyui::tr("%s  ·  %s").c_str(),name.c_str(),timecode(out-sourceIn,s.project.fps).c_str());ImGui::EndDragDropSource();
     }
-    dl->AddRectFilled({barX(sourceIn), barMin.y}, {barX(out), barMin.y + barSize.y}, alpha(accent, .18f));
-    dl->AddRectFilled({barX(sourceIn) - 1, barMin.y}, {barX(sourceIn) + 2, barMin.y + barSize.y}, accent);
-    dl->AddRectFilled({barX(out) - 2, barMin.y}, {barX(out) + 1, barMin.y + barSize.y}, accent);
-    dl->AddLine({barX(sourceTime), barMin.y}, {barX(sourceTime), barMin.y + barSize.y}, text, 2);
+    // A single source span reuses the shared trim/move/seek timeline. Sequence edits stay host actions.
+    sourceBarMin=ImGui::GetCursorScreenPos();sourceBarSize={available.x,cyui::dp(62)};
+    std::vector<cyui::TimelineLane> lanes{{1,"In / Out",32}};
+    std::vector<cyui::TimelineClip> spans{{1,1,sourceIn,std::max(frame,out-sourceIn),"Marked span",1}};
+    cyui::TimelineOptions options;options.playhead=sourceTime;options.snap=frame;options.minDuration=frame;
+    options.formatTime=[&](double t){return timecode(t,s.project.fps);};
+    options.drawClip=[&](const cyui::TimelineClip& span,const cyui::Rect& rect){
+        if(peaks.empty()||length<=0)return;auto* d=ImGui::GetWindowDrawList();float mid=(rect.min.y+rect.max.y)*.5f;
+        for(float x=rect.min.x;x<rect.max.x;x+=cyui::dp(2)){double t=span.start+(x-rect.min.x)/std::max(1.f,rect.max.x-rect.min.x)*span.duration;size_t i=size_t(std::max(0.,t)*100);float peak=i<peaks.size()?std::min(1.f,peaks[i]/ceiling):0;d->AddLine({x,mid-peak*8},{x,mid+peak*8},alpha(style::audio,.55f));}
+    };
+    auto range=cyui::timeline("##sourceScrub",sourceTimeline,lanes,spans,{},sourceBarSize,options);
+    sourceBarMin.x+=std::min(cyui::dp(150),available.x*.3f);
+    sourceBarSize.x=available.x-(sourceBarMin.x-ImGui::GetItemRectMin().x);
+    sourceBarMin.y+=ImGui::GetFrameHeight();sourceBarSize.y=cyui::dp(32);
+    if(range.seek)sourceTime=std::clamp(range.time,0.,std::max(0.,length-frame));
+    if(range.clips.committed()&&!range.clips.value.empty()) {
+        auto span=range.clips.value.front();sourceIn=std::clamp(span.start,0.,std::max(0.,length-frame));
+        sourceOut=std::clamp(span.start+span.duration,sourceIn+frame,std::max(sourceIn+frame,length));out=sourceOut;
+    }
     // Transport, marks and edits.
     ImGui::BeginDisabled(still);
     if (iconButton(icon::previous, "Previous Frame [Left]"))
@@ -546,20 +519,20 @@ void Editor::sourcePanel() {
     ImGui::PopFont();
     if (sourcePlaying && sourceSpeed > 1) {
         ImGui::SameLine(0, 4);
-        ImGui::TextDisabled("×%.0f", sourceSpeed);
+        ImGui::TextDisabled(cyui::tr("×%.0f").c_str(), sourceSpeed);
     }
     ImGui::SameLine(0, 10);
     bool focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) && !io.WantTextInput;
-    if (ImGui::Button("In [I]") || (focused && ImGui::IsKeyPressed(ImGuiKey_I, false)))
+    if (ImGui::Button(cyui::trLabel("In [I]").c_str()) || (focused && ImGui::IsKeyPressed(ImGuiKey_I, false)))
         sourceIn = std::min(sourceTime, out - frame);
     ImGui::SameLine(0, 2);
-    if (ImGui::Button("Out [O]") || (focused && ImGui::IsKeyPressed(ImGuiKey_O, false)))
+    if (ImGui::Button(cyui::trLabel("Out [O]").c_str()) || (focused && ImGui::IsKeyPressed(ImGuiKey_O, false)))
         sourceOut = std::max(sourceTime + frame, sourceIn + frame);
     ImGui::SameLine(0, 2);
-    if (ImGui::SmallButton("Clear"))
+    if (ImGui::SmallButton(cyui::trLabel("Clear").c_str()))
         sourceIn = sourceOut = 0;
     ImGui::SameLine(0, 8);
-    ImGui::TextDisabled("%s → %s  (%s)", timecode(sourceIn, s.project.fps).c_str(), timecode(out, s.project.fps).c_str(),
+    ImGui::TextDisabled(cyui::tr("%s → %s  (%s)").c_str(), timecode(sourceIn, s.project.fps).c_str(), timecode(out, s.project.fps).c_str(),
                         timecode(out - sourceIn, s.project.fps).c_str());
     if (focused) {
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow))
@@ -568,22 +541,22 @@ void Editor::sourcePanel() {
             sourceTime = std::min(length - frame, sourceTime + (io.KeyShift ? 1 : frame));
     }
     if (hasVideo && hasAudio) {
-        ImGui::Checkbox("Video", &sourceVideo);
+        ImGui::Checkbox(cyui::trLabel("Video").c_str(), &sourceVideo);
         ImGui::SameLine();
-        ImGui::Checkbox("Audio", &sourceAudio);
+        ImGui::Checkbox(cyui::trLabel("Audio").c_str(), &sourceAudio);
         ImGui::SameLine(0, 12);
     }
     ImGui::BeginDisabled(!(sourceVideo && hasVideo) && !(sourceAudio && hasAudio));
-    if (ImGui::Button("Insert at Playhead [,]") || (focused && ImGui::IsKeyPressed(ImGuiKey_Comma, false)))
+    if (ImGui::Button(cyui::trLabel("Insert at Playhead [,]").c_str()) || (focused && ImGui::IsKeyPressed(ImGuiKey_Comma, false)))
         sourceEdit(true);
     tooltip("Split the sequence at the playhead and shift later clips by the marked duration");
     ImGui::SameLine(0, 4);
-    if (ImGui::Button("Overwrite at Playhead [.]") || (focused && !io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_Period, false)))
+    if (ImGui::Button(cyui::trLabel("Overwrite at Playhead [.]").c_str()) || (focused && !io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_Period, false)))
         sourceEdit(false);
     tooltip("Replace target track content over the marked duration");
     ImGui::SameLine(0, 4);
     ImGui::BeginDisabled(!s.project.hasWorkArea());
-    if (ImGui::Button("Fit to Fill [Shift+.]") ||
+    if (ImGui::Button(cyui::trLabel("Fit to Fill [Shift+.]").c_str()) ||
         (focused && s.project.hasWorkArea() && io.KeyShift && ImGui::IsKeyPressed(ImGuiKey_Period, false)))
         sourceEdit(false, true);
     ImGui::EndDisabled();
@@ -592,7 +565,7 @@ void Editor::sourcePanel() {
     ImGui::SameLine(0, 4);
     auto *replaced = s.project.findClip(s.selected);
     ImGui::BeginDisabled(!replaced || replaced->source.empty());
-    if (ImGui::Button("Replace Clip")) {
+    if (ImGui::Button(cyui::trLabel("Replace Clip").c_str())) {
         Json a = Json::Object();
         a["clip"] = s.selected;
         a["path"] = sourcePath;

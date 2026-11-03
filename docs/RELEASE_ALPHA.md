@@ -1,6 +1,6 @@
-# ShaderixFrame 0.13.0-alpha.1
+# ShaderixFrame 0.14.0-alpha.1
 
-First Windows x64 alpha preview, licensed under GNU AGPL v3.
+Windows x64 alpha preview, licensed under GNU AGPL v3.
 
 ## Downloads
 
@@ -14,6 +14,8 @@ First Windows x64 alpha preview, licensed under GNU AGPL v3.
 Windows 10/11 x64 and a Direct3D 11 device are required. `--warp` selects software
 rendering. The main interface, effect labels and MCP descriptions default to English.
 Example projects retain their own names and text.
+
+See [the 0.14 changes](RELEASE_0.14.md) for the modular CyUI interface update.
 
 ## Included
 

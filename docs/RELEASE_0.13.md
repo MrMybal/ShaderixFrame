@@ -272,6 +272,37 @@ Son clic droit **exporte l'image** courante (PNG ou EXR half, aussi dans le menu
   une couleur. Le projet enregistre repères, zone, groupes, couleurs et hauteurs de pistes
   dans des champs facultatifs du schéma 10.
 
+## Effets de piste, son et vue
+
+- **Track Graph** : chaque piste vidéo a son graphe d'effets (comme Shaderixel), appliqué à l'image
+  de ses clips avant la fusion avec les pistes du dessous ; vignettes par nœud, Shader Graph et LUT
+  par nœud, lecture des pistes du dessous comme entrées secondaires. Bouton **FX** sur l'en-tête de
+  piste (allumé s'il y a des effets ; on y dépose un effet de la bibliothèque). MCP :
+  `get_track_graph`, `set_track_graph`, `add_track_effect`.
+- **Effets CyDAW** : les 50 inserts stéréo de CyDAW (35 nouveaux : reverbs Pro, Halo et à
+  convolution, échos à bande et granulaire, compresseur Pression, multibande, de-esser, saturation,
+  simulations d'ampli, de baffle et de micro, tranche de console, mastering, transposition et
+  correction de justesse, vocodeur, modulateurs d'anneau et de fréquence, résonateurs, utilitaire,
+  mesures) ; latence de look-ahead compensée, valeurs lissées comme dans le graphe DSP.
+- **Track Effects** : chaîne d'inserts d'une piste audio, d'un bus ou du master en appareils
+  CyDAW (marche/arrêt, réordonner par glisser, retirer, boutons rotatifs, catalogue par famille,
+  VST3/natif) ; suit le clip son choisi, bouton **FX** des pistes audio ; ouvert en mode Audio.
+- **Sortie son** : Séquence > **Sound Output** choisit le périphérique (mémorisé) ; il est rouvert à
+  chaque lecture ; un échec n'est plus silencieux (« No sound » dans la barre d'état avec la raison) ;
+  un clip hors ligne est sauté au lieu d'arrêter la lecture ; un média déposé depuis le chutier
+  pendant son chargement est placé une fois chargé, avec son clip son.
+- **Explorateur d'effets** : cartes avec aperçu (rendu en arrière-plan sur une image de référence ou
+  sur le clip choisi) pour les effets, fusions, générateurs et transitions Shaderixel, et inserts
+  audio CyDAW ; double-clic pour appliquer, glisser vers la timeline ; **Apply LUT File...** pour
+  une LUT .cube ou image en correction native.
+- **Fusion des pistes** : mode (27 modes Shaderixel), opacité et effet de fusion par piste vidéo
+  (menu de la piste, carte de fusion déposée sur **FX**, `set_track` `blend`/`opacity`/
+  `blend_effect`), utilisés par le graphe des calques automatique. Une entrée secondaire non
+  branchée d'un nœud d'effet est absente (un masque optionnel lit blanc) ; une fusion appliquée en
+  effet de clip lit l'image du dessous comme fond.
+- **Vue finale** : outil **Main** (`H`), Maj+molette et molette horizontale, glisser dans la marge
+  pour se déplacer dans l'image zoomée ; double-clic sur la mini-carte sans retour à l'ajustement.
+
 ## Correction du décodage vidéo
 
 Les images H.264 étaient lues à leur taille codée (1080 lignes codées en 1088) : des lignes de

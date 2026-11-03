@@ -508,7 +508,14 @@ void MediaCache::mixEngine(const Project &p, double time, unsigned frames, std::
             if (c.source.empty() || c.hold || time + frames / 48000. <= c.start ||
                 time >= c.start + c.duration + incomingLatency[t.id] / 48000.)
                 continue;
-            auto &a = get(c.source);
+            // An offline or undecodable medium is silent; the toolbar already counts it as offline.
+            MediaAsset *found = nullptr;
+            try {
+                found = &get(c.source);
+            } catch (const std::exception &) {
+                continue;
+            }
+            auto &a = *found;
             Buffer clipData(size_t(frames) * 2, 0);
             bool ramped = c.ramped();
             unsigned rampBlock = ~0u;
@@ -723,6 +730,7 @@ void MediaCache::mixEngine(const Project &p, double time, unsigned frames, std::
 bool AudioOutput::available() {
     if (device)
         return true;
+    failure.clear();
     WAVEFORMATEX f{};
     f.wFormatTag = WAVE_FORMAT_PCM;
     f.nChannels = 2;
@@ -730,10 +738,51 @@ bool AudioOutput::available() {
     f.wBitsPerSample = 16;
     f.nBlockAlign = 4;
     f.nAvgBytesPerSec = 192000;
-    return waveOutOpen(&device, WAVE_MAPPER, &f, 0, 0, CALLBACK_NULL) == MMSYSERR_NOERROR;
+    UINT target = WAVE_MAPPER;
+    if (!chosenDevice().empty()) {
+        auto names = devices();
+        auto found = std::find(names.begin(), names.end(), chosenDevice());
+        if (found != names.end())
+            target = UINT(found - names.begin());
+    }
+    MMRESULT opened = waveOutOpen(&device, target, &f, 0, 0, CALLBACK_NULL);
+    if (opened == MMSYSERR_NOERROR)
+        return true;
+    device = nullptr;
+    wchar_t text[MAXERRORLENGTH] = L"";
+    waveOutGetErrorTextW(opened, text, MAXERRORLENGTH);
+    failure = "No sound output (" + sx::Narrow(text) + "): check the default playback device in Windows";
+    return false;
+}
+std::vector<std::string> AudioOutput::devices() {
+    std::vector<std::string> names;
+    for (UINT i = 0, count = waveOutGetNumDevs(); i < count; ++i) {
+        WAVEOUTCAPSW caps{};
+        names.push_back(waveOutGetDevCapsW(i, &caps, sizeof(caps)) == MMSYSERR_NOERROR ? sx::Narrow(caps.szPname)
+                                                                                        : std::string());
+    }
+    return names;
+}
+std::string &AudioOutput::chosenDevice() {
+    static std::string name;
+    return name;
+}
+void AudioOutput::close() {
+    running = false;
+    if (!device)
+        return;
+    waveOutReset(device);
+    for (auto &b : blocks)
+        if (b.prepared) {
+            waveOutUnprepareHeader(device, &b.header, sizeof(WAVEHDR));
+            b.prepared = false;
+        }
+    waveOutClose(device);
+    device = nullptr;
 }
 void AudioOutput::start(double t) {
-    stop();
+    // Reopened at each start, so playback follows a change of the default device (headphones, speakers).
+    close();
     origin = t;
     queued = 0;
     running = available();
@@ -743,15 +792,7 @@ void AudioOutput::stop() {
     if (device)
         waveOutReset(device);
 }
-AudioOutput::~AudioOutput() {
-    stop();
-    if (device) {
-        for (auto &b : blocks)
-            if (b.prepared)
-                waveOutUnprepareHeader(device, &b.header, sizeof(WAVEHDR));
-        waveOutClose(device);
-    }
-}
+AudioOutput::~AudioOutput() { close(); }
 double AudioOutput::time() const {
     if (!device || !running)
         return origin;
@@ -778,11 +819,19 @@ void AudioOutput::pump(const Project &p, MediaCache &m) {
         b.header = {};
         b.header.lpData = reinterpret_cast<LPSTR>(b.samples.data());
         b.header.dwBufferLength = sizeof(b.samples);
-        if (waveOutPrepareHeader(device, &b.header, sizeof(WAVEHDR)) != MMSYSERR_NOERROR)
-            throw std::runtime_error("Unable to prepare audio output");
+        // A device that disappears (unplugged, taken exclusively) silences playback with a reason
+        // instead of stopping it; the next start reopens the default device.
+        if (waveOutPrepareHeader(device, &b.header, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) {
+            failure = "The sound device stopped accepting audio";
+            close();
+            return;
+        }
         b.prepared = true;
-        if (waveOutWrite(device, &b.header, sizeof(WAVEHDR)) != MMSYSERR_NOERROR)
-            throw std::runtime_error("Audio output failed");
+        if (waveOutWrite(device, &b.header, sizeof(WAVEHDR)) != MMSYSERR_NOERROR) {
+            failure = "The sound device stopped accepting audio";
+            close();
+            return;
+        }
         queued += blockFrames;
         analysis.channelCount = 2;
         analysis.waveformCount = blockFrames;

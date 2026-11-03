@@ -64,110 +64,16 @@ for group in ('Self','Under'):
 portable=params+shader+helpers+weight+'float4 Effect(EffectContext ctx){int2 ap=ctx.px;float4 base=Premultiply(Input(0,ctx.px)),top=Premultiply(Input(1,ctx.px));\n'+ranges+body+'return Unpremultiply(result);}\n'
 with (generated/'ShaderixelBlend.h').open('a',encoding='utf-8') as f:f.write('namespace sf { inline constexpr const char *shaderixelComposite = R"SF('+portable+')SF"; }\n')
 
-# Shared native controls, without the unrelated JUCE translation/font loader.
-wh=(root/'vendor/cydaw2/src/v2/Widgets.h').read_text(encoding='utf-8')
-wc=(root/'vendor/cydaw2/src/v2/Widgets.cpp').read_text(encoding='utf-8')
-th=(root/'vendor/cydaw2/src/v2/Theme.h').read_text(encoding='utf-8')
-tc=(root/'vendor/cydaw2/src/v2/Theme.cpp').read_text(encoding='utf-8')
-(generated/'CyDawWidgets.h').write_text('// Generated from CyDAW v2 Widgets.h.\n#pragma once\n#include <imgui.h>\nnamespace cydaw::v2::ui {\n'+section(wh,'enum KnobFlags','// A flat icon button')+'}\n',encoding='utf-8')
-theme=section(th,'struct Palette','[[nodiscard]] const Palette& palette();')
-constants=section(tc,'constexpr ImU32 rgb(', 'ImFont* gUi')
-colour=section(tc,'const Palette& palette()', 'ImU32 fromArgb')
-# vec is defined before fromArgb, keep original colour functions unchanged.
-helpers=section(wc,'constexpr float kPi','} // namespace')
-controls=section(wc,'bool knob(', 'bool iconButton(')
-(generated/'CyDawWidgets.cpp').write_text('// Generated from CyDAW v2 Widgets/Theme; parameter controls unchanged.\n#include "adapters/CyDawWidgets.h"\n#include <imgui_internal.h>\n#include <algorithm>\n#include <cmath>\n#include <cstdio>\n#include <string>\nnamespace cydaw::v2::theme {\n'+theme+constants+colour+'}\nnamespace cydaw::v2::ui {\nstatic float dp(float x){return x*ImGui::GetStyle().FontScaleDpi;}\nstatic float currentFontBase(){return ImGui::GetCurrentContext()->FontSizeBase;}\n'+helpers+'static void tooltip(const char *text){if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))ImGui::SetTooltip("%s",text); }\n'+controls+'}\n',encoding='utf-8')
-# Native parameter IDs provide English labels; upstream resources remain untouched.
+# Only parameter captions cross this boundary. All control/card/canvas rendering comes from CyUI.
 translations=json.loads((root/'vendor/cydaw2/resources/i18n/fr.json').read_text(encoding='utf-8'))
-with (generated/'CyDawWidgets.h').open('a',encoding='utf-8') as f:f.write('#include <string_view>\nnamespace cydaw::v2::ui { const char *parameterLabel(std::string_view key); }\n')
-with (generated/'CyDawWidgets.cpp').open('a',encoding='utf-8') as f:
- f.write('namespace cydaw::v2::ui { const char *parameterLabel(std::string_view key){\n')
+(generated/'CyDawParameters.h').write_text('// Generated parameter captions; rendering belongs to CyUI.\n#pragma once\n#include <string_view>\nnamespace sf::audio_ui { const char *parameterLabel(std::string_view key); }\n',encoding='utf-8')
+with (generated/'CyDawParameters.cpp').open('w',encoding='utf-8') as f:
+ f.write('// Generated parameter captions; rendering belongs to CyUI.\n#include "adapters/CyDawParameters.h"\nnamespace sf::audio_ui { const char *parameterLabel(std::string_view key){\n')
  for key in translations:
   if key.startswith('effect.parameter.'):
    label=key.removeprefix('effect.parameter.');label=re.sub(r'([a-z])([A-Z])',r'\1 \2',label).replace('_',' ').title()
    f.write('if(key=='+json.dumps(key)+')return '+json.dumps(label)+';\n')
  f.write('return "Parameter";} }\n')
-
-# Geometry and colours copied from Shaderixel's composition editor.
-u=(root/'vendor/shaderixel/src/ui/NodeEditor.cpp').read_text(encoding='utf-8')
-visuals=section(u,'constexpr float kNodeW','// Node menu entries')
-(generated/'ShaderixelNodeVisuals.h').write_text('// Generated from Shaderixel NodeEditor.cpp.\n#pragma once\n#include "adapters/ShaderixelComposition.h"\n#include "ui/Theme.h"\n#include <imgui.h>\nnamespace sf::shaderixel_ui { using namespace sx;\n'+visuals+'}\n',encoding='utf-8')
-
-drawing=section(u,'    auto linkPin =', '    // Context menus')
-drawing=drawing.replace('n.id == d.S().activeNode','n.id == this->selected')
-drawing=drawing.replace('v->renderer.NodeFailed(n.id)','false')
-drawing=drawing.replace('n.kind == NodeKind::Surface && n.surface == d.PaintTarget()','false')
-a=drawing.index('        // Thumbnail')
-b=drawing.index('    }',a)
-# Replace the GPU-specific thumbnail bridge only; original card and pin drawing stays intact.
-drawing=drawing[:a]+"""        if(auto *out=renderer.layerNodeView(n.id)) {
-            ImVec2 ta=toScreen(n.pos+float2{8,kHeader+L.rows*kRow+4});
-            ImVec2 tb(ta.x+L.thumbW*ed.zoom,ta.y+L.thumbH*ed.zoom);
-            dl->AddImageRounded((ImTextureID)out,ta,tb,ImVec2(0,0),ImVec2(1,1),IM_COL32_WHITE,3*ed.zoom);
-        }
-    }
-"""
-(generated/'ShaderixelNodeDrawing.inl').write_text('// Generated from Shaderixel NodeEditor.cpp; D3D11 thumbnail bridge adapted.\n'+drawing,encoding='utf-8')
-
-# Track-strip drawing from MixerView, with session access replaced by a plain data boundary.
-with (generated/'CyDawWidgets.h').open('a',encoding='utf-8') as f:
- f.write("""namespace cydaw::v2::ui {
-struct MixerStrip {
-    const char *name=""; const char *output="MASTER"; int devices=0;
-    float gainDb=0,pan=0; bool muted=false,solo=false,selected=false;
-    bool canMute=true,canSolo=true;
-    float peak[2]{},rms[2]{};
-};
-bool mixerStrip(const char *id,MixerStrip &strip,float width,float height,bool &picked);
-} // namespace cydaw::v2::ui
-""")
-with (generated/'CyDawWidgets.cpp').open('a',encoding='utf-8') as f:
- f.write("""namespace cydaw::v2::ui {
-bool mixerStrip(const char *id,MixerStrip &strip,float width,float height,bool &picked){
-    const auto &p=theme::palette();const auto colour=p.audio;
-    const auto origin=ImGui::GetCursorScreenPos();auto *list=ImGui::GetWindowDrawList();
-    ImGui::PushID(id);ImGui::BeginGroup();bool changed=false;
-    list->AddRectFilled(origin,ImVec2(origin.x+width,origin.y+height),strip.selected?p.bg3:p.bg2,dp(4.f));
-    list->AddRectFilled(origin,ImVec2(origin.x+width,origin.y+dp(4.f)),colour,dp(4.f),ImDrawFlags_RoundCornersTop);
-    if(strip.selected)list->AddRect(origin,ImVec2(origin.x+width,origin.y+height),theme::alpha(p.accent,.6f),dp(4.f));
-    ImGui::SetCursorScreenPos(ImVec2(origin.x,origin.y+dp(6.f)));
-    if(ImGui::InvisibleButton("##select",ImVec2(width,ImGui::GetFontSize()+dp(4.f))))picked=true;
-    list->PushClipRect(origin,ImVec2(origin.x+width,origin.y+dp(40.f)),true);
-    list->AddText(ImVec2(origin.x+dp(6.f),origin.y+dp(7.f)),p.text,strip.name);
-    char count[40];std::snprintf(count,sizeof(count),"%d effets",strip.devices);
-    list->AddText(ImVec2(origin.x+dp(6.f),origin.y+dp(24.f)),p.textDim,count);list->PopClipRect();
-    ImGui::SetCursorScreenPos(ImVec2(origin.x+width-dp(28.f),origin.y+dp(7.f)));
-    changed|=knob("##pan",&strip.pan,-1,1,0,{20.f,colour,nullptr,"%.2f",nullptr,knobBipolar|knobNoLabel});
-    const auto faderTop=origin.y+dp(48.f),faderHeight=std::max(dp(40.f),height-dp(100.f));
-    const auto left=origin.x+std::max(dp(4.f),(width-dp(70.f))*.5f);
-    ImGui::SetCursorScreenPos(ImVec2(left,faderTop));
-    changed|=fader("##fader",&strip.gainDb,-80,12,ImVec2(dp(44.f),faderHeight),colour);
-    ImGui::SetCursorScreenPos(ImVec2(left+dp(50.f),faderTop+dp(7.f)));
-    meter("##meter",ImVec2(dp(20.f),faderHeight-dp(14.f)),strip.peak[0],strip.peak[1],strip.rms[0],strip.rms[1],true);
-    char gain[32];std::snprintf(gain,sizeof(gain),"%+.1f dB",strip.gainDb);
-    list->AddText(ImVec2(left,faderTop+faderHeight+dp(1.f)),p.textDim,gain);
-    list->PushClipRect(origin,ImVec2(origin.x+width,origin.y+height),true);
-    list->AddText(ImVec2(origin.x+dp(5.f),origin.y+height-dp(37.f)),p.textDim,strip.output);list->PopClipRect();
-    ImGui::SetCursorScreenPos(ImVec2(origin.x+dp(5.f),origin.y+height-dp(22.f)));
-    const ImVec2 size((width-dp(13.f))*.5f,dp(18.f));
-    ImGui::BeginDisabled(!strip.canMute);changed|=toggle("M",&strip.muted,p.mute,size,"Muet");ImGui::EndDisabled();ImGui::SameLine(0,dp(3.f));
-    ImGui::BeginDisabled(!strip.canSolo);changed|=toggle("S",&strip.solo,p.solo,size,"Solo");ImGui::EndDisabled();
-    ImGui::SetCursorScreenPos(ImVec2(origin.x,origin.y+height));ImGui::Dummy(ImVec2(width,0));
-    ImGui::EndGroup();ImGui::PopID();return changed;
-}
-} // namespace cydaw::v2::ui
-""")
-
-frame=section((root/'vendor/cydaw2/src/v2/GraphEditor.cpp').read_text(encoding='utf-8'),'    // A soft shadow,','    ImGui::PushID(static_cast<int>(node.id));')
-frame=frame.replace('layout.min','min').replace('layout.max','max').replace('layout.headerHeight','headerHeight').replace('node.boundary','boundary').replace('node.invalid','invalid')
-with (generated/'CyDawWidgets.h').open('a',encoding='utf-8') as f:
- f.write('namespace cydaw::v2::ui { void graphCard(ImDrawList *list, ImVec2 min, ImVec2 max,float headerHeight,ImU32 colour,bool boundary,bool selected,float s,bool invalid=false); void arrangerClipBackground(ImDrawList *list,ImVec2 min,ImVec2 max,ImU32 colour,bool hovered); }\n')
-with (generated/'CyDawWidgets.cpp').open('a',encoding='utf-8') as f:
- f.write('namespace cydaw::v2::ui { void graphCard(ImDrawList *list,ImVec2 min,ImVec2 max,float headerHeight,ImU32 colour,bool boundary,bool selected,float s,bool invalid){const auto &p=theme::palette();const float rounding=7.f*s;\n'+frame+'}\n')
- arrangement=(root/'vendor/cydaw2/src/v2/ArrangementView.cpp').read_text(encoding='utf-8')
- background=section(arrangement,'    const auto rounding = dp(3.0f);','    // Waveform:')
- background=background.replace('hit.min','min').replace('hit.max','max').replace('darker(colour, hovered ? 0.62f : 0.70f)','theme::mix(colour,0xff000000u,hovered?.62f:.70f)').replace('darker(colour, 0.15f)','theme::mix(colour,0xff000000u,.15f)')
- f.write('void arrangerClipBackground(ImDrawList *list,ImVec2 min,ImVec2 max,ImU32 colour,bool hovered){\n'+background+'} }\n')
 
 for p in generated.iterdir():
  p.write_text(translate_cpp(p.read_text(encoding='utf-8')),encoding='utf-8')

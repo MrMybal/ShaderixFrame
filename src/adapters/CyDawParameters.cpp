@@ -1,0 +1,52 @@
+// Generated parameter captions; rendering belongs to CyUI.
+#include "adapters/CyDawParameters.h"
+namespace sf::audio_ui { const char *parameterLabel(std::string_view key){
+if(key=="effect.parameter.pan")return "Pan";
+if(key=="effect.parameter.balance")return "Balance";
+if(key=="effect.parameter.rate")return "Rate";
+if(key=="effect.parameter.depth")return "Depth";
+if(key=="effect.parameter.delay")return "Delay";
+if(key=="effect.parameter.width")return "Width";
+if(key=="effect.parameter.mix")return "Mix";
+if(key=="effect.parameter.feedback")return "Feedback";
+if(key=="effect.parameter.frequency")return "Frequency";
+if(key=="effect.parameter.shape")return "Shape";
+if(key=="effect.parameter.spread")return "Spread";
+if(key=="effect.parameter.bits")return "Bits";
+if(key=="effect.parameter.downsample")return "Downsample";
+if(key=="effect.parameter.drive")return "Drive";
+if(key=="effect.parameter.mode")return "Mode";
+if(key=="effect.parameter.cutoff")return "Cutoff";
+if(key=="effect.parameter.resonance")return "Resonance";
+if(key=="effect.parameter.low")return "Low";
+if(key=="effect.parameter.mid")return "Mid";
+if(key=="effect.parameter.high")return "High";
+if(key=="effect.parameter.lowFrequency")return "Low Frequency";
+if(key=="effect.parameter.highFrequency")return "High Frequency";
+if(key=="effect.parameter.gain")return "Gain";
+if(key=="effect.parameter.ceiling")return "Ceiling";
+if(key=="effect.parameter.release")return "Release";
+if(key=="effect.parameter.threshold")return "Threshold";
+if(key=="effect.parameter.attack")return "Attack";
+if(key=="effect.parameter.range")return "Range";
+if(key=="effect.parameter.punch")return "Punch";
+if(key=="effect.parameter.sustain")return "Sustain";
+if(key=="effect.parameter.output")return "Output";
+if(key=="effect.parameter.time")return "Time";
+if(key=="effect.parameter.sync")return "Sync";
+if(key=="effect.parameter.free")return "Free";
+if(key=="effect.parameter.enabled")return "Enabled";
+if(key=="effect.parameter.type")return "Type";
+if(key=="effect.parameter.q")return "Q";
+if(key=="effect.parameter.slope")return "Slope";
+if(key=="effect.parameter.band")return "Band";
+if(key=="effect.parameter.ratio")return "Ratio";
+if(key=="effect.parameter.knee")return "Knee";
+if(key=="effect.parameter.makeup")return "Makeup";
+if(key=="effect.parameter.sidechain")return "Sidechain";
+if(key=="effect.parameter.floor")return "Floor";
+if(key=="effect.parameter.tilt")return "Tilt";
+if(key=="effect.parameter.smoothing")return "Smoothing";
+if(key=="effect.parameter.hold")return "Hold";
+if(key=="effect.parameter.history")return "History";
+return "Parameter";} }

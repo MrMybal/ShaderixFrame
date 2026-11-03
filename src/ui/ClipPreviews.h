@@ -56,6 +56,11 @@ class ClipPreviews {
     ID3D11ShaderResourceView *get(const Project &project, const Clip &clip, double time, Renderer &owner);
     // Frame of the final composition, all tracks; the document signature refreshes a few times a second.
     ID3D11ShaderResourceView *getSequence(const Project &project, double time, Renderer &owner);
+    // Any small document (an effect card's preview), cached under its key.
+    ID3D11ShaderResourceView *getDocument(const std::string &key, const std::shared_ptr<const Project> &project,
+                                          double time, Renderer &owner) {
+        return fetch(key, project, time, owner);
+    }
     void clear();
     void beginFrame() {
         if (prepared.size() > 1024)

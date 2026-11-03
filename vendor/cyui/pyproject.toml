@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyui"
+version = "1.2.0"
+description = "Themed Dear ImGui widgets and optional CyUI interface modules"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+readme = "README.md"
+# `import cyui` draws with imgui_bundle, so it is a dependency, not an extra.
+# The cyui_modules models (ranges, diff, documents, web policy...) still import without it.
+dependencies = ["imgui-bundle>=1.92"]
+
+[project.optional-dependencies]
+# Kept so that existing `pip install cyui[ui]` commands keep working.
+ui = ["imgui-bundle>=1.92"]
+
+[tool.setuptools]
+package-dir = {"" = "python"}
+py-modules = ["cyui"]
+
+[tool.setuptools.packages.find]
+where = ["python"]
+include = ["cyui_modules*"]

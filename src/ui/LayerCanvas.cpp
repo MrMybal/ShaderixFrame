@@ -1,14 +1,25 @@
+#include <cyui/Core.h>
 #include "ui/LayerCanvas.h"
-#include "adapters/ShaderixelNodeVisuals.h"
+#include "ui/Theme.h"
 #include "render/Grading.h"
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
 namespace sf {
 bool LayerCanvas::draw(Json &document, const Project &project, Renderer &renderer, double time) {
     using namespace sx;
-    using namespace shaderixel_ui;
     const auto before = document.Dump(0);
-    auto decoded = decodeLayerGraph(document, project);
+    auto decoded = track ? decodeTrackGraph(document, project, track) : decodeLayerGraph(document, project);
+    auto nodeView = [&](Id id) { return track ? renderer.trackNodeView(track, id) : renderer.layerNodeView(id); };
+    // A track graph reads its own track and the tracks below it; the layer graph reads every video track.
+    auto readable = [&](const Track &t) {
+        if (t.kind != TrackKind::Video)
+            return false;
+        if (!track)
+            return true;
+        auto self = std::find_if(project.tracks.begin(), project.tracks.end(), [&](auto &x) { return x.id == track; });
+        auto other = std::find_if(project.tracks.begin(), project.tracks.end(), [&](auto &x) { return x.id == t.id; });
+        return t.id == track || other > self;
+    };
     auto &g = decoded.graph;
     auto mutate = [&](Id id, auto fn) {
         auto nodes = Json::Array();
@@ -29,8 +40,8 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         n["name"] = name;
         n["surface"] = track;
         n["pos"] = Json::Array();
-        n["pos"].Push(60 - ed.pan.x);
-        n["pos"].Push(80 - ed.pan.y);
+        n["pos"].Push(60 / ed.zoom - ed.pan.x);
+        n["pos"].Push(80 / ed.zoom - ed.pan.y);
         n["inputs"] = Json::Array();
         for (int i = 0; i < (kind == NodeKind::Blend     ? 3
                              : kind == NodeKind::Surface ? 0
@@ -51,15 +62,15 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         document["nodes"].Push(n);
         selected = id;
     };
-    if (ImGui::Button("+ Blend"))
+    if (ImGui::Button(cyui::trLabel("+ Blend").c_str()))
         add(NodeKind::Blend, "Blend");
     ImGui::SameLine();
-    if (ImGui::Button("+ Correction")) {
+    if (ImGui::Button(cyui::trLabel("+ Correction").c_str())) {
         auto e = makeGrade();
         add(NodeKind::Effect, "Color Correction", &e);
     }
     ImGui::SameLine();
-    if (ImGui::Button("+ Shader Graph")) {
+    if (ImGui::Button(cyui::trLabel("+ Shader Graph").c_str())) {
         Effect e;
         e.id = "graph";
         e.graph = EffectGraph::Default().ToJson();
@@ -67,13 +78,13 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         add(NodeKind::Effect, "Shader Graph", &e);
     }
     ImGui::SameLine();
-    if (ImGui::Button("+ LUT 2D / 3D")) {
+    if (ImGui::Button(cyui::trLabel("+ LUT 2D / 3D").c_str())) {
         auto e = makeGrade("LUT 2D / 3D");
         add(NodeKind::Effect, "LUT 2D / 3D", &e);
         lutRequest = selected;
     }
     ImGui::SameLine();
-    if (ImGui::BeginCombo("+ Transition multitrack", "Choose…")) {
+    if (ImGui::BeginCombo(cyui::trLabel("+ Transition multitrack").c_str(), "Choose…")) {
         for (auto &d : renderer.library.definitions)
             if (d.kind == "transition" && ImGui::Selectable(d.name.c_str())) {
                 Effect e;
@@ -95,13 +106,13 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         ImGui::EndCombo();
     }
     ImGui::SameLine();
-    if (ImGui::Button("+ Split RGBA"))
+    if (ImGui::Button(cyui::trLabel("+ Split RGBA").c_str()))
         add(NodeKind::Split, "Split RGBA");
     ImGui::SameLine();
-    if (ImGui::BeginCombo("+ Effect / Timeline", "Choose…")) {
-        for (auto &track : project.tracks)
-            if (track.kind == TrackKind::Video && ImGui::Selectable(("Timeline / " + track.name).c_str()))
-                add(NodeKind::Surface, track.name, nullptr, track.id);
+    if (ImGui::BeginCombo(cyui::trLabel("+ Effect / Timeline").c_str(), "Choose…")) {
+        for (auto &layer : project.tracks)
+            if (readable(layer) && ImGui::Selectable(("Timeline / " + layer.name).c_str()))
+                add(NodeKind::Surface, layer.name, nullptr, layer.id);
         for (auto &def : renderer.library.definitions)
             if (def.kind == "effect" && ImGui::Selectable((def.category + " / " + def.name).c_str())) {
                 auto e = renderer.library.instantiate(def.id);
@@ -109,7 +120,7 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     e.code = def.code;
                 add(NodeKind::Effect, def.name, &e);
             }
-        if (ImGui::Selectable("Custom HLSL")) {
+        if (ImGui::Selectable(cyui::trLabel("Custom HLSL").c_str())) {
             Effect e;
             e.id = "custom";
             e.code = "float4 Effect(EffectContext ctx){return Input(0,ctx.px);}";
@@ -117,132 +128,71 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         }
         ImGui::EndCombo();
     }
-    bool fit = ImGui::Button("Fit All [F]");
+    bool fit = ImGui::Button(cyui::trLabel("Fit All [F]").c_str());
     ImGui::SameLine();
-    ImGui::TextDisabled("Wheel: zoom - middle button: pan - connect ports - right-click: disconnect");
+    ImGui::TextDisabled(cyui::tr("Wheel: zoom - middle button: pan - connect ports - right-click: disconnect").c_str());
     ImGui::BeginChild("ShaderixelComposition",
                       {0, selected ? std::max(180.f, ImGui::GetContentRegionAvail().y * .60f) : 0}, true,
                       ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     ImVec2 origin = ImGui::GetCursorScreenPos(), size = ImGui::GetContentRegionAvail();
-    ImGui::InvisibleButton("##graph", size,
-                           ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonMiddle |
-                               ImGuiButtonFlags_MouseButtonRight);
-    bool hovered = ImGui::IsItemHovered();
-    auto &io = ImGui::GetIO();
-    auto *dl = ImGui::GetWindowDrawList();
-    ImVec2 mouse = io.MousePos;
-    fit |= hovered && !io.WantTextInput && ImGui::IsKeyPressed(ImGuiKey_F);
-    if ((fit || needsFit) && size.x > 100 && size.y > 80 && !g.nodes.empty()) {
-        float2 mn{1e9f, 1e9f}, mx{-1e9f, -1e9f};
-        for (auto &n : g.nodes) {
-            mn.x = std::min(mn.x, n.pos.x);
-            mn.y = std::min(mn.y, n.pos.y);
-            mx.x = std::max(mx.x, n.pos.x + kNodeW);
-            mx.y = std::max(mx.y, n.pos.y + NodeLayout(n, float(project.width) / project.height).h);
-        }
-        ed.zoom =
-            std::clamp(std::min((size.x - 40) / (mx.x - mn.x), (size.y - 40) / (mx.y - mn.y)), .2f, 1.f);
-        ed.pan = {20 / ed.zoom - mn.x, 20 / ed.zoom - mn.y};
-        needsFit = false;
-    }
-    auto toScreen = [&](float2 p) {
-        return ImVec2(origin.x + (p.x + ed.pan.x) * ed.zoom, origin.y + (p.y + ed.pan.y) * ed.zoom);
-    };
-    auto toGraph = [&](ImVec2 p) {
-        return float2{(p.x - origin.x) / ed.zoom - ed.pan.x, (p.y - origin.y) / ed.zoom - ed.pan.y};
-    };
-    if (hovered && io.MouseWheel) {
-        auto anchor = toGraph(mouse);
-        ed.zoom = std::clamp(ed.zoom * std::pow(1.15f, io.MouseWheel), .2f, 2.5f);
-        ed.pan = ed.pan + (toGraph(mouse) - anchor);
-    }
-    if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Middle, 0))
-        ed.pan = ed.pan + float2{io.MouseDelta.x / ed.zoom, io.MouseDelta.y / ed.zoom};
-    dl->PushClipRect(origin, origin + size, true);
-    dl->AddRectFilled(origin, origin + size, IM_COL32(19, 20, 24, 255));
-    float step = 24 * ed.zoom;
-    for (float x = std::fmod(ed.pan.x * ed.zoom, step); x < size.x; x += step)
-        dl->AddLine(origin + ImVec2(x, 0), origin + ImVec2(x, size.y), ui::col::Grid);
-    for (float y = std::fmod(ed.pan.y * ed.zoom, step); y < size.y; y += step)
-        dl->AddLine(origin + ImVec2(0, y), origin + ImVec2(size.x, y), ui::col::Grid);
-    const float aspect = float(project.width) / project.height;
-    float pinR = kPin * ed.zoom;
-    auto outPin = [&](const Node &n, int k) {
-        return toScreen(n.pos + float2{kNodeW, kHeader + kRow * (k + .5f)});
-    };
-    auto inPin = [&](const Node &n, int k) {
-        return toScreen(n.pos + float2{0, kHeader + kRow * (k + .5f)});
-    };
-    Id hoverNode = 0, hoverOut = 0, hoverInNode = 0;
-    int hoverIn = -1, hoverOutCh = 0;
-    auto pinNear = [&](ImVec2 a) {
-        auto d = a - mouse;
-        return d.x * d.x + d.y * d.y < pinR * pinR * 4;
-    };
-    if (hovered)
-        for (auto it = g.nodes.rbegin(); it != g.nodes.rend(); ++it) {
-            auto &n = *it;
-            auto l = NodeLayout(n, aspect);
-            for (int k = 0; k < l.outputs; ++k)
-                if (pinNear(outPin(n, k))) {
-                    hoverOut = n.id;
-                    hoverOutCh = k;
-                }
-            for (int k = 0; k < l.inputs; ++k)
-                if (pinNear(inPin(n, k))) {
-                    hoverInNode = n.id;
-                    hoverIn = k;
-                }
-            if (hoverOut || hoverInNode)
-                break;
-            auto a = toScreen(n.pos), b = toScreen(n.pos + float2{kNodeW, l.h});
-            if (mouse.x >= a.x && mouse.x <= b.x && mouse.y >= a.y && mouse.y <= b.y) {
-                hoverNode = n.id;
-                break;
-            }
-        }
-    if (hovered && ImGui::IsMouseClicked(0)) {
-        if (hoverOut) {
-            ed.draggingLink = true;
-            ed.linkFrom = hoverOut;
-            ed.linkChannel = NodeOutputChannel(*g.Find(hoverOut), hoverOutCh);
-        } else if (hoverNode) {
-            selected = hoverNode;
-            ed.selection = {selected};
-            dragging = selected;
+    auto &io=ImGui::GetIO(); auto mouse=io.MousePos;
+    bool hovered=ImGui::IsWindowHovered();
+    auto toGraph=[&](ImVec2 p){auto w=nodesState.canvas.view.world(p,origin);return float2{float(w.x),float(w.y)};};
+    auto pin=[](Id id,int port,bool output){return (std::uint64_t(id)<<16)|(output?0x8000:0)|(port+1);};
+    if(stamp!=before){stamp=before;++revision;}
+    std::vector<cyui::Node> nodes;std::vector<cyui::NodeLink> links;
+    for(auto& n:g.nodes) {
+        cyui::Node item{n.id,{n.pos.x,n.pos.y},n.name+(n.bypass?" [bypassed]":"")};item.colorIndex=int(n.kind);
+        for(int i=0;i<NodeInputCount(n);++i)item.inputs.push_back({pin(n.id,i,false),NodeInputName(n,i),int(NodeInputType(n,i))});
+        for(int i=0;i<NodeOutputCount(n);++i)item.outputs.push_back({pin(n.id,i,true),NodeOutputName(n,i),int(NodeOutputType(n,i))});
+        nodes.push_back(std::move(item));
+        for(int i=0;i<int(n.inputs.size());++i)if(auto* src=g.Find(n.inputs[i])) {
+            int channel=InputChannel(n,i),port=src->kind==NodeKind::Split&&channel>0?channel-1:0;
+            links.push_back({pin(n.id,i,false),pin(src->id,port,true),pin(n.id,i,false),channel?2:0});
         }
     }
-    if (hovered && hoverInNode && ImGui::IsMouseClicked(1))
-        mutate(hoverInNode, [&](Json &n) {
-            auto pins = Json::Array();
-            for (int k = 0; k < int(n["inputs"].Size()); ++k)
-                pins.Push(k == hoverIn ? Json(0) : n["inputs"].At(k));
-            n["inputs"] = pins;
-        });
-    if (dragging && ImGui::IsMouseDragging(0))
-        mutate(dragging, [&](Json &n) {
-            n["pos"] = Json::Array();
-            auto p = g.Find(dragging)->pos + float2{io.MouseDelta.x / ed.zoom, io.MouseDelta.y / ed.zoom};
-            n["pos"].Push(p.x);
-            n["pos"].Push(p.y);
-        });
-    if (ImGui::IsMouseReleased(0)) {
-        if (ed.draggingLink && hoverInNode && !g.WouldCycle(ed.linkFrom, hoverInNode))
-            mutate(hoverInNode, [&](Json &n) {
-                auto pins = Json::Array(), channels = Json::Array();
-                for (int k = 0; k < int(n["inputs"].Size()); ++k) {
-                    pins.Push(k == hoverIn ? Json(ed.linkFrom) : n["inputs"].At(k));
-                    channels.Push(k == hoverIn ? ed.linkChannel : int(InputChannel(*g.Find(hoverInNode), k)));
-                }
-                n["inputs"] = pins;
-                n["inputChannels"] = channels;
-            });
-        ed.draggingLink = false;
-        ed.linkFrom = 0;
-        dragging = 0;
+    if((fit||needsFit||(hovered&&!io.WantTextInput&&ImGui::IsKeyPressed(ImGuiKey_F)))&&size.x>100&&size.y>80&&!nodes.empty()) {
+        cyui::Point lo=nodes.front().position,hi=lo;
+        for(auto& n:nodes){lo.x=std::min(lo.x,n.position.x);lo.y=std::min(lo.y,n.position.y);
+            hi.x=std::max(hi.x,n.position.x+cyui::dp(190));hi.y=std::max(hi.y,n.position.y+cyui::dp(36+72*std::max({size_t(1),n.inputs.size(),n.outputs.size()})));}
+        nodesState.canvas.view.fit(lo,hi,size,cyui::dp(24));needsFit=false;
     }
-    if (hovered && !hoverInNode && ImGui::IsMouseClicked(1)) {
-        contextNode = hoverNode;
+    cyui::NodeOptions options;options.width=190;options.row=72;options.revision=revision;
+    options.canConnect=[&](auto from,auto to){auto* a=g.Find(Id(from>>16));auto* b=g.Find(Id(to>>16));
+        return a&&b&&(from&0x8000)&&!(to&0x8000)&&!g.WouldCycle(a->id,b->id);};
+    options.drawBody=[&](const cyui::Node& n,const cyui::Rect& body){
+        if(auto* image=nodeView(Id(n.id))) {
+            float z=float(nodesState.canvas.view.zoom),w=body.max.x-body.min.x-cyui::dp(8)*z;
+            float h=std::min(cyui::dp(44)*z,w*float(project.height)/std::max(1,project.width));
+            ImVec2 a{body.min.x,body.max.y-h-cyui::dp(5)*z},b{a.x+w,a.y+h};
+            ImGui::GetWindowDrawList()->AddImage((ImTextureID)image,a,b);
+        }
+    };
+    cyui::NodeResult result;{cyui::ScopedFont font(cyui::uiFont(),float(nodesState.canvas.view.zoom));result=cyui::nodeEditor("##graph",nodesState,nodes,links,size,options);}
+    if(hovered&&ImGui::IsMouseClicked(1))for(auto& n:nodes)for(size_t i=0;i<n.inputs.size();++i) {
+        auto at=nodesState.canvas.view.screen(n.position,origin);at.y+=cyui::dp(28+72*(float(i)+.5f))*float(nodesState.canvas.view.zoom);
+        if(std::hypot(at.x-io.MousePos.x,at.y-io.MousePos.y)<cyui::dp(9)){result.linkRemoved=true;result.removeLink=n.inputs[i].id;}
+    }
+    ed.zoom=float(nodesState.canvas.view.zoom);ed.pan={float(-nodesState.canvas.view.origin.x),float(-nodesState.canvas.view.origin.y)};
+    ed.selection.clear();for(auto id:nodesState.selection)ed.selection.insert(Id(id));
+    if(!nodesState.selection.empty())selected=Id(nodesState.selection.back());
+    if(result.moved.committed())for(auto& move:result.moved.value)mutate(Id(move.id),[&](Json& n){n["pos"]=Json::Array();n["pos"].Push(move.position.x);n["pos"].Push(move.position.y);});
+    if(result.connect) {
+        Id from=Id(result.connectFrom>>16),to=Id(result.connectTo>>16);int input=int(result.connectTo&0x7fff)-1,output=int(result.connectFrom&0x7fff)-1;
+        int channel=NodeOutputChannel(*g.Find(from),output);
+        mutate(to,[&](Json& n){auto pins=Json::Array(),channels=Json::Array();for(int i=0;i<int(n["inputs"].Size());++i){pins.Push(i==input?Json(from):n["inputs"].At(i));channels.Push(i==input?channel:int(InputChannel(*g.Find(to),i)));}n["inputs"]=pins;n["inputChannels"]=channels;});
+    }
+    if(result.linkRemoved) {Id id=Id(result.removeLink>>16);int port=int(result.removeLink&0x7fff)-1;
+        mutate(id,[&](Json& n){auto pins=Json::Array();for(int i=0;i<int(n["inputs"].Size());++i)pins.Push(i==port?Json(0):n["inputs"].At(i));n["inputs"]=pins;});}
+    if(!result.removeNodes.empty()) {
+        std::set<Id> ids;for(auto id:result.removeNodes)if(auto* n=g.Find(Id(id));n&&n->kind!=NodeKind::Output)ids.insert(Id(id));
+        auto ns=Json::Array();for(auto n:document["nodes"].Elements())if(!ids.contains(n["id"].U())){auto pins=Json::Array();for(auto& p:n["inputs"].Elements())pins.Push(ids.contains(p.U())?Json(0):p);n["inputs"]=pins;ns.Push(n);}document["nodes"]=ns;
+        if(ids.contains(selected))selected=0;
+    }
+    if(hovered&&ImGui::IsMouseClicked(1)&&!result.linkRemoved) {
+        contextNode=0;
+        for(auto& n:nodes){auto a=nodesState.canvas.view.screen(n.position,origin);float z=ed.zoom;
+            if(ImGui::IsMouseHoveringRect(a,{a.x+cyui::dp(190)*z,a.y+cyui::dp(36+72*std::max({size_t(1),n.inputs.size(),n.outputs.size()}))*z}))contextNode=Id(n.id);}
         ImGui::OpenPopup("LayerGraphContext");
     }
     if (ImGui::BeginPopup("LayerGraphContext")) {
@@ -251,20 +201,21 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
             if (node) {
                 selected = contextNode;
                 ed.selection = {selected};
+                nodesState.selection={selected};
                 ImGui::TextUnformatted(node->name.c_str());
                 ImGui::Separator();
                 auto name = node->name;
-                if (ImGui::InputText("Name", &name))
+                if (ImGui::InputText(cyui::trLabel("Name").c_str(), &name))
                     mutate(selected, [&](Json &v) { v["name"] = name; });
                 if (node->kind != NodeKind::Output) {
-                    if (ImGui::MenuItem("Enable / Bypass"))
+                    if (ImGui::MenuItem(cyui::trLabel("Enable / Bypass").c_str()))
                         mutate(selected, [&](Json &v) { v["bypass"] = !node->bypass; });
-                    if (ImGui::MenuItem("Copy Node")) {
+                    if (ImGui::MenuItem(cyui::trLabel("Copy Node").c_str())) {
                         for (auto &v : document["nodes"].Elements())
                             if (v["id"].U() == selected)
                                 clipboard = v;
                     }
-                    if (ImGui::MenuItem("Delete")) {
+                    if (ImGui::MenuItem(cyui::trLabel("Delete").c_str())) {
                         auto nodes = Json::Array();
                         for (auto item : document["nodes"].Elements())
                             if (item["id"].U() != selected) {
@@ -279,31 +230,31 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     }
                 }
                 if (node->kind == NodeKind::Effect && decoded.effects.at(node->id).id != "grading" &&
-                    ImGui::MenuItem("Edit Shader Graph"))
+                    ImGui::MenuItem(cyui::trLabel("Edit Shader Graph").c_str()))
                     shaderRequest = node->id;
             }
         } else {
-            if (ImGui::MenuItem("Shaderixel Blend"))
+            if (ImGui::MenuItem(cyui::trLabel("Shaderixel Blend").c_str()))
                 add(NodeKind::Blend, "Blend");
-            if (ImGui::MenuItem("Color Correction")) {
+            if (ImGui::MenuItem(cyui::trLabel("Color Correction").c_str())) {
                 auto e = makeGrade();
                 add(NodeKind::Effect, "Correction", &e);
             }
-            if (ImGui::MenuItem("Shader Graph")) {
+            if (ImGui::MenuItem(cyui::trLabel("Shader Graph").c_str())) {
                 Effect e;
                 e.id = "graph";
                 e.graph = EffectGraph::Default().ToJson();
                 add(NodeKind::Effect, "Shader Graph", &e);
             }
-            if (ImGui::MenuItem("Split RGBA"))
+            if (ImGui::MenuItem(cyui::trLabel("Split RGBA").c_str()))
                 add(NodeKind::Split, "Split RGBA");
-            if (ImGui::BeginMenu("Timeline / Layer")) {
+            if (ImGui::BeginMenu(cyui::trLabel("Timeline / Layer").c_str())) {
                 for (auto &t : project.tracks)
-                    if (t.kind == TrackKind::Video && ImGui::MenuItem(t.name.c_str()))
+                    if (readable(t) && ImGui::MenuItem(t.name.c_str()))
                         add(NodeKind::Surface, t.name, nullptr, t.id);
                 ImGui::EndMenu();
             }
-            if (!clipboard.IsNull() && ImGui::MenuItem("Paste Node")) {
+            if (!clipboard.IsNull() && ImGui::MenuItem(cyui::trLabel("Paste Node").c_str())) {
                 auto n = clipboard;
                 Id next = 1;
                 for (auto &v : g.nodes)
@@ -318,21 +269,20 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
             }
         }
         ImGui::Separator();
-        if (ImGui::MenuItem("Fit All [F]"))
+        if (ImGui::MenuItem(cyui::trLabel("Fit All [F]").c_str()))
             needsFit = true;
         ImGui::EndPopup();
     }
-#include "adapters/ShaderixelNodeDrawing.inl"
-    dl->PopClipRect();
+
     ImGui::EndChild();
     if (auto *n = g.Find(selected)) {
-        ImGui::Text("%s / node %u", n->name.c_str(), n->id);
+        ImGui::Text(cyui::tr("%s / node %u").c_str(), n->name.c_str(), n->id);
         if (n->kind != NodeKind::Output) {
             bool bypass = n->bypass;
-            if (ImGui::Checkbox("Bypass", &bypass))
+            if (ImGui::Checkbox(cyui::trLabel("Bypass").c_str(), &bypass))
                 mutate(selected, [&](Json &v) { v["bypass"] = bypass; });
             ImGui::SameLine();
-            if (ImGui::Button("Delete Node")) {
+            if (ImGui::Button(cyui::trLabel("Delete Node").c_str())) {
                 auto nodes = Json::Array();
                 for (auto item : document["nodes"].Elements())
                     if (item["id"].U() != selected) {
@@ -376,10 +326,10 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                                    "Luminosity",
                                    "Darker Color",
                                    "Lighter Color"};
-            if (ImGui::Combo("Shaderixel Blend", &mode, names, 27))
+            if (ImGui::Combo(cyui::trLabel("Shaderixel Blend").c_str(), &mode, names, 27))
                 mutate(selected, [&](Json &v) { v["blend"] = mode; });
             bool clip = n->clip;
-            if (ImGui::Checkbox("Clip to Background Alpha", &clip))
+            if (ImGui::Checkbox(cyui::trLabel("Clip to Background Alpha").c_str(), &clip))
                 mutate(selected, [&](Json &v) { v["clip"] = clip; });
             for (int c = 0; c < 4; ++c) {
                 ImGui::PushID(c);
@@ -393,8 +343,8 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     });
                 ImGui::PopID();
             }
-            if (ImGui::TreeNode("Blend If / Conditional Blend")) {
-                ImGui::TextDisabled("Handles 0-255: soft in, soft out");
+            if (ImGui::TreeNode(cyui::trLabel("Blend If / Conditional Blend").c_str())) {
+                ImGui::TextDisabled(cyui::tr("Handles 0-255: soft in, soft out").c_str());
                 for (int c = 0; c < 4; ++c)
                     for (int side = 0; side < 2; ++side) {
                         ImGui::PushID(c * 2 + side);
@@ -431,11 +381,11 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
             descriptors =
                 effectParameters(e.id == "grading" ? gradeShader(e, project.workingSpace) : effectCode(e));
             if (e.id == "grading") {
-                ImGui::Combo("Image LUT layout", &lutLayout, "Automatic\0 3D atlas\0 2D RG map\0");
-                if (ImGui::Button("Import .cube / 2D image LUT"))
+                ImGui::Combo(cyui::trLabel("Image LUT layout").c_str(), &lutLayout, "Automatic\0 3D atlas\0 2D RG map\0");
+                if (ImGui::Button(cyui::trLabel("Import .cube / 2D image LUT").c_str()))
                     lutRequest = selected;
                 ImGui::SameLine();
-                if (ImGui::BeginCombo("Look", "Choose…")) {
+                if (ImGui::BeginCombo(cyui::trLabel("Look").c_str(), "Choose…")) {
                     for (auto preset :
                          {"Neutral", "Warm", "Cool", "Black and White", "Cyan shadows / warm highlights"})
                         if (ImGui::Selectable(preset)) {
@@ -449,11 +399,11 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                         }
                     ImGui::EndCombo();
                 }
-                if (ImGui::Button("Remove LUT"))
+                if (ImGui::Button(cyui::trLabel("Remove LUT").c_str()))
                     mutate(selected, [&](Json &v) { v["effect"]["grading"]["lut"] = Json(); });
             }
             if (e.id != "grading") {
-                if (ImGui::Button("Open Shader Graph")) {
+                if (ImGui::Button(cyui::trLabel("Open Shader Graph").c_str())) {
                     if (e.graph.IsNull())
                         mutate(selected,
                                [&](Json &v) { v["effect"]["graph"] = EffectGraph::Default().ToJson(); });
@@ -464,8 +414,8 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     shaderDraft = effectCode(e);
                     draftIdentity = identity;
                 }
-                ImGui::InputTextMultiline("Shader HLSL / EffectGraph", &shaderDraft, {-1, 100});
-                if (ImGui::Button("Compile and Apply")) {
+                codeFields.draw("Shader HLSL / EffectGraph", shaderDraft, {-1, 160});
+                if (ImGui::Button(cyui::trLabel("Compile and Apply").c_str())) {
                     renderer.validateShader(shaderDraft);
                     mutate(selected, [&](Json &v) {
                         v["effect"]["code"] = shaderDraft;
@@ -505,12 +455,12 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                 mutate(selected, [&](Json &v) { v["params"][d.key] = parameterJson(p); });
             }
             ImGui::SameLine();
-            if (ImGui::Button("K")) {
+            if (ImGui::Button(cyui::trLabel("K").c_str())) {
                 setLayerGraphKey(document, selected, d.key, {time, value, Curve::Smooth, 0});
                 automationKey = d.key;
             }
             ImGui::SameLine();
-            if (ImGui::SmallButton("Curve"))
+            if (ImGui::SmallButton(cyui::trLabel("Curve").c_str()))
                 automationKey = d.key;
             if (automationKey == d.key && !p.keys.empty()) {
                 float values[128];
@@ -521,20 +471,20 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
                     ImGui::PushID(int(k));
                     auto frame = p.keys[k];
                     ImGui::SetNextItemWidth(100);
-                    bool edit = ImGui::InputDouble("s", &frame.time, 0, 0, "%.4f",
+                    bool edit = ImGui::InputDouble(cyui::trLabel("s").c_str(), &frame.time, 0, 0, "%.4f",
                                                    ImGuiInputTextFlags_EnterReturnsTrue);
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(100);
-                    edit |= ImGui::InputFloat("Value", &frame.value, 0, 0, "%.4f",
+                    edit |= ImGui::InputFloat(cyui::trLabel("Value").c_str(), &frame.value, 0, 0, "%.4f",
                                               ImGuiInputTextFlags_EnterReturnsTrue);
                     int curve = int(frame.curve);
                     ImGui::SameLine();
                     ImGui::SetNextItemWidth(110);
-                    edit |= ImGui::Combo("Interpolation", &curve, "Linear\0Smooth\0Step\0Curved\0");
+                    edit |= ImGui::Combo(cyui::trLabel("Interpolation").c_str(), &curve, "Linear\0Smooth\0Step\0Curved\0");
                     frame.curve = Curve(curve);
                     if (curve == 3)
-                        edit |= ImGui::SliderFloat("Curvature", &frame.shape, -1, 1);
-                    bool remove = ImGui::SmallButton("Remove");
+                        edit |= ImGui::SliderFloat(cyui::trLabel("Curvature").c_str(), &frame.shape, -1, 1);
+                    bool remove = ImGui::SmallButton(cyui::trLabel("Remove").c_str());
                     if (edit || remove) {
                         p.keys.erase(p.keys.begin() + k);
                         if (!remove)
@@ -550,6 +500,7 @@ bool LayerCanvas::draw(Json &document, const Project &project, Renderer &rendere
         }
         ImGui::EndChild();
     }
+    if(selected && !ed.selection.contains(selected))nodesState.selection={selected};
     return before != document.Dump(0);
 }
 } // namespace sf

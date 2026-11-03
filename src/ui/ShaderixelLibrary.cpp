@@ -37,7 +37,7 @@ void Editor::shaderixelLibrary() {
     if (!panels["Shaderixel Library"] || !beginPanel("Shaderixel Library"))
         return;
     ImGui::InputTextWithHint("Search", "Name / category...", &shaderixelFilter);
-    ImGui::Combo("Show", &shaderixelMode, "All\0Layers / Generators\0Effects\0");
+    ImGui::Combo(cyui::trLabel("Show").c_str(), &shaderixelMode, "All\0Layers / Generators\0Effects\0");
     std::set<std::string> categories;
     unsigned total = 0;
     for (auto &d : s.renderer.library.definitions)
@@ -45,15 +45,15 @@ void Editor::shaderixelLibrary() {
             categories.insert(d.category);
             ++total;
         }
-    if (ImGui::BeginCombo("Category", shaderixelCategory.empty() ? "All" : shaderixelCategory.c_str())) {
-        if (ImGui::Selectable("All", shaderixelCategory.empty()))
+    if (ImGui::BeginCombo(cyui::trLabel("Category").c_str(), shaderixelCategory.empty() ? "All" : shaderixelCategory.c_str())) {
+        if (ImGui::Selectable(cyui::trLabel("All").c_str(), shaderixelCategory.empty()))
             shaderixelCategory.clear();
         for (auto &category : categories)
             if (ImGui::Selectable(category.c_str(), category == shaderixelCategory))
                 shaderixelCategory = category;
         ImGui::EndCombo();
     }
-    ImGui::TextDisabled("%u Shaderixel items - embedded sources", total);
+    ImGui::TextDisabled(cyui::tr("%u Shaderixel items - embedded sources").c_str(), total);
     ImGui::BeginChild("ShaderixelCatalogue");
     for (auto &d : s.renderer.library.definitions) {
         if (!d.id.starts_with("shaderixel.") || (shaderixelMode == 1 && !d.generator) ||
@@ -82,9 +82,9 @@ void Editor::shaderixelLibrary() {
         }
         if (ImGui::BeginPopupContextItem()) {
             if (d.generator) {
-                if (ImGui::MenuItem("Create Layer in Timeline"))
+                if (ImGui::MenuItem(cyui::trLabel("Create Layer in Timeline").c_str()))
                     addLibraryLayer(d.id);
-            } else if (ImGui::MenuItem("Apply to Selected Clip", nullptr, false, s.selected != 0)) {
+            } else if (ImGui::MenuItem(cyui::trLabel("Apply to Selected Clip").c_str(), nullptr, false, s.selected != 0)) {
                 Json a = Json::Object();
                 a["clip"] = s.selected;
                 a["id"] = d.id;
@@ -92,7 +92,7 @@ void Editor::shaderixelLibrary() {
             }
             ImGui::EndPopup();
         }
-        ImGui::TextDisabled("%s · %s", d.category.c_str(), d.generator ? "HLSL LAYER" : "HLSL EFFECT");
+        ImGui::TextDisabled(cyui::tr("%s · %s").c_str(), d.category.c_str(), d.generator ? "HLSL LAYER" : "HLSL EFFECT");
         ImGui::PopID();
     }
     ImGui::EndChild();

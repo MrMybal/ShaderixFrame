@@ -1,4 +1,4 @@
-# ShaderixFrame 0.13.0-alpha.1
+# ShaderixFrame 0.14.0-alpha.1
 
 Development and maintenance: Cyberalien.
 
@@ -6,13 +6,22 @@ Development and maintenance: Cyberalien.
 See [alpha downloads and limitations](docs/RELEASE_ALPHA.md) and [licensing/source information](docs/LICENSING.md).
 
 ShaderixFrame is a native Windows video editor with layered compositing, HLSL effects,
-VFX graphs and audio editing. It reuses Shaderixel's theme, shader graph compiler and
-composition components, together with CyDAW v2's DSP engine, signal analysis and graph controls.
+VFX graphs and audio editing. It uses modular CyUI for common interface components,
+Shaderixel's shader graph compiler and composition algorithms, and CyDAW v2's DSP
+engine and signal analysis.
 The application starts in **English**. Imported projects keep their own clip names and text.
+The current development UI migration is described in [CYUI_MIGRATION.md](docs/CYUI_MIGRATION.md).
 
 Version 0.13 adds six workspaces, a CyDAW-style arrangement timeline and frame filmstrip,
 a curve editor, detailed composition zoom, and **406 Shaderixel effects and generators**.
 See [the release notes](docs/RELEASE_0.13.md) for version-specific details.
+
+Version 0.14 migrates common UI to modular [CyUI](https://github.com/MrMybal/CyUI):
+shared node editors, audio controls, grading/DSP curves, source monitor and code editor.
+CyUI is MIT-licensed. See its
+[pinned licence](https://github.com/MrMybal/CyUI/blob/8367401fe45fc22bfed5e227cb3de343177f676b/LICENSE)
+and the [bundled licence](vendor/cyui/LICENSE).
+See [0.14 release notes](docs/RELEASE_0.14.md).
 
 ## Start editing
 
@@ -42,6 +51,8 @@ Drag a tab outside the main window to create a native window on another screen.
 Close panels freely and reopen them from **View**. The clip editor can be detached
 as a whole, and its panels are available from **Clip Windows**.
 Existing French panel settings and docking layouts are migrated to their English names.
+**View > Appearance** selects a CyUI theme, density and UI language. English is the
+default; personal settings stay beside the executable in `ui-preferences.json`.
 
 **Command Palette** (`Ctrl+Shift+P`) finds commands, tools, panels and workspaces by name.
 Use the arrows and Enter to select a result. **Keyboard Shortcuts** allows rebinding tools,
@@ -135,15 +146,36 @@ Analyses run in the background and report progress in the status bar.
 ## Composition, graphs and motion design
 
 **Composition** supports wheel zoom around the pointer, Fit, 1:1 and 25%-1600% presets.
-Use Ctrl+0 to fit, Ctrl+1 for 100%, and Ctrl plus +/- to zoom. Space-drag or middle-drag pans;
-the minimap shows and moves the visible region. Rendering follows zoom up to sequence resolution,
+Use Ctrl+0 to fit, Ctrl+1 for 100%, and Ctrl plus +/- to zoom. To move around a zoomed image,
+use the **Hand** tool (toolbar button or `H` over the image), middle-drag, Space-drag, Shift+wheel
+or a touchpad's horizontal scroll, or drag in the margin around the picture; the minimap shows and
+moves the visible region (double-clicking it no longer resets the zoom). Rendering follows zoom up to sequence resolution,
 with sharp pixel display above 200% and hovered pixel coordinates.
 
 Guides include safe areas, thirds, center and target aspect ratios. **Snapshot** stores image A;
 **A/B** compares it with the live B image using a draggable wipe. Right-click to export the
 current frame as PNG or EXR half, or use **Copy Image** (`Ctrl+Shift+C`) at sequence resolution.
 
-**Layer Graph** is independent of **Shader Graph**. Video tracks produce transparent surfaces;
+**Track Graph** gives every video track its own effect graph, as in Shaderixel: the track's clips
+come in as a surface, effect, correction, LUT and Shader Graph nodes process it, and the output goes
+on to the track blending. Drop a library effect on a track header's **FX** button (or on the panel)
+to append it to the chain; **FX** lights up when the track has effects. A track graph may also read
+tracks below it as side inputs (mattes, displacement sources). Each node shows a live thumbnail.
+
+**Effects Browser** shows Shaderixel's effects, blends, generators and transitions as cards with a
+live preview each, rendered in the background on a reference picture (or on the selected clip with
+**Preview on selected clip**), plus CyDAW's audio inserts by family. Double-click applies a card to
+the selection (an effect to the clip, a blend to the clip's track, a generator as a new layer, a
+transition into the clip, an audio device to the Track Effects channel); cards also drag onto the
+timeline, and a blend card onto a track header's **FX** button. **Apply LUT File...** loads a 1D/3D
+`.cube` or image LUT onto the selected clip as a native color correction.
+
+Each video track has a **blend mode** (Shaderixel's 27 modes), an **opacity** and optionally a library
+**blend effect**, set from the track's right-click menu or by dropping a blend card; the automatic layer
+graph uses them, so adjustment layers keep working. Blend shaders applied as clip effects read the
+picture below as their background and the clip as their layer.
+
+**Layer Graph** blends the tracks together and is independent of **Shader Graph**. Video tracks produce transparent surfaces;
 connect these to blend, correction, effect and output nodes. Branches can share inputs and
 parameters are animatable in sequence time. **Open Shader Graph** edits the selected node's
 HLSL graph; **Back to Clip Effects** returns to clip effects. Wheel zooms, middle-drag pans,
@@ -189,10 +221,22 @@ HDR-monitor workflow; see [architecture](docs/ARCHITECTURE.md) and [roadmap](doc
 
 ## Audio, DSP and plugins
 
+**Track Effects** shows the insert chain of an audio track, a bus or the master as a row of CyDAW
+devices: power (bypass), drag to reorder, remove, one knob per parameter (animated parameters take a
+key at the playhead), and a **+ Add device** catalogue by family with VST3/native plugins. Selecting
+an audio clip shows its track; a track header's **FX** button opens it. Each knob gesture is one undo
+step. **Sequence > Sound Output** chooses the playback device (kept in `audio-output.json`); when no
+device can play, the status bar says **No sound** with the reason instead of staying silent.
+
 **Mixer & Audio Graph** exposes tracks, buses, sends and master. **DSP Graph** edits embedded
 stereo graphs using CyDAW v2's AudioRenderPlan, graph validation and controls. Add DSPs by search,
 connect ports, arrange nodes, automate parameters and **Compile and Apply** the draft as one
-undoable edit. The internal catalogue contains 15 DSP effects. Native SDK effects and VST3
+undoable edit. The internal catalogue contains CyDAW's 50 stereo insert effects: dynamics (pro compressor
+and limiter, Pression, multiband, de-esser, gate, transient shaper, Velours resonance suppressor), EQ and
+filters, reverbs (Pro Reverb, Halo, Empreinte convolution), delays (ping-pong, tape echo, grains, repeat),
+saturation, amp/cabinet/microphone simulation, channel strip and mastering, pitch shift and correction,
+modulation, resonators, utility and meters. Look-ahead devices report their latency and the mix
+compensates it. MIDI effects, modulators and containers are not offered. Native SDK effects and VST3
 plugins run in isolated workers; plugin windows, opaque state and presets remain accessible.
 
 Channels support gain/pan, mute/solo, output routing and pre/post-fader sends. Routing cycles

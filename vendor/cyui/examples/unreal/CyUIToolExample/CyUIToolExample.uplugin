@@ -1,0 +1,12 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.1.0",
+  "FriendlyName": "CyUI Consumer Example",
+  "Description": "Example editor plugin using the shared CyUI module inside its own Slate tab.",
+  "Category": "Editor",
+  "CanContainContent": false,
+  "EnabledByDefault": false,
+  "Plugins": [{ "Name": "CyUI", "Enabled": true }],
+  "Modules": [{ "Name": "CyUIToolExample", "Type": "Editor", "LoadingPhase": "PostEngineInit" }]
+}

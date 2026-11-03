@@ -1,5 +1,6 @@
 #include "ui/EnglishPanels.h"
 #include "ui/Editor.h"
+#include "ui/UiPreferences.h"
 #include <atomic>
 #include <deque>
 #include <fstream>
@@ -35,6 +36,11 @@ LRESULT CALLBACK proc(HWND w, UINT msg, WPARAM a, LPARAM b) {
             pendingHeight = HIWORD(b);
         }
         return 0;
+    case WM_DPICHANGED: {
+        const auto* rect=reinterpret_cast<RECT*>(b);
+        SetWindowPos(w,nullptr,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,SWP_NOZORDER|SWP_NOACTIVATE);
+        return 0;
+    }
     case WM_CLOSE:
         closing = true;
         return 0;
@@ -102,6 +108,7 @@ void capture(const std::string &path) {
 int main() {
     bool mcp = false, hidden = false;
     std::string snapshot, projectPath, view, recoveryDir, viewportReport;
+    std::string uiTheme, uiDensity, uiLocale;float uiScale=0;
     int snapshotFrames = 10, startMode = -1;
     std::string modeReport, modeIni;
     sf::Json modeResults = sf::Json::Array();
@@ -112,6 +119,7 @@ int main() {
     bool prerender = false, compare = false;
     int selectClip = -1, clipMenu = -1;
     std::string paletteQuery;
+    int browserKind = -1;
     bool palette = false;
     int guides = 0;
     bool viewportRendered = false, viewportClosed = false;
@@ -119,7 +127,11 @@ int main() {
     auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     for (int i = 1; i < argc; ++i) {
         std::wstring a = argv[i];
-        if (a == L"--mcp")
+        if(a.starts_with(L"--ui-theme="))uiTheme=sx::Narrow(a.substr(11));
+        else if(a.starts_with(L"--ui-density="))uiDensity=sx::Narrow(a.substr(13));
+        else if(a.starts_with(L"--ui-locale="))uiLocale=sx::Narrow(a.substr(12));
+        else if(a.starts_with(L"--ui-scale="))uiScale=std::clamp(float(_wtof(a.substr(11).c_str())),.5f,4.f);
+        else if (a == L"--mcp")
             mcp = true;
         else if (a == L"--hidden")
             hidden = true;
@@ -139,6 +151,8 @@ int main() {
             timelineZoom = float(_wtof(a.substr(16).c_str()));
         else if (a.starts_with(L"--timeline-start="))
             timelineStart = _wtof(a.substr(17).c_str());
+        else if (a.starts_with(L"--browser="))
+            browserKind = _wtoi(a.substr(10).c_str());
         else if (a.starts_with(L"--palette=")) {
             palette = true;
             paletteQuery = sx::Narrow(a.substr(10));
@@ -231,6 +245,11 @@ int main() {
             io.IniFilename = modeIni.c_str();
         }
         sf::applyFrameTheme();
+        sf::initializeUiPreferences(!hidden&&snapshot.empty()?root/"ui-preferences.json":std::filesystem::path{},ImGui_ImplWin32_GetDpiScaleForHwnd(window));
+        if(!uiTheme.empty())cyui::setTheme(uiTheme.c_str());
+        if(!uiDensity.empty())cyui::setDensity(uiDensity=="comfortable"?cyui::Density::comfortable:cyui::Density::compact);
+        if(!uiLocale.empty())cyui::setLocale(uiLocale.c_str());
+        io.ConfigDpiScaleViewports=true;
         ImGui_ImplWin32_Init(window);
         ImGui_ImplDX11_Init(device.Get(), context.Get());
         if (hidden && (!viewportReport.empty() || !modeReport.empty()))
@@ -353,6 +372,7 @@ int main() {
             }
             ImGui_ImplDX11_NewFrame();
             ImGui_ImplWin32_NewFrame();
+            cyui::applyDpi(uiScale>0?uiScale:ImGui_ImplWin32_GetDpiScaleForHwnd(window));
             ImGui::NewFrame();
             ui.draw();
             ++ticks;
@@ -361,6 +381,8 @@ int main() {
                 ui.selectClipAt(selectClip);
             if (ticks == 10 && clipMenu >= 0)
                 ui.openClipMenuAt(clipMenu);
+            if (ticks == 3 && browserKind >= 0)
+                ui.setBrowserKind(browserKind);
             if (ticks == 10 && palette)
                 ui.openPalette(paletteQuery);
             if (ticks == 3 && guides)
@@ -396,6 +418,9 @@ int main() {
                                     : view == "subtitles"  ? "Subtitles"
                                     : view == "angles"     ? "Camera Angles"
                                     : view == "shortcuts"  ? "Keyboard Shortcuts"
+                                    : view == "track-effects" ? "Track Effects"
+                                    : view == "track-graph" ? "Track Graph"
+                                    : view == "effects-browser" ? "Effects Browser"
                                                            : "Timeline";
                 ui.openPanel(panel);
                 ImGui::SetWindowFocus(panel);
@@ -448,6 +473,7 @@ int main() {
                 ImGui::SetWindowPos("Composition", {1760, 100}, ImGuiCond_Always);
                 ImGui::SetWindowSize("Composition", {600, 400}, ImGuiCond_Always);
             }
+            cyui::renderNotifications();
             ImGui::Render();
             float bg[] = {.05f, .06f, .075f, 1};
             auto *rt = backTarget.Get();

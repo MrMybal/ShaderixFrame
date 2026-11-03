@@ -1,7 +1,23 @@
 #include "adapters/LayerGraph.h"
 #include "plugins/Effects.h"
 #include "render/Grading.h"
+#include <algorithm>
 #include <set>
+namespace sx {
+// Shaderixel's blend names and Photoshop menu order (Document.cpp, not compiled here).
+const int kBlendMenuOrder[] = {0, 13, -1, 6, 1, 10, 14, 25, -1, 7, 2, 9, 4, 26, -1, 3, 12, 11, 15, 16, 17, 18, -1, 8, 19, 5, 20, -1, 21, 22, 23, 24};
+const int kBlendMenuCount = int(sizeof(kBlendMenuOrder) / sizeof(int));
+const char *BlendModeName(BlendMode m) {
+    static const char *names[] = {"Normal",     "Multiply",     "Screen",      "Overlay",     "Linear Dodge (Add)",
+                                  "Subtract",   "Darken",       "Lighten",     "Difference",  "Color Dodge",
+                                  "Color Burn", "Hard Light",   "Soft Light",  "Dissolve",    "Linear Burn",
+                                  "Vivid Light", "Linear Light", "Pin Light",  "Hard Mix",    "Exclusion",
+                                  "Divide",     "Hue",          "Saturation",  "Color",       "Luminosity",
+                                  "Darker Color", "Lighter Color"};
+    int i = int(m);
+    return i >= 0 && i < int(BlendMode::Count) ? names[i] : "?";
+}
+} // namespace sx
 namespace sf {
 Json parameterJson(const Parameter &p) {
     Json j = Json::Object();
@@ -60,10 +76,23 @@ Json defaultLayerGraph(const Project &p) {
             j["nodes"].Push(source);
             Json blend = Json::Object();
             blend["id"] = id++;
-            blend["kind"] = "blend";
+            // The track's blending: a mode and opacity, or a library blend effect wired below / track / mask.
+            if (it->blendEffect.id.empty()) {
+                blend["kind"] = "blend";
+                blend["blend"] = it->blend;
+                blend["opacity"] = it->opacity;
+            } else {
+                blend["kind"] = "effect";
+                blend["effect"] = Json::Object();
+                blend["effect"]["id"] = it->blendEffect.id;
+                blend["effect"]["code"] = it->blendEffect.code;
+                blend["params"] = Json::Object();
+                for (auto &[key, value] : it->blendEffect.params)
+                    blend["params"][key] = parameterJson(value);
+                if (!blend["params"].Has("sx_Opacity"))
+                    blend["params"]["sx_Opacity"] = it->opacity;
+            }
             blend["name"] = "Blend / " + it->name;
-            blend["blend"] = 0;
-            blend["opacity"] = 1;
             blend["pos"] = Json::Array();
             blend["pos"].Push(250 + row * .6f);
             blend["pos"].Push(row);
@@ -87,6 +116,113 @@ Json defaultLayerGraph(const Project &p) {
     j["nodes"].Push(out);
     j["output"] = id;
     return j;
+}
+Json defaultTrackGraph(const Project &p, Id track) {
+    auto t = std::find_if(p.tracks.begin(), p.tracks.end(), [&](const Track &x) { return x.id == track; });
+    Json j = Json::Object();
+    j["schema"] = 1;
+    j["engine"] = "shaderixel.composition";
+    j["nodes"] = Json::Array();
+    Json source = Json::Object();
+    source["id"] = 1;
+    source["kind"] = "surface";
+    source["surface"] = track;
+    source["name"] = t != p.tracks.end() ? t->name : std::string("Track");
+    source["pos"] = Json::Array();
+    source["pos"].Push(20);
+    source["pos"].Push(40);
+    source["inputs"] = Json::Array();
+    j["nodes"].Push(source);
+    Json out = Json::Object();
+    out["id"] = 2;
+    out["kind"] = "output";
+    out["name"] = "Track Output";
+    out["inputs"] = Json::Array();
+    out["inputs"].Push(1);
+    out["pos"] = Json::Array();
+    out["pos"].Push(480);
+    out["pos"].Push(40);
+    j["nodes"].Push(out);
+    j["output"] = 2;
+    return j;
+}
+LayerComposition decodeTrackGraph(const Json &json, const Project &p, Id track) {
+    auto position = std::find_if(p.tracks.begin(), p.tracks.end(), [&](const Track &t) { return t.id == track; });
+    if (position == p.tracks.end() || position->kind != TrackKind::Video)
+        throw std::runtime_error("Track graph: video track not found");
+    auto result = decodeLayerGraph(json, p);
+    // Tracks render bottom up: only the track itself and the tracks below it are ready to be read.
+    for (auto &node : result.graph.nodes)
+        if (node.kind == sx::NodeKind::Surface && node.surface != track) {
+            auto other = std::find_if(p.tracks.begin(), p.tracks.end(),
+                                      [&](const Track &t) { return t.id == node.surface; });
+            if (other <= position)
+                throw std::runtime_error("Track graph: a surface may only read this track or a track below it");
+        }
+    return result;
+}
+Id appendTrackEffect(Json &graph, const Effect &effect, const std::string &name) {
+    Id next = 1;
+    float x = 20, y = 40;
+    for (auto &n : graph["nodes"].Elements())
+        next = std::max(next, n["id"].U() + 1);
+    auto nodes = Json::Array();
+    Json added = Json::Object();
+    added["id"] = next;
+    added["kind"] = "effect";
+    added["name"] = name;
+    added["inputs"] = Json::Array();
+    for (auto n : graph["nodes"].Elements()) {
+        if (n["id"].U() == graph["output"].U()) {
+            // The effect takes what fed the output, and the output moves right to make room.
+            added["inputs"].Push(n["inputs"].Size() ? n["inputs"].At(0) : Json(sx::u32(0)));
+            x = n["pos"].At(0).F();
+            y = n["pos"].At(1).F();
+            n["inputs"] = Json::Array();
+            n["inputs"].Push(next);
+            n["pos"] = Json::Array();
+            n["pos"].Push(x + 230);
+            n["pos"].Push(y);
+        }
+        nodes.Push(n);
+    }
+    for (unsigned k = 1, count = effectInputs(effectCode(effect)); k < count; ++k)
+        added["inputs"].Push(0);
+    added["pos"] = Json::Array();
+    added["pos"].Push(x);
+    added["pos"].Push(y);
+    added["effect"] = Json::Object();
+    added["effect"]["id"] = effect.id;
+    added["effect"]["code"] = effect.code;
+    added["effect"]["graph"] = effect.graph;
+    added["effect"]["grading"] = effect.grading;
+    added["params"] = Json::Object();
+    for (auto &[key, value] : effect.params)
+        added["params"][key] = parameterJson(value);
+    nodes.Push(added);
+    graph["nodes"] = nodes;
+    return next;
+}
+Json withoutSurface(const Json &graph, Id track) {
+    std::set<Id> removed;
+    for (auto &node : graph["nodes"].Elements())
+        if (node["kind"].S() == "surface" && node["surface"].U() == track)
+            removed.insert(node["id"].U());
+    if (removed.empty())
+        return graph;
+    auto result = graph;
+    auto nodes = Json::Array();
+    for (auto node : graph["nodes"].Elements()) {
+        if (removed.count(node["id"].U()))
+            continue;
+        auto inputs = Json::Array();
+        for (auto &input : node["inputs"].Elements())
+            inputs.Push(removed.count(input.U()) ? Json(sx::u32(0)) : input);
+        node["inputs"] = inputs;
+        nodes.Push(node);
+    }
+    result["nodes"] = nodes;
+    return removed.count(result["output"].U()) ? Json() : result;
 }
 void appendLayerSurface(Project &p, Id track, const std::string &name) {
     if (p.layerGraph.IsNull())

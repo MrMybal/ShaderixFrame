@@ -7,6 +7,13 @@
 #include "ui/LayerCanvas.h"
 #include "ui/RenderCache.h"
 #include "ui/Keymap.h"
+#include "ui/CodeFields.h"
+#include <cyui/modules/Commands.h>
+#include <cyui/modules/Nodes.h>
+#include <cyui/modules/AudioViews.h>
+#include <cyui/modules/Inspector.h>
+#include <cyui/modules/Timeline.h>
+#include <cyui/modules/Images.h>
 #include <imgui.h>
 #include <array>
 #include <set>
@@ -29,6 +36,7 @@ class Editor {
     DspCanvas dspCanvas;
     LayerCanvas layerCanvas;
     Id layerShaderNode = 0;
+    Id layerShaderTrack = 0; // with layerShaderNode: a node of that track's effect graph (0: the layer graph)
     void layerGraphEditor();
     std::string panelSuffix;
     std::string pendingPanelFocus;
@@ -54,6 +62,7 @@ class Editor {
     bool motionResizing = false;
     std::optional<Project> motionBefore;
     CanvasView motionView;
+    cyui::CanvasState motionCanvas;
     DspCanvas channelDsp;
     std::string channelDspIdentity;
     bool channelDspDirty = false;
@@ -68,6 +77,9 @@ class Editor {
     std::unique_ptr<Renderer> gradeBefore;
     Com<ID3D11ShaderResourceView> gradeReference;
     std::string pendingGradeReference;
+    cyui::CurveState gradeCurveState;
+    std::string gradeCurveIdentity, gradeCurveStamp;
+    std::uint64_t gradeCurveRevision=0;
     int gradeCurvePoint = -1;
     Id gradeGestureClip = 0;
     int gradeGestureEffect = -1;
@@ -78,6 +90,18 @@ class Editor {
     void captureGradeReference(const Image &image);
     bool dspGraphEditor(Json target, const std::vector<Effect> &chain);
     bool pluginControls(Json target, const Effect &effect);
+    CodeFields codeFields;
+    cyui::CommandState paletteState;
+    cyui::NodeState shaderNodes, routingNodes;
+    std::string routingStamp;
+    cyui::PlotState signalWave{{{0,1},false},{{-1,1},false}}, signalSpectrum{{{20,20000},true},{{0,1},false}};
+    cyui::InspectorState sequenceInspector;
+    cyui::TimelineState sourceTimeline;
+    cyui::ImageState sourceImage;
+    std::string sourceViewIdentity, sequenceStamp;
+    std::uint64_t sequenceRevision=0;
+    std::uint64_t shaderRevision=0;
+    std::string shaderGraphStamp;
     Session &s;
     Protocol protocol;
     AudioOutput audio;
@@ -104,6 +128,32 @@ class Editor {
     int wireOutput = 0;
     CanvasView graphView, compositionView;
     float compositionDetail = 0, pendingPixelZoom = 0, compositionPixelLock = 0;
+    std::string audioWarning; // last sound device problem shown, so it is reported once
+    bool audioDeviceRead = false;
+    void soundOutputMenu(); // the playback device, kept in audio-output.json
+    // Track Effects panel (ui/AudioChain.cpp): the insert chain of mixScope/mixTarget as devices.
+    void trackEffectsPanel();
+    // Track Graph panel (ui/TrackGraph.cpp): the effect graph of graphTrack.
+    void trackGraphEditor();
+    LayerCanvas trackCanvas;
+    Id graphTrack = 0, graphFollowed = 0;
+    Id trackOpacityFor = 0;        // the track whose opacity the context menu slider shows
+    // Effects Browser (ui/EffectsBrowser.cpp): cards with previews rendered by their own worker.
+    void effectsBrowser();
+    std::shared_ptr<const Project> previewDocument(const EffectDefinition &d, int kind, const Clip *reference);
+    ClipPreviews effectPreviews;
+    std::map<std::string, std::shared_ptr<const Project>> browserDocuments;
+    std::string browserSearch, browserCategory, browserReferenceKey;
+    int browserKind = 0;
+    float browserCard = 120;
+    bool browserOnClip = false;
+    float trackOpacityDraft = 100;
+    std::string trackEffectSearch;
+    Id chainFollowed = 0;      // the selection last followed by the chain
+    Parameter chainEditStart;  // a knob's parameter when its gesture began, for one undo step
+    std::string chainSearch;
+    void loadSoundOutput();
+    bool compositionHand = false; // Hand tool of the final image view: a left drag moves the view
     bool compositionPanning = false, compositionMapDrag = false, compositionHovered = false, spaceOverView = false,
          spacePanned = false;
     double navigateAnchor = 0;
@@ -130,7 +180,10 @@ class Editor {
                                        {"History", false},
                                        {"Subtitles", false},
                                        {"Camera Angles", false},
-                                       {"Keyboard Shortcuts", false}};
+                                       {"Keyboard Shortcuts", false},
+                                       {"Track Effects", false},
+                                       {"Track Graph", false},
+                                       {"Effects Browser", true}};
     // Sequence panels (ui/SequencePanels.cpp).
     void markersPanel();
     void historyPanel();
@@ -475,6 +528,8 @@ class Editor {
                 }
     }
     void drop(const std::string &path);
+    void openTrackGraph(Id track);
+    Id trackGraphShown() const { return graphTrack; }
     void openPanel(const std::string &name) {
         panels[name] = true;
         pendingPanelFocus = panelTitle(name.c_str());
@@ -559,6 +614,7 @@ class Editor {
         rememberProject(path);
     }
     bool welcomeVisible() const { return welcomeShown; }
+    const CanvasView& shaderNavigation() const {return graphView;}
     Keymap &shortcuts() { return keymap; }
     void captureShortcut(const std::string &id) { keymapCapture = id; }
     void openPalette(const std::string &query = {}) {
@@ -569,6 +625,9 @@ class Editor {
     bool paletteVisible() const { return paletteOpen; }
     std::vector<std::string> paletteMatches(const std::string &query);
     bool looping() const { return loop; }
+    std::pair<std::string, Id> chainChannel() const { return {mixScope, mixTarget}; }
+    bool runAction(const std::string &name, Json args = Json::Object()) { return action(name, std::move(args)); }
+    void setBrowserKind(int kind) { browserKind = std::clamp(kind, 0, 4); }
     void openClipMenuAt(int index) {
         selectClipAt(index);
         clipMenuRequest = s.selected != 0;

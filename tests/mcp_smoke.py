@@ -6,6 +6,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
+from release_version import release_version
+
 exe = Path(sys.argv[1]).resolve()
 sandbox = exe.parent / 'test-output' / 'mcp'
 sandbox.mkdir(parents=True, exist_ok=True)
@@ -54,7 +57,7 @@ try:
     process.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
     process.stdin.flush()
     catalogue = rpc('tools/list')['tools']
-    assert len(catalogue) == 160
+    assert len(catalogue) == 163
     call('new_project', {'name':'Clip container MCP','width':64,'height':64,'duration':2})
     container=call('add_generator',{'duration':2})['clip']
     call('make_clip_container',{'clip':container})
@@ -141,7 +144,7 @@ try:
     call('undo')
     call('redo')
     effects = call('list_effects')['effects']
-    assert len(effects) == 429 and any(e['id'] == 'cydaw.limiter' for e in effects)
+    assert len(effects) == 464 and any(e['id'] == 'cydaw.limiter' for e in effects)
     assert {e['id'] for e in effects if e['kind'] == 'transition'} == {'transition.crossfade', 'transition.wipe'}
     title = call('add_title', {'text': 'Été · VFX\nMontage vidéo', 'start': 0, 'duration': 0.5})['clip']
     call('set_title', {'clip': title, 'font': 'Segoe UI', 'alignment': 1, 'bold': True, 'italic': True})
@@ -235,7 +238,7 @@ try:
     selected = call('select_clips', {'clips': [video_clips[1], video_clips[0], video_clips[1]]})['clips']
     state = call('status')
     assert set(selected) == set(video_clips) and state['selection'] == selected
-    assert state['selected'] == video_clips[1] and state['version'] == '0.13.0-alpha.1'
+    assert state['selected'] == video_clips[1] and state['version'] == release_version()
     # The selection is shared UI state and never creates a document/history entry.
     assert call('select_clips', {'clips': []})['clips'] == []
     assert call('status')['selected'] == 0

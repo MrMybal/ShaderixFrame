@@ -1,3 +1,4 @@
+#include "adapters/LayerGraph.h"
 #include "core/CanvasView.h"
 #include "mcp/Protocol.h"
 #include "render/Color.h"
@@ -774,6 +775,135 @@ int main(int argc, char **argv) {
             require(plain < 100 && inverted > plain + 80 && refused &&
                         sf::Project::fromJson(adjusted.json()).tracks[0].clips[0].adjustment,
                     "An adjustment layer inverts the picture below it, is saved, and cannot also be a generator");
+        }
+        {
+            // A track effect graph processes its track's picture before blending: inverted here, saved, and
+            // restricted to video tracks reading themselves or tracks below.
+            sf::Project tracked;
+            tracked.width = tracked.height = 64;
+            tracked.duration = 1;
+            sf::Clip base;
+            base.id = tracked.allocate();
+            base.generator = true;
+            base.duration = 1;
+            tracked.addTrack(sf::TrackKind::Video).clips = {base};
+            tracked.addTrack(sf::TrackKind::Video);
+            std::rotate(tracked.tracks.begin(), tracked.tracks.end() - 1, tracked.tracks.end()); // empty track on top
+            sf::Id lowerId = tracked.tracks[1].id, upperId = tracked.tracks[0].id;
+            auto meanOf = [&](const sf::Project &project) {
+                s.renderer.clearHistory();
+                s.renderer.render(project, s.media, .5, 64, 64);
+                auto picture = s.renderer.readback();
+                double sum = 0;
+                for (size_t i = 0; i < picture.pixels.size(); i += 4)
+                    sum += picture.pixels[i] + picture.pixels[i + 1] + picture.pixels[i + 2];
+                return sum / (picture.pixels.size() / 4 * 3);
+            };
+            double plain = meanOf(tracked);
+            sf::Effect invert;
+            invert.id = "test.invert";
+            invert.code = "float4 Effect(EffectContext ctx){float4 c=InputUV(0,ctx.uv);return float4(1-c.rgb,c.a);}";
+            auto graph = sf::defaultTrackGraph(tracked, lowerId);
+            auto node = sf::appendTrackEffect(graph, invert, "Invert");
+            tracked.findTrack(lowerId)->graph = graph;
+            tracked.validate();
+            double inverted = meanOf(tracked);
+            auto reloaded = sf::Project::fromJson(tracked.json());
+            auto upperReadsLower = sf::defaultTrackGraph(tracked, upperId);
+            sf::Json lowerSurface = sf::Json::Object();
+            lowerSurface["id"] = 10;
+            lowerSurface["kind"] = "surface";
+            lowerSurface["surface"] = lowerId;
+            lowerSurface["name"] = "Below";
+            lowerSurface["inputs"] = sf::Json::Array();
+            lowerSurface["pos"] = sf::Json::Array();
+            lowerSurface["pos"].Push(0);
+            lowerSurface["pos"].Push(0);
+            upperReadsLower["nodes"].Push(lowerSurface);
+            bool belowAllowed = true, aboveRefused = false, audioRefused = false;
+            try {
+                sf::decodeTrackGraph(upperReadsLower, tracked, upperId);
+            } catch (const std::exception &) {
+                belowAllowed = false;
+            }
+            auto lowerReadsUpper = sf::defaultTrackGraph(tracked, lowerId);
+            lowerSurface["surface"] = upperId;
+            lowerReadsUpper["nodes"].Push(lowerSurface);
+            try {
+                sf::decodeTrackGraph(lowerReadsUpper, tracked, lowerId);
+            } catch (const std::exception &) {
+                aboveRefused = true;
+            }
+            try {
+                auto wrong = tracked;
+                wrong.addTrack(sf::TrackKind::Audio).graph = sf::defaultTrackGraph(tracked, lowerId);
+                wrong.validate();
+            } catch (const std::exception &) {
+                audioRefused = true;
+            }
+            auto removed = tracked;
+            removed.findTrack(upperId)->graph = upperReadsLower;
+            removed.removeTrack(lowerId);
+            require(plain < 100 && inverted > plain + 80 && node == 3 && !reloaded.findTrack(lowerId)->graph.IsNull() &&
+                        belowAllowed && aboveRefused && audioRefused && removed.tracks.size() == 1 &&
+                        removed.tracks[0].graph["nodes"].Size() == 2,
+                    "A track effect graph inverts its track, is saved, reads only tracks below, and loses removed ones");
+        }
+        {
+            // Track blending in the automatic layer graph: a mode, an opacity or a library blend effect.
+            sf::Project blended;
+            blended.width = blended.height = 64;
+            blended.duration = 1;
+            for (int k = 0; k < 2; ++k) {
+                sf::Clip layer;
+                layer.id = blended.allocate();
+                layer.generator = true;
+                layer.duration = 1;
+                blended.addTrack(sf::TrackKind::Video).clips = {layer};
+            }
+            auto channels = [&](const sf::Project &project) {
+                s.renderer.clearHistory();
+                s.renderer.render(project, s.media, .5, 64, 64);
+                auto picture = s.renderer.readback();
+                double red = 0, green = 0;
+                for (size_t i = 0; i < picture.pixels.size(); i += 4) {
+                    red += picture.pixels[i + 2];
+                    green += picture.pixels[i + 1];
+                }
+                double count = double(picture.pixels.size() / 4);
+                return std::pair{red / count, green / count};
+            };
+            auto normal = channels(blended);
+            blended.tracks[0].blend = int(sx::BlendMode::Multiply);
+            auto multiplied = channels(blended);
+            blended.tracks[0].blend = 0;
+            blended.tracks[0].blendEffect.id = "test.red";
+            blended.tracks[0].blendEffect.code =
+                "//@input 0 \"Background\"\n//@input 1 \"Layer\"\nfloat4 Effect(EffectContext ctx){return float4(1,0,0,1);}";
+            auto red = channels(blended);
+            auto reopened = sf::Project::fromJson(blended.json());
+            bool invalid = false;
+            try {
+                auto wrong = blended;
+                wrong.tracks[0].opacity = 2;
+                wrong.validate();
+            } catch (const std::exception &) {
+                invalid = true;
+            }
+            auto saved = s.project;
+            s.project = blended;
+            sf::Json named = sf::Json::Object();
+            named["track"] = s.project.tracks[0].id;
+            named["blend"] = "Screen";
+            named["opacity"] = .5;
+            sf::Protocol(s).execute("set_track", named);
+            bool screen = s.project.tracks[0].blend == int(sx::BlendMode::Screen) &&
+                          s.project.tracks[0].blendEffect.id.empty() && std::abs(s.project.tracks[0].opacity - .5f) < 1e-6;
+            s.project = saved;
+            s.history.clear();
+            require(multiplied.first < normal.first - 5 && red.first > 200 && red.second < 20 &&
+                        reopened.tracks[0].blendEffect.id == "test.red" && invalid && screen,
+                    "A track blends over the tracks below by mode, by blend effect or by opacity, saved and set by name");
         }
         {
             // Compositing quick actions on a solid green picture over a generator: keyed out, then placed in a corner.
@@ -2072,7 +2202,7 @@ int main(int argc, char **argv) {
         clip.fadeIn = 0;
         int dspCount = 0;
         for (auto &descriptor : cydaw::engine::effectCatalogue) {
-            if (descriptor.convertsChannels())
+            if (!sf::audioInsert(descriptor))
                 continue;
             clip.effects = {sf::instantiateAudioEffect("cydaw." + std::string(descriptor.typeKey))};
             s.media.resetAudio();
@@ -2085,7 +2215,19 @@ int main(int argc, char **argv) {
                 require(processed != clean, "Native CyDAW DSP changes audio");
             ++dspCount;
         }
-        require(dspCount == 15, "15 native stereo CyDAW audio processors");
+        require(dspCount == 50, "50 native stereo CyDAW insert processors");
+        {
+            // A look-ahead device reports its delay, so the mix can align it with the picture; MIDI effects,
+            // modulators and containers are not offered as inserts.
+            sf::AudioEffects probe;
+            probe.begin(0);
+            unsigned frozen = probe.latency(1, {sf::instantiateAudioEffect("cydaw.givre")});
+            unsigned plain = probe.latency(2, {sf::instantiateAudioEffect("cydaw.eq-three")});
+            require(frozen >= 1024 && plain == 0 && !sf::audioEffect("cydaw.arpege") &&
+                        !sf::audioEffect("cydaw.mod-lfo") && !sf::audioEffect("cydaw.fx-chain") &&
+                        sf::audioEffect("cydaw.reverb-pro") && sf::audioEffect("cydaw.de-esser"),
+                    "CyDAW look-ahead latency is reported and only stereo inserts are offered");
+        }
         clip.effects = {sf::instantiateAudioEffect("cydaw.eq-three")};
         auto mp4 = sx::Narrow((sandbox / "demo.mp4").wstring());
         auto protectedMp4 = sx::Narrow((sandbox / "protected.mp4").wstring());

@@ -317,7 +317,7 @@ et donne le nombre d'échantillons analysés.
 ## Graphes des calques ajoutés en 0.11
 
 `get_layer_graph` retourne `graph` et `explicit`. Un graphe implicite est dérivé
-sans modifier le document. `set_layer_graph` prend `graph`, valide les connexions
+sans modifier le document. `get_track_graph` / `set_track_graph` (`track`, `graph`, null pour retirer les effets) et `add_track_effect` (`track`, `id` d'un effet de la bibliothèque, ajouté en fin de chaîne) gèrent le graphe d'effets propre à une piste vidéo, appliqué avant la fusion ; ses surfaces sont la piste elle-même ou les pistes du dessous. `set_layer_graph` prend `graph`, valide les connexions
 avec Shaderixel et rend la composition explicite, avec undo/redo.
 
 Les nœuds portent `id`, `kind` (`surface`, `effect`, `blend`, `split`, `output`),

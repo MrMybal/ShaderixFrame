@@ -112,6 +112,14 @@ struct Track {
     Id group = 0;       // groupe de pistes de la timeline, 0 : aucun
     std::vector<Clip> clips;
     MixChannel mix;
+    // Video only: the track's own effect graph (Shaderixel composition schema), applied to the picture of
+    // its clips before it is blended with the tracks below. Null: no track effects.
+    Json graph;
+    // Video only: how the track is blended over the tracks below in the automatic layer graph: one of
+    // Shaderixel's 27 modes and an opacity, or a library blend effect (inputs: below, track, mask).
+    int blend = 0;
+    float opacity = 1;
+    Effect blendEffect{.id = {}}; // id empty: the blend mode
 };
 // Groupe de pistes repliable, comme les dossiers de l'ArrangementView CyDAW. Organisation seule :
 // la composition et le mixage ne changent pas.
