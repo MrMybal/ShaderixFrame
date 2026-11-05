@@ -50,7 +50,8 @@ int main(int argc, char **argv) {
         require(newIni.find("[Window][Layer Graph##sfmode2]") != std::string::npos &&
                     newIni.find("DockId=0x12345678") != std::string::npos,
                 "English window titles preserve the user's saved docking layout");
-        sf::Editor editor(s, root);
+        auto applicationRoot = argc > 2 ? sx::Utf8Path(argv[2]) : root;
+        sf::Editor editor(s, applicationRoot);
         auto frame = [&](const char *focus = nullptr) {
             io.DeltaTime = 1.f / 60;
             ImGui::NewFrame();
@@ -1659,6 +1660,53 @@ int main(int argc, char **argv) {
                 "Keyboard undo in a clip workspace does not undo the parent project");
         require(editor.applyClipDrafts() && !editor.hasClipDrafts() && !editor.hasError(),
                 "Clip drafts apply through validated parent project mutations");
+        {
+            auto &help = editor.documentation();
+            std::string opened;
+            editor.setHelpOpener([&](const std::string &url) { opened = url; return true; });
+            const auto beforeHelp = s.project.json().Dump(0);
+            const auto historyBefore = s.history.undoSteps().size();
+            const auto timeBefore = s.time;
+            const bool dirtyBefore = s.dirty;
+            editor.showManual("quickstart", "en");
+            require(opened.starts_with("file:///") && opened.ends_with("#/en/quickstart"),
+                    "Help opens a real installed local CyDoc route through the native launcher");
+            require(editor.helpUrl("layers", "fr", "usage").ends_with("#/fr/layers/usage"),
+                    "French contextual help preserves shared page and section identifiers");
+            auto media = editor.helpUrl("timeline", "en", "", {{"media", "timeline-image-1"}, {"note", "navigator"}});
+            require(media.find("#/en/timeline?media=timeline-image-1&note=navigator") != std::string::npos,
+                    "Native help can address a precise image and its built-in annotation");
+            require(editor.helpUrl("layer-graph", "fr").ends_with("#/fr/layers") &&
+                        editor.helpUrl("overview", "de").ends_with("#/en/welcome"),
+                    "Legacy page aliases and unsupported-language fallback resolve safely");
+            require(editor.helpUrl("no-such-page").empty() && editor.helpUrl("layers", "en", "bad-section").empty() &&
+                        editor.helpUrl("timeline", "en", "", {{"media", "bad-media"}}).empty(),
+                    "Unknown page, anchor and media targets are rejected before launching a browser");
+            auto file = sf::HelpDocumentation::fileUrl(applicationRoot / L"Help space # %.html");
+            require(file.starts_with("file:///") && file.find("%20") != std::string::npos &&
+                        file.find("%23") != std::string::npos && file.find("%25") != std::string::npos,
+                    "Windows path conversion encodes spaces, fragment characters and percent signs");
+            require(sf::HelpDocumentation::topicForPanel("Layer Graph##clip:2") == "layers" &&
+                        sf::HelpDocumentation::topicForPanel("Track Effects/devices") == "devices" &&
+                        sf::HelpDocumentation::topicForPanel("Source") == "source",
+                    "Detached, nested and child panel names map to the relevant help topic");
+            editor.setMode(sf::Editor::Mode::Audio);
+            for (int i = 0; i < 3; ++i) frame("Timeline");
+            io.AddKeyEvent(ImGuiMod_Ctrl, true); io.AddKeyEvent(ImGuiKey_F1, true); frame("Timeline");
+            io.AddKeyEvent(ImGuiKey_F1, false); io.AddKeyEvent(ImGuiMod_Ctrl, false); frame("Timeline");
+            require(editor.currentMode() == sf::Editor::Mode::Audio && opened.ends_with("#/en/timeline"),
+                    "Ctrl+F1 opens contextual CyDoc help without selecting the F1 Edit workspace");
+            require(beforeHelp == s.project.json().Dump(0) && historyBefore == s.history.undoSteps().size() &&
+                        timeBefore == s.time && dirtyBefore == s.dirty,
+                    "Opening help and resolving contextual routes leaves the project and undo history untouched");
+            require(!editor.paletteMatches("User Manual").empty() && !editor.paletteMatches("MCP and SDK Reference").empty(),
+                    "The command palette retains help and adds the actual API reference entry");
+            require(help.url(root / "build/qa/no-such-application").empty() && !help.error().empty(),
+                    "A missing local CyDoc export reports a recoverable error");
+            sf::HelpDocumentation failed([](const std::string &) { return false; });
+            require(!failed.open(applicationRoot) && !failed.error().empty(),
+                    "The native help controller reports browser launch failures");
+        }
         std::cout << checks << " editor interaction checks passed.\n";
     } catch (const std::exception &e) {
         std::cerr << "FAILED: " << e.what() << std::endl;

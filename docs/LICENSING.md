@@ -50,3 +50,13 @@ is reproduced in the source tree at `vendor/cyui/LICENSE` and in Windows package
 at `licenses/cyui/LICENSE`. Public availability of the repository does not affect
 the bundled licence copy. Its TextEditor, Lexilla/Scintilla and SciTE dependencies
 retain their respective notices under the same package directory.
+
+## CyDoc
+
+The offline help reader and native route helper use CyDoc 0.1.0 under MIT, pinned
+to commit `774f2a7eabf7dd181a98ffc5add115b580b67f42`. Its locally built npm archive,
+native helper and licence are in `vendor/cydoc/`; hashes are in `cydoc.lock.json`.
+Windows packages include `licenses/cydoc/LICENSE` and `help/licenses/CyDoc-LICENSE.txt`.
+ShaderixFrame and its original documentation remain under AGPL-3.0-only. The reader
+footer distinguishes the application's licence from CyDoc's licence. Only the image
+reader is exported; Three.js and other optional media readers are not distributed.

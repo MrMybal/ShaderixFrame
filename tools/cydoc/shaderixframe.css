@@ -1,0 +1,8 @@
+/* App-owned theme adaptation; retain CyDoc's layout, focus and responsive/touch rules. */
+@layer base {
+  .cydoc-viewer[data-theme=dark] {
+    --bg:#252525;--sidebar:#202020;--surface:#303030;--card:#2c2c2c;
+    --text:#e8e8e8;--muted:#bababa;--faint:#a0a0a0;--line:#454545;
+    --accent:#ffac50;--accent-bg:#49351f;
+  }
+}

@@ -108,6 +108,7 @@ void capture(const std::string &path) {
 int main() {
     bool mcp = false, hidden = false;
     std::string snapshot, projectPath, view, recoveryDir, viewportReport;
+    std::string manualTopic, manualLanguage, helpAnchor, helpMedia, helpNote, helpReport;
     std::string uiTheme, uiDensity, uiLocale;float uiScale=0;
     int snapshotFrames = 10, startMode = -1;
     std::string modeReport, modeIni;
@@ -129,6 +130,14 @@ int main() {
         std::wstring a = argv[i];
         if(a.starts_with(L"--ui-theme="))uiTheme=sx::Narrow(a.substr(11));
         else if(a.starts_with(L"--ui-density="))uiDensity=sx::Narrow(a.substr(13));
+        else if(a.starts_with(L"--help-topic="))manualTopic=sx::Narrow(a.substr(13));
+        else if(a.starts_with(L"--help-language="))manualLanguage=sx::Narrow(a.substr(16));
+        else if(a.starts_with(L"--help-section="))helpAnchor=sx::Narrow(a.substr(15));
+        else if(a.starts_with(L"--help-media="))helpMedia=sx::Narrow(a.substr(13));
+        else if(a.starts_with(L"--help-note="))helpNote=sx::Narrow(a.substr(12));
+        else if(a.starts_with(L"--help-url-report="))helpReport=sx::Narrow(a.substr(18));
+        else if(a.starts_with(L"--manual-topic="))manualTopic=sx::Narrow(a.substr(15));
+        else if(a.starts_with(L"--manual-language="))manualLanguage=sx::Narrow(a.substr(18));
         else if(a.starts_with(L"--ui-locale="))uiLocale=sx::Narrow(a.substr(12));
         else if(a.starts_with(L"--ui-scale="))uiScale=std::clamp(float(_wtof(a.substr(11).c_str())),.5f,4.f);
         else if (a == L"--mcp")
@@ -395,7 +404,23 @@ int main() {
                 ui.startRenderCache();
             if (ticks == 3 && !sourceMedia.empty())
                 ui.openSource(sx::Narrow(std::filesystem::absolute(sx::Utf8Path(sourceMedia)).wstring()));
-            if (ticks == 3 && !view.empty()) {
+            if (ticks == 3 && (view == "manual" || !manualTopic.empty() || !helpReport.empty())) {
+                sf::HelpDocumentation::State state;
+                if (!helpMedia.empty()) state.emplace_back("media", helpMedia);
+                if (!helpNote.empty()) state.emplace_back("note", helpNote);
+                if (!helpReport.empty()) {
+                    sf::Json report = sf::Json::Object();
+                    auto url = ui.helpUrl(manualTopic.empty() ? "welcome" : manualTopic,
+                                          manualLanguage.empty() ? "en" : manualLanguage, helpAnchor, state);
+                    report["url"] = url;
+                    report["error"] = ui.documentation().error();
+                    std::ofstream stream(sx::Utf8Path(helpReport), std::ios::binary);
+                    stream << report.Dump(2);
+                    if (!stream || url.empty()) exitCode = 1;
+                    closing = true;
+                } else if (!hidden) ui.showManual(manualTopic, manualLanguage, helpAnchor, state);
+            }
+            if (ticks == 3 && !view.empty() && view != "manual") {
                 if (view == "clip")
                     ui.showClipEditor();
                 if (view == "grading")

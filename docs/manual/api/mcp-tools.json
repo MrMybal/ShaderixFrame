@@ -1,0 +1,3494 @@
+[
+  {
+    "description": "Configure video widget hierarchy/anchors; widget_x/y/width/height support animation",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "layout": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "set_motion_widget"
+  },
+  {
+    "description": "Motion hierarchy and evaluated rectangles at the requested time",
+    "inputSchema": {
+      "properties": {
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "get_motion_widgets"
+  },
+  {
+    "description": "Convert a video clip to a nested composition while preserving its content",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "make_clip_container"
+  },
+  {
+    "description": "Container's local timeline and graph",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "get_clip_composition"
+  },
+  {
+    "description": "Replace the container's local composition after validation",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "project": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "clip",
+        "project"
+      ],
+      "type": "object"
+    },
+    "name": "set_clip_composition"
+  },
+  {
+    "description": "Shaderixel composition graph: timelines, blends, effects and output",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "get_layer_graph"
+  },
+  {
+    "description": "Replace the composition graph; Shaderixel validation, undo and HDR rendering",
+    "inputSchema": {
+      "properties": {
+        "graph": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "graph"
+      ],
+      "type": "object"
+    },
+    "name": "set_layer_graph"
+  },
+  {
+    "description": "Effect graph of a video track (its clips composited, then its effect nodes, before blending with the tracks below); returns graph and explicit (false: no track effects yet)",
+    "inputSchema": {
+      "properties": {
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track"
+      ],
+      "type": "object"
+    },
+    "name": "get_track_graph"
+  },
+  {
+    "description": "Replace a video track's effect graph (same schema as the layer graph; surfaces: the track or tracks below it); graph null removes the track effects",
+    "inputSchema": {
+      "properties": {
+        "graph": {
+          "type": "object"
+        },
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track"
+      ],
+      "type": "object"
+    },
+    "name": "set_track_graph"
+  },
+  {
+    "description": "Append a library effect to the end of a video track's effect chain; returns node",
+    "inputSchema": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track",
+        "id"
+      ],
+      "type": "object"
+    },
+    "name": "add_track_effect"
+  },
+  {
+    "description": "Base value of a composition node parameter",
+    "inputSchema": {
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "node": {
+          "type": "integer"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "node",
+        "key",
+        "value"
+      ],
+      "type": "object"
+    },
+    "name": "set_layer_parameter"
+  },
+  {
+    "description": "Animate the blending graph in sequence time",
+    "inputSchema": {
+      "properties": {
+        "curve": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string"
+        },
+        "node": {
+          "type": "integer"
+        },
+        "shape": {
+          "type": "number"
+        },
+        "time": {
+          "type": "number"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "node",
+        "key",
+        "time",
+        "value"
+      ],
+      "type": "object"
+    },
+    "name": "set_layer_keyframe"
+  },
+  {
+    "description": "Sequence status, transport and project content",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "status"
+  },
+  {
+    "description": "Add an HDR correction to a video clip; stack order and animation via set_effect/set_parameter/set_keyframe",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "add_grade"
+  },
+  {
+    "description": "Set schema 1 correction data (name, curves, maskPoints, lutInput/lutOutput); animatable parameters via set_parameter",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "settings": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "settings"
+      ],
+      "type": "object"
+    },
+    "name": "set_grade"
+  },
+  {
+    "description": "Master/r/g/b/hue_hue/hue_sat/hue_luma/luma_sat curve; 2..32 [x,y] points, endpoints 0 and 1",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "curve": {
+          "type": "string"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "values": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "curve",
+        "values"
+      ],
+      "type": "object"
+    },
+    "name": "set_grade_curve"
+  },
+  {
+    "description": "Import and embed a 2D image LUT or 1D/3D .cube, with explicit domain and spaces; no reference external",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "input": {
+          "type": "string"
+        },
+        "layout": {
+          "type": "string"
+        },
+        "output": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "import_grade_lut"
+  },
+  {
+    "description": "Neutral balance from a pre-correction linear Rec.709 RGB sample; replace WB gains and their keys",
+    "inputSchema": {
+      "properties": {
+        "b": {
+          "type": "number"
+        },
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "g": {
+          "type": "number"
+        },
+        "r": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "r",
+        "g",
+        "b"
+      ],
+      "type": "object"
+    },
+    "name": "neutral_grade"
+  },
+  {
+    "description": "Built-in color grading presets",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "list_grade_presets"
+  },
+  {
+    "description": "Replace a correction with a built-in preset",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "name"
+      ],
+      "type": "object"
+    },
+    "name": "apply_grade_preset"
+  },
+  {
+    "description": "Save a portable correction, including LUT and animation",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "save_grade_preset"
+  },
+  {
+    "description": "Replace a correction from a validated .sgrade file",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "load_grade_preset"
+  },
+  {
+    "description": "Waveform 256x128, parade 3x128x128, vectorscope 256x256, histogram 3x256; analysis up to 640x360",
+    "inputSchema": {
+      "properties": {
+        "bins": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "video_scopes"
+  },
+  {
+    "description": "RGBA16F composition, working color space, display and high-precision sequences",
+    "inputSchema": {
+      "properties": {
+        "backgroundAlpha": {
+          "type": "number"
+        },
+        "exposure": {
+          "type": "number"
+        },
+        "imageFormat": {
+          "type": "string"
+        },
+        "space": {
+          "type": "string"
+        },
+        "tone": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "set_color_management"
+  },
+  {
+    "description": "Interpret a video source's color space and alpha",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "premultiplied": {
+          "type": "boolean"
+        },
+        "space": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "set_source_color"
+  },
+  {
+    "description": "Create an empty sequence or use a template (youtube, short, podcast, cinema: format, frame rate and named tracks)",
+    "inputSchema": {
+      "properties": {
+        "duration": {
+          "type": "number"
+        },
+        "fps": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "template": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "new_project"
+  },
+  {
+    "description": "Open a .sframe project",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "open_project"
+  },
+  {
+    "description": "Save a .sframe project; keep the replaced file among the ten most recent versions (versions)",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "versions": {
+          "type": "boolean"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "save_project"
+  },
+  {
+    "description": "Saved project versions, newest first: path, saved",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "list_versions"
+  },
+  {
+    "description": "Replace the sequence with a previous version as one undoable operation",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "restore_version"
+  },
+  {
+    "description": "Import video, image or audio and create clips (separate audio); proxy prepares a 720p proxy for videos over 1440 lines; return clips, proxy_job",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "proxy": {
+          "type": "boolean"
+        },
+        "start": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "import_media"
+  },
+  {
+    "description": "Remove media unused by any clip from the bin; return removed",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "remove_unused_media"
+  },
+  {
+    "description": "Add a video or audio track",
+    "inputSchema": {
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "name": "add_track"
+  },
+  {
+    "description": "Rename a track; set its 0xRRGGBB color, height, mute, solo and lock; for a video track its blending over the tracks below: blend (0-26 or a mode name such as Multiply, Screen, Overlay), opacity 0-1, blend_effect (a library blend effect id, empty to go back to the mode)",
+    "inputSchema": {
+      "properties": {
+        "blend": {
+          "type": "string"
+        },
+        "blend_effect": {
+          "type": "string"
+        },
+        "color": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "group": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "number"
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "muted": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "opacity": {
+          "type": "number"
+        },
+        "solo": {
+          "type": "boolean"
+        },
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track"
+      ],
+      "type": "object"
+    },
+    "name": "set_track"
+  },
+  {
+    "description": "Delete a track and its clips; linked partners stay in place",
+    "inputSchema": {
+      "properties": {
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track"
+      ],
+      "type": "object"
+    },
+    "name": "remove_track"
+  },
+  {
+    "description": "Move a track to the requested index (0 = top, in front in the composition)",
+    "inputSchema": {
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track",
+        "index"
+      ],
+      "type": "object"
+    },
+    "name": "move_track"
+  },
+  {
+    "description": "Group tracks in a collapsible timeline group; return group",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tracks": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        }
+      },
+      "required": [
+        "tracks"
+      ],
+      "type": "object"
+    },
+    "name": "group_tracks"
+  },
+  {
+    "description": "Rename, recolor (0xRRGGBB), or collapse a track group",
+    "inputSchema": {
+      "properties": {
+        "collapsed": {
+          "type": "boolean"
+        },
+        "color": {
+          "type": "integer"
+        },
+        "group": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "group"
+      ],
+      "type": "object"
+    },
+    "name": "set_group"
+  },
+  {
+    "description": "Dissolve a group; its tracks stay in place",
+    "inputSchema": {
+      "properties": {
+        "group": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "group"
+      ],
+      "type": "object"
+    },
+    "name": "ungroup"
+  },
+  {
+    "description": "Three-point edit: place a media range [in, out) at start; insert shifts later clips, overwrite replaces target tracks (video_track/audio_track, 0 = first available); fit mode fills the work area (or start + duration) by adjusting speed so [in, out) fits",
+    "inputSchema": {
+      "properties": {
+        "audio": {
+          "type": "boolean"
+        },
+        "audio_track": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "in": {
+          "type": "number"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "out": {
+          "type": "number"
+        },
+        "path": {
+          "type": "string"
+        },
+        "start": {
+          "type": "number"
+        },
+        "video": {
+          "type": "boolean"
+        },
+        "video_track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "edit_source"
+  },
+  {
+    "description": "Duplicate a track below itself: clips, effects, animation and mix; return track",
+    "inputSchema": {
+      "properties": {
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track"
+      ],
+      "type": "object"
+    },
+    "name": "duplicate_track"
+  },
+  {
+    "description": "Lift [begin, end) on all tracks: split boundaries, remove the interior and leave a gap",
+    "inputSchema": {
+      "properties": {
+        "begin": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "begin",
+        "end"
+      ],
+      "type": "object"
+    },
+    "name": "lift_range"
+  },
+  {
+    "description": "Add a marker to the timeline ruler",
+    "inputSchema": {
+      "properties": {
+        "color": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "time"
+      ],
+      "type": "object"
+    },
+    "name": "add_marker"
+  },
+  {
+    "description": "Move, rename or recolor a marker; duration > 0 makes a region (0: point marker)",
+    "inputSchema": {
+      "properties": {
+        "color": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "marker": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "marker"
+      ],
+      "type": "object"
+    },
+    "name": "set_marker"
+  },
+  {
+    "description": "Delete a marker",
+    "inputSchema": {
+      "properties": {
+        "marker": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "marker"
+      ],
+      "type": "object"
+    },
+    "name": "remove_marker"
+  },
+  {
+    "description": "Render the frame at each marker; path is the base name (folder/base.png or .exr); files become base_01_Name.png; returns files",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "export_marker_stills"
+  },
+  {
+    "description": "CMX 3600 edit decision list for a video track (track, or the first with clips) for Premiere, Resolve or Avid; optional path; returns text, events",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "export_edl"
+  },
+  {
+    "description": "Import a CMX 3600 edit decision list onto a new video track (and linked audio track for audio events); locate media from SOURCE FILE comments, otherwise by name in media_folder (default: the folder of the EDL), otherwise offline; returns clips, offline",
+    "inputSchema": {
+      "properties": {
+        "media_folder": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "import_edl"
+  },
+  {
+    "description": "CSV shot list (track, name, timecodes, source, speed, effects); optional path; returns text",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "export_shot_list"
+  },
+  {
+    "description": "List markers as YouTube chapters (youtube format) or CSV; optional path writes UTF-8; returns text",
+    "inputSchema": {
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "export_markers"
+  },
+  {
+    "description": "Work area / loop; end <= start disables it",
+    "inputSchema": {
+      "properties": {
+        "begin": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "begin",
+        "end"
+      ],
+      "type": "object"
+    },
+    "name": "set_work_area"
+  },
+  {
+    "description": "Add a stereo mixing bus",
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "add_bus"
+  },
+  {
+    "description": "Delete a bus, reconnect its sources to master and remove its sends",
+    "inputSchema": {
+      "properties": {
+        "bus": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "bus"
+      ],
+      "type": "object"
+    },
+    "name": "remove_bus"
+  },
+  {
+    "description": "Set a track, bus or master channel; output 0 refers to master",
+    "inputSchema": {
+      "properties": {
+        "gain": {
+          "type": "number"
+        },
+        "locked": {
+          "type": "boolean"
+        },
+        "muted": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "output": {
+          "type": "integer"
+        },
+        "pan": {
+          "type": "number"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "solo": {
+          "type": "boolean"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope"
+      ],
+      "type": "object"
+    },
+    "name": "set_mix_channel"
+  },
+  {
+    "description": "Create or set a bus send, before or after the fader",
+    "inputSchema": {
+      "properties": {
+        "bus": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "gain": {
+          "type": "number"
+        },
+        "pre_fader": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "target",
+        "bus"
+      ],
+      "type": "object"
+    },
+    "name": "set_send"
+  },
+  {
+    "description": "Remove a bus send",
+    "inputSchema": {
+      "properties": {
+        "bus": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "target",
+        "bus"
+      ],
+      "type": "object"
+    },
+    "name": "remove_send"
+  },
+  {
+    "description": "Add a CyDAW 2 DSP to a track, bus or master channel",
+    "inputSchema": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "id"
+      ],
+      "type": "object"
+    },
+    "name": "add_mix_effect"
+  },
+  {
+    "description": "Enable or reorder a channel DSP",
+    "inputSchema": {
+      "properties": {
+        "effect": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "position": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "set_mix_effect"
+  },
+  {
+    "description": "Remove a channel DSP and its animation",
+    "inputSchema": {
+      "properties": {
+        "effect": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "remove_mix_effect"
+  },
+  {
+    "description": "Set channel gain/pan or a DSP parameter",
+    "inputSchema": {
+      "properties": {
+        "effect": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "scope",
+        "key",
+        "value"
+      ],
+      "type": "object"
+    },
+    "name": "set_mix_parameter"
+  },
+  {
+    "description": "Animate a channel or DSP in sequence time",
+    "inputSchema": {
+      "properties": {
+        "curve": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string"
+        },
+        "previous_time": {
+          "type": "number"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "shape": {
+          "type": "number"
+        },
+        "target": {
+          "type": "integer"
+        },
+        "time": {
+          "type": "number"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "scope",
+        "key",
+        "value",
+        "time"
+      ],
+      "type": "object"
+    },
+    "name": "set_mix_keyframe"
+  },
+  {
+    "description": "Remove a key; without time, restore the channel's base value",
+    "inputSchema": {
+      "properties": {
+        "effect": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "scope",
+        "key"
+      ],
+      "type": "object"
+    },
+    "name": "remove_mix_keyframe"
+  },
+  {
+    "description": "Read the stereo routing/DSP graph, validated by CyDAW 2",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "get_audio_graph"
+  },
+  {
+    "description": "Compile and embed a v2 stereo DSP graph; scope clip/track/bus/master, optional effect to replace",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "graph": {
+          "type": "object"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "graph"
+      ],
+      "type": "object"
+    },
+    "name": "set_dsp_graph"
+  },
+  {
+    "description": "Read an embedded DSP graph",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "get_dsp_graph"
+  },
+  {
+    "description": "Load a native SDK v1 or VST3 effect in an isolated process; scope clip/track/bus/master",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "kind",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "add_external_audio"
+  },
+  {
+    "description": "Show/hide the VST3 window in its isolated worker",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        },
+        "visible": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "scope",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "show_plugin_editor"
+  },
+  {
+    "description": "Embed the complete VST3 state",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "capture_plugin_state"
+  },
+  {
+    "description": "Read VST3 state and control names",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "get_plugin_state"
+  },
+  {
+    "description": "Restore a base64 VST3 state up to 4 MiB",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "effect",
+        "state"
+      ],
+      "type": "object"
+    },
+    "name": "set_plugin_state"
+  },
+  {
+    "description": "Save a full VST3 preset",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "effect",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "save_plugin_preset"
+  },
+  {
+    "description": "Load a VST3 preset while preserving automation curves",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "target": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "scope",
+        "effect",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "load_plugin_preset"
+  },
+  {
+    "description": "Add an animated HLSL video generator",
+    "inputSchema": {
+      "properties": {
+        "duration": {
+          "type": "number"
+        },
+        "id": {
+          "type": "string"
+        },
+        "start": {
+          "type": "number"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "add_generator"
+  },
+  {
+    "description": "Add a transparent text layer with effects and animation on an available title track at this time (new_track forces a new track); return clip, track",
+    "inputSchema": {
+      "properties": {
+        "duration": {
+          "type": "number"
+        },
+        "new_track": {
+          "type": "boolean"
+        },
+        "start": {
+          "type": "number"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "add_title"
+  },
+  {
+    "description": "Apply a style to title clips: classic (white, outline, shadow), subtitle_yellow (outlined yellow), boxed (white on black), cinema (serif, soft shadow), neon (cyan glow); return clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "style": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clips",
+        "style"
+      ],
+      "type": "object"
+    },
+    "name": "apply_title_style"
+  },
+  {
+    "description": "Enhance audio clip speech: add a gentle noise gate, EQ (reduced bass, increased presence) and CyDAW compressor to their effects; return clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "enhance_voice"
+  },
+  {
+    "description": "Add a name / role lower third: name, role, start (playhead), duration (5); text at the bottom left on a dark box, with slide and fade animation; return clip, track",
+    "inputSchema": {
+      "properties": {
+        "duration": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "new_track": {
+          "type": "boolean"
+        },
+        "role": {
+          "type": "string"
+        },
+        "start": {
+          "type": "number"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "add_lower_third"
+  },
+  {
+    "description": "Set text, font, alignment (0 left, 1 center, 2 right) and style",
+    "inputSchema": {
+      "properties": {
+        "alignment": {
+          "type": "integer"
+        },
+        "bold": {
+          "type": "boolean"
+        },
+        "clip": {
+          "type": "integer"
+        },
+        "font": {
+          "type": "string"
+        },
+        "italic": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "set_title"
+  },
+  {
+    "description": "Set the mask shape (none, rectangle, ellipse) and inversion",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "inverted": {
+          "type": "boolean"
+        },
+        "shape": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "set_mask"
+  },
+  {
+    "description": "Set a closed mask; points [x,y,inX,inY,outX,outY], normalized centered coordinates",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "points": {
+          "items": {
+            "items": {
+              "maximum": 2,
+              "minimum": -2,
+              "type": "number"
+            },
+            "maxItems": 6,
+            "minItems": 6,
+            "type": "array"
+          },
+          "maxItems": 16,
+          "minItems": 3,
+          "type": "array"
+        }
+      },
+      "required": [
+        "clip",
+        "points"
+      ],
+      "type": "object"
+    },
+    "name": "set_bezier_mask"
+  },
+  {
+    "description": "Track mask translation by background correlation (1800 frames maximum)",
+    "inputSchema": {
+      "properties": {
+        "begin": {
+          "type": "number"
+        },
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "end": {
+          "type": "number"
+        },
+        "radius": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "begin",
+        "end"
+      ],
+      "type": "object"
+    },
+    "name": "start_mask_tracking"
+  },
+  {
+    "description": "Status of the last mask tracking job",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "mask_tracking_status"
+  },
+  {
+    "description": "Cancel active tracking",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "cancel_mask_tracking"
+  },
+  {
+    "description": "Apply mask_x/y curves if the clip has not changed",
+    "inputSchema": {
+      "properties": {
+        "job": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "job"
+      ],
+      "type": "object"
+    },
+    "name": "apply_mask_tracking"
+  },
+  {
+    "description": "Incoming transition between the video clip and layers below; reset_progress restores automatic automatic",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "string"
+        },
+        "reset_progress": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "set_transition"
+  },
+  {
+    "description": "Remove the transition and its transition_ parameters/animation",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "remove_transition"
+  },
+  {
+    "description": "Compile a two-input transition shader and save it in the clip",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "code"
+      ],
+      "type": "object"
+    },
+    "name": "set_transition_shader"
+  },
+  {
+    "description": "Change clip timing, name or 0xRRGGBB color; hold freezes the source at in",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "color": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fade_in": {
+          "type": "number"
+        },
+        "fade_out": {
+          "type": "number"
+        },
+        "hold": {
+          "type": "boolean"
+        },
+        "in": {
+          "type": "number"
+        },
+        "name": {
+          "type": "string"
+        },
+        "reverse": {
+          "type": "boolean"
+        },
+        "speed": {
+          "type": "number"
+        },
+        "start": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "set_clip"
+  },
+  {
+    "description": "Shorten/extend by delta seconds and shift later clips; left adjusts the source in point",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "delta": {
+          "type": "number"
+        },
+        "left": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "clip",
+        "delta"
+      ],
+      "type": "object"
+    },
+    "name": "ripple_trim"
+  },
+  {
+    "description": "Set audio clip gain so its peak reaches peak dBFS (default -1); return gains",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "peak": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "normalize_audio"
+  },
+  {
+    "description": "Replace edit: the clip (and linked group using the same media) uses another source starting at in, keeping its position and duration",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "in": {
+          "type": "number"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "replace_source"
+  },
+  {
+    "description": "Remove silence from an audio clip (or a video's linked audio), closing gaps across all tracks; threshold dB (default -40), min_length s (0.5), padding s around speech (0.1); returns cuts, seconds",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "min_length": {
+          "type": "number"
+        },
+        "padding": {
+          "type": "number"
+        },
+        "spans": {
+          "type": "array"
+        },
+        "threshold": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "remove_silences"
+  },
+  {
+    "description": "Lower music track clip gain during speech on a voice track: amount dB (default -12), threshold dB (-40), attack and release s (0.25 / 0.5); return spans",
+    "inputSchema": {
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "attack": {
+          "type": "number"
+        },
+        "release": {
+          "type": "number"
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "track": {
+          "type": "integer"
+        },
+        "voice": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track",
+        "voice"
+      ],
+      "type": "object"
+    },
+    "name": "auto_duck"
+  },
+  {
+    "description": "Find scene changes in a video clip; split (default true) splits at each one, otherwise add markers; threshold 0..1 (default 0.15); return times",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "split": {
+          "type": "boolean"
+        },
+        "threshold": {
+          "type": "number"
+        },
+        "times": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "detect_scenes"
+  },
+  {
+    "description": "Add a marker at each audio transient (edit to music); sensitivity 0..1 (default 0.5), min_gap in seconds (default 0.12); return markers",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "min_gap": {
+          "type": "number"
+        },
+        "sensitivity": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "detect_beats"
+  },
+  {
+    "description": "Import a SubRip (.srt) file as title clips on a new track; return track, clips",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "import_subtitles"
+  },
+  {
+    "description": "Write title clips from a track (otherwise all) as SubRip; return text",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "export_subtitles"
+  },
+  {
+    "description": "Add a subtitle cue using the previous cue's style; stop at the next clip; returns clip",
+    "inputSchema": {
+      "properties": {
+        "duration": {
+          "type": "number"
+        },
+        "start": {
+          "type": "number"
+        },
+        "text": {
+          "type": "string"
+        },
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track"
+      ],
+      "type": "object"
+    },
+    "name": "add_subtitle"
+  },
+  {
+    "description": "Apply size (font_size), vertical position (y, -0.5..0.5) and outline to all titles on a track",
+    "inputSchema": {
+      "properties": {
+        "box": {
+          "type": "number"
+        },
+        "font_size": {
+          "type": "number"
+        },
+        "outline": {
+          "type": "number"
+        },
+        "track": {
+          "type": "integer"
+        },
+        "y": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "track"
+      ],
+      "type": "object"
+    },
+    "name": "set_subtitle_style"
+  },
+  {
+    "description": "Measure integrated mix loudness (BS.1770) and set master gain to target LUFS (default -14); Existing measured/true_peak values skip measurement; limit adds a -1 dBTP master limiter; returns measured, gain, master, true_peak",
+    "inputSchema": {
+      "properties": {
+        "limit": {
+          "type": "boolean"
+        },
+        "measured": {
+          "type": "number"
+        },
+        "target": {
+          "type": "number"
+        },
+        "true_peak": {
+          "type": "number"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "normalize_loudness"
+  },
+  {
+    "description": "Change sequence format: even width and height (16..8192), fps (1..240), name",
+    "inputSchema": {
+      "properties": {
+        "fps": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "set_sequence"
+  },
+  {
+    "description": "Frame video clips with another aspect ratio: fill crops to fill, fit adds letterboxing; returns scales",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "mode": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "fit_clips"
+  },
+  {
+    "description": "Used media (bin and clips): path, online, uses",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "media_status"
+  },
+  {
+    "description": "Relink offline media to same-named files in folder (including subfolders); returns relinked, missing",
+    "inputSchema": {
+      "properties": {
+        "folder": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "folder"
+      ],
+      "type": "object"
+    },
+    "name": "relink_media"
+  },
+  {
+    "description": "Copy used media into folder and update project paths (archive); return copied, bytes",
+    "inputSchema": {
+      "properties": {
+        "folder": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "folder"
+      ],
+      "type": "object"
+    },
+    "name": "collect_media"
+  },
+  {
+    "description": "Rename clips in timeline order: # becomes a zero-padded number, {nom} the current name; first is the first number (default 1); return names",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "first": {
+          "type": "integer"
+        },
+        "pattern": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clips",
+        "pattern"
+      ],
+      "type": "object"
+    },
+    "name": "rename_clips"
+  },
+  {
+    "description": "Align a clip (and linked group) to a reference using their audio (envelopes, +/-max_lag s, default 30); return offset (movement in seconds), confidence 0..1",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "max_lag": {
+          "type": "number"
+        },
+        "reference": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "reference"
+      ],
+      "type": "object"
+    },
+    "name": "sync_audio"
+  },
+  {
+    "description": "Apply an animation preset: fade_in, fade_out, fade_in_out, slide_up, zoom_in, ken_burns (images), typewriter (titles), ramp_up, ramp_down, ramp_middle (speed ramps); fade/slide duration (0.5 s); returns clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "preset": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clips",
+        "preset"
+      ],
+      "type": "object"
+    },
+    "name": "apply_animation"
+  },
+  {
+    "description": "Paste from clip attributes onto clips: effects (append, or replace with replace_effects), transform (x, y, scale, rotation), opacity, audio (gain, pan), mask; keys follow each clip's start clip; returns clips",
+    "inputSchema": {
+      "properties": {
+        "audio": {
+          "type": "boolean"
+        },
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "effects": {
+          "type": "boolean"
+        },
+        "from": {
+          "type": "integer"
+        },
+        "mask": {
+          "type": "boolean"
+        },
+        "opacity": {
+          "type": "boolean"
+        },
+        "replace_effects": {
+          "type": "boolean"
+        },
+        "transform": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "from",
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "paste_attributes"
+  },
+  {
+    "description": "Multicam: at time (default playhead), split each angle (video tracks with an image, top first) and enable only the requested angle (1 = topmost) until the next switch; return angles",
+    "inputSchema": {
+      "properties": {
+        "angle": {
+          "type": "integer"
+        },
+        "audio": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "angle"
+      ],
+      "type": "object"
+    },
+    "name": "switch_angle"
+  },
+  {
+    "description": "Auto grade a video clip at time (default playhead): white balance (gray-world average) and exposure to 18% middle gray; add or update its correction; return exposure, gains",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "exposure": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "number"
+        },
+        "white_balance": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "auto_grade"
+  },
+  {
+    "description": "Match a video clip (clip) or selection (clips) to a reference clip: average color and brightness match the reference (white balance and exposure, with a second correction if needed beyond its range); optional time, reference_time; return clips, exposure, gains, clamped",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "reference": {
+          "type": "integer"
+        },
+        "reference_time": {
+          "type": "number"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "reference"
+      ],
+      "type": "object"
+    },
+    "name": "match_grade"
+  },
+  {
+    "description": "Split given clips (or all unlocked tracks) at each marker they cross; returns cuts",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "split_at_markers"
+  },
+  {
+    "description": "Close gaps: on a track (move clips with linked members), or without track, where all tracks are empty (shorten the sequence); return gaps",
+    "inputSchema": {
+      "properties": {
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "close_gaps"
+  },
+  {
+    "description": "Edit to markers: arrange given clips from the first clip's track in order, starting at the first clip and each following marker, lasting until the next marker (limited by source duration); return clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "fit_to_markers"
+  },
+  {
+    "description": "Insert a gap on all tracks: split crossing clips, shift later clips and markers",
+    "inputSchema": {
+      "properties": {
+        "duration": {
+          "type": "number"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "duration"
+      ],
+      "type": "object"
+    },
+    "name": "insert_gap"
+  },
+  {
+    "description": "Freeze frame: split a video clip at time and insert a held frame for duration; returns clip",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "freeze_frame"
+  },
+  {
+    "description": "Trim a clip and its linked group at an interior time: side start removes the head, end removes the tail; ripple (default true) closes the gap",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "ripple": {
+          "type": "boolean"
+        },
+        "side": {
+          "type": "string"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "trim_clip"
+  },
+  {
+    "description": "Move the cut between adjacent clips without changing total duration",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "delta": {
+          "type": "number"
+        },
+        "next": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "next",
+        "delta"
+      ],
+      "type": "object"
+    },
+    "name": "roll_trim"
+  },
+  {
+    "description": "Create an overlap and audio crossfade using available source handles",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "next": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "next",
+        "duration"
+      ],
+      "type": "object"
+    },
+    "name": "overlap_transition"
+  },
+  {
+    "description": "Split and remove a range on all tracks, closing the gap",
+    "inputSchema": {
+      "properties": {
+        "begin": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "begin",
+        "end"
+      ],
+      "type": "object"
+    },
+    "name": "remove_range"
+  },
+  {
+    "description": "Split the clip at the specified time",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip",
+        "time"
+      ],
+      "type": "object"
+    },
+    "name": "split_clip"
+  },
+  {
+    "description": "Delete a clip and its group; ripple closes its ranges on all tracks",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "ripple": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "delete_clip"
+  },
+  {
+    "description": "Select clips and their groups in the interface; an empty list deselects all",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "select_clips"
+  },
+  {
+    "description": "Move a selection and its animation by delta seconds, including linked clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "delta": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clips",
+        "delta"
+      ],
+      "type": "object"
+    },
+    "name": "move_clips"
+  },
+  {
+    "description": "Delete a selection; ripple closes the union of its ranges on all tracks without splitting unselected clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "ripple": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "delete_clips"
+  },
+  {
+    "description": "Duplicate a selection as a block after its end, preserving links and animation",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "duplicate_clips"
+  },
+  {
+    "description": "Split selected clips crossing time, including linked clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clips",
+        "time"
+      ],
+      "type": "object"
+    },
+    "name": "split_clips"
+  },
+  {
+    "description": "Duplicate a clip and linked group, including animation",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "duplicate_clip"
+  },
+  {
+    "description": "Link two clips or merge their groups for editing operations",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "other": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "other"
+      ],
+      "type": "object"
+    },
+    "name": "link_clips"
+  },
+  {
+    "description": "Unlink all clips in the group",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "unlink_clip"
+  },
+  {
+    "description": "Set a clip parameter (opacity/x/y/scale/rotation/gain/pan) or effect parameter",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip",
+        "key",
+        "value"
+      ],
+      "type": "object"
+    },
+    "name": "set_parameter"
+  },
+  {
+    "description": "Animation key; interpolation 0 linear, 1 smooth, 2 step, 3 CyDAW curve",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "curve": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "key": {
+          "type": "string"
+        },
+        "shape": {
+          "type": "number"
+        },
+        "time": {
+          "type": "number"
+        },
+        "value": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clip",
+        "key",
+        "value",
+        "time"
+      ],
+      "type": "object"
+    },
+    "name": "set_keyframe"
+  },
+  {
+    "description": "Add a library HLSL effect",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "id"
+      ],
+      "type": "object"
+    },
+    "name": "add_effect"
+  },
+  {
+    "description": "Add a native CyDAW 2 DSP effect",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "id"
+      ],
+      "type": "object"
+    },
+    "name": "add_audio_effect"
+  },
+  {
+    "description": "Enable an effect and/or reorder it in the video/audio stack (zero-based index)",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "position": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "set_effect"
+  },
+  {
+    "description": "Remove a video/audio effect and its animation",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "remove_effect"
+  },
+  {
+    "description": "List available effects and plugins",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "list_effects"
+  },
+  {
+    "description": "Describe a float RGBA OFX filter/general plugin in an isolated process",
+    "inputSchema": {
+      "properties": {
+        "identifier": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "inspect_ofx"
+  },
+  {
+    "description": "Add an OFX to a video clip with animatable parameters",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "identifier": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip",
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "add_ofx_effect"
+  },
+  {
+    "description": "Compile and replace an effect shader",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "code": {
+          "type": "string"
+        },
+        "effect": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "code"
+      ],
+      "type": "object"
+    },
+    "name": "set_shader"
+  },
+  {
+    "description": "Read an embedded Shaderixel graph",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clip",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "name": "get_graph"
+  },
+  {
+    "description": "Compile a Shaderixel graph (one input), native JSON object",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "effect": {
+          "type": "integer"
+        },
+        "graph": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "clip",
+        "effect",
+        "graph"
+      ],
+      "type": "object"
+    },
+    "name": "set_graph"
+  },
+  {
+    "description": "Play/pause and seek in seconds",
+    "inputSchema": {
+      "properties": {
+        "playing": {
+          "type": "boolean"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "transport"
+  },
+  {
+    "description": "Render the sequence as MP4 H264/AAC",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "export_video"
+  },
+  {
+    "description": "Render the mix as stereo 48 kHz WAV",
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "export_audio"
+  },
+  {
+    "description": "Place video clips as picture-in-picture: position top_left, top_right, bottom_left, bottom_right, center or full; size (width fraction, default 0.33), margin (0.04); return clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "margin": {
+          "type": "number"
+        },
+        "position": {
+          "type": "string"
+        },
+        "size": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clips",
+        "position"
+      ],
+      "type": "object"
+    },
+    "name": "place_clip"
+  },
+  {
+    "description": "Split screen: 2 to 4 video clips, layout side_by_side (left/right), stacked (top/bottom) or grid (four quadrants); each image fits its cell; return clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "layout": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "split_screen"
+  },
+  {
+    "description": "Key video clips over a green or blue screen: add a chroma key effect set to color (green, blue), threshold (default 0.35); return clips",
+    "inputSchema": {
+      "properties": {
+        "clips": {
+          "items": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "maxItems": 4096,
+          "type": "array"
+        },
+        "color": {
+          "type": "string"
+        },
+        "threshold": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "clips"
+      ],
+      "type": "object"
+    },
+    "name": "key_background"
+  },
+  {
+    "description": "Anti-click micro fades at audio track cuts: each boundary receives a fade of length s (default 0.05) on each side; return cuts",
+    "inputSchema": {
+      "properties": {
+        "length": {
+          "type": "number"
+        },
+        "track": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "track"
+      ],
+      "type": "object"
+    },
+    "name": "audio_cut_fades"
+  },
+  {
+    "description": "Add an adjustment layer on a new top video track; its effects process the image from tracks below; return clip, track",
+    "inputSchema": {
+      "properties": {
+        "duration": {
+          "type": "number"
+        },
+        "start": {
+          "type": "number"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "add_adjustment_layer"
+  },
+  {
+    "description": "Export a looping animated GIF: range work (work area) or begin/end, width (default 480), fps (15); returns frames",
+    "inputSchema": {
+      "properties": {
+        "begin": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        },
+        "fps": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        },
+        "range": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "export_gif"
+  },
+  {
+    "description": "Start a chapter export (start/marker to next marker) in folder: kind video (MP4) or audio (WAV), files named '01 Name'; regions true exports each marker with duration; return jobs",
+    "inputSchema": {
+      "properties": {
+        "folder": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "regions": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "folder"
+      ],
+      "type": "object"
+    },
+    "name": "export_chapters"
+  },
+  {
+    "description": "Start a background export from a snapshot; kind video (MP4) or audio (WAV); range work: work area, selection: selected clips' extent, or begin/end in seconds",
+    "inputSchema": {
+      "properties": {
+        "begin": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "preset": {
+          "type": "string"
+        },
+        "range": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "kind"
+      ],
+      "type": "object"
+    },
+    "name": "start_export"
+  },
+  {
+    "description": "Resolution and frame-rate presets for the render queue",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "list_export_presets"
+  },
+  {
+    "description": "Prepare an H264 720p preview copy; exports use the original source",
+    "inputSchema": {
+      "properties": {
+        "clip": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "clip"
+      ],
+      "type": "object"
+    },
+    "name": "prepare_proxy"
+  },
+  {
+    "description": "Enable/disable ready preview proxies",
+    "inputSchema": {
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "name": "set_preview_proxies"
+  },
+  {
+    "description": "Status of an export, queue and the eight most recent completed renders",
+    "inputSchema": {
+      "properties": {
+        "job": {
+          "type": "integer"
+        }
+      },
+      "required": [],
+      "type": "object"
+    },
+    "name": "export_status"
+  },
+  {
+    "description": "Request cancellation before final file replacement; return accepted",
+    "inputSchema": {
+      "properties": {
+        "job": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "job"
+      ],
+      "type": "object"
+    },
+    "name": "cancel_export"
+  },
+  {
+    "description": "Renders PNG8, PNG16 or half-float EXR",
+    "inputSchema": {
+      "properties": {
+        "format": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "time": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "type": "object"
+    },
+    "name": "render_frame"
+  },
+  {
+    "description": "Undo the last change",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "undo"
+  },
+  {
+    "description": "Undoable steps (past, oldest first) and redoable steps (future, next first), by name",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "get_history"
+  },
+  {
+    "description": "Redo the change",
+    "inputSchema": {
+      "properties": {},
+      "required": [],
+      "type": "object"
+    },
+    "name": "redo"
+  }
+]

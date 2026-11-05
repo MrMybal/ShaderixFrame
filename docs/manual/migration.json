@@ -1,0 +1,508 @@
+{
+  "source_sha256": "d489a0e34c94b56ac3679f7660eede3f320320b5b2d7560bd8471c6999b4ab69",
+  "guides": [
+    {
+      "page": "welcome",
+      "locale": "en",
+      "source_blocks": 5,
+      "path": "docs/manual/pages/en/welcome.md"
+    },
+    {
+      "page": "welcome",
+      "locale": "fr",
+      "source_blocks": 5,
+      "path": "docs/manual/pages/fr/welcome.md"
+    },
+    {
+      "page": "quickstart",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/quickstart.md"
+    },
+    {
+      "page": "quickstart",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/quickstart.md"
+    },
+    {
+      "page": "workspaces",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/workspaces.md"
+    },
+    {
+      "page": "workspaces",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/workspaces.md"
+    },
+    {
+      "page": "projects",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/projects.md"
+    },
+    {
+      "page": "projects",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/projects.md"
+    },
+    {
+      "page": "media",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/media.md"
+    },
+    {
+      "page": "media",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/media.md"
+    },
+    {
+      "page": "source",
+      "locale": "en",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/en/source.md"
+    },
+    {
+      "page": "source",
+      "locale": "fr",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/fr/source.md"
+    },
+    {
+      "page": "timeline",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/timeline.md"
+    },
+    {
+      "page": "timeline",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/timeline.md"
+    },
+    {
+      "page": "editing",
+      "locale": "en",
+      "source_blocks": 5,
+      "path": "docs/manual/pages/en/editing.md"
+    },
+    {
+      "page": "editing",
+      "locale": "fr",
+      "source_blocks": 5,
+      "path": "docs/manual/pages/fr/editing.md"
+    },
+    {
+      "page": "composition",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/composition.md"
+    },
+    {
+      "page": "composition",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/composition.md"
+    },
+    {
+      "page": "containers",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/containers.md"
+    },
+    {
+      "page": "containers",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/containers.md"
+    },
+    {
+      "page": "layers",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/layers.md"
+    },
+    {
+      "page": "layers",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/layers.md"
+    },
+    {
+      "page": "track-graphs",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/track-graphs.md"
+    },
+    {
+      "page": "track-graphs",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/track-graphs.md"
+    },
+    {
+      "page": "shaders",
+      "locale": "en",
+      "source_blocks": 9,
+      "path": "docs/manual/pages/en/shaders.md"
+    },
+    {
+      "page": "shaders",
+      "locale": "fr",
+      "source_blocks": 9,
+      "path": "docs/manual/pages/fr/shaders.md"
+    },
+    {
+      "page": "library",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/library.md"
+    },
+    {
+      "page": "library",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/library.md"
+    },
+    {
+      "page": "animation",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/animation.md"
+    },
+    {
+      "page": "animation",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/animation.md"
+    },
+    {
+      "page": "motion",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/motion.md"
+    },
+    {
+      "page": "motion",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/motion.md"
+    },
+    {
+      "page": "titles",
+      "locale": "en",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/en/titles.md"
+    },
+    {
+      "page": "titles",
+      "locale": "fr",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/fr/titles.md"
+    },
+    {
+      "page": "masks",
+      "locale": "en",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/en/masks.md"
+    },
+    {
+      "page": "masks",
+      "locale": "fr",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/fr/masks.md"
+    },
+    {
+      "page": "transitions",
+      "locale": "en",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/en/transitions.md"
+    },
+    {
+      "page": "transitions",
+      "locale": "fr",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/fr/transitions.md"
+    },
+    {
+      "page": "grading",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/grading.md"
+    },
+    {
+      "page": "grading",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/grading.md"
+    },
+    {
+      "page": "scopes",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/scopes.md"
+    },
+    {
+      "page": "scopes",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/scopes.md"
+    },
+    {
+      "page": "luts",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/luts.md"
+    },
+    {
+      "page": "luts",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/luts.md"
+    },
+    {
+      "page": "precision",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/precision.md"
+    },
+    {
+      "page": "precision",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/precision.md"
+    },
+    {
+      "page": "audio-edit",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/audio-edit.md"
+    },
+    {
+      "page": "audio-edit",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/audio-edit.md"
+    },
+    {
+      "page": "mixer",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/mixer.md"
+    },
+    {
+      "page": "mixer",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/mixer.md"
+    },
+    {
+      "page": "devices",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/devices.md"
+    },
+    {
+      "page": "devices",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/devices.md"
+    },
+    {
+      "page": "dsp",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/dsp.md"
+    },
+    {
+      "page": "dsp",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/dsp.md"
+    },
+    {
+      "page": "plugins",
+      "locale": "en",
+      "source_blocks": 8,
+      "path": "docs/manual/pages/en/plugins.md"
+    },
+    {
+      "page": "plugins",
+      "locale": "fr",
+      "source_blocks": 8,
+      "path": "docs/manual/pages/fr/plugins.md"
+    },
+    {
+      "page": "markers",
+      "locale": "en",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/en/markers.md"
+    },
+    {
+      "page": "markers",
+      "locale": "fr",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/fr/markers.md"
+    },
+    {
+      "page": "multicam",
+      "locale": "en",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/en/multicam.md"
+    },
+    {
+      "page": "multicam",
+      "locale": "fr",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/fr/multicam.md"
+    },
+    {
+      "page": "export",
+      "locale": "en",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/en/export.md"
+    },
+    {
+      "page": "export",
+      "locale": "fr",
+      "source_blocks": 4,
+      "path": "docs/manual/pages/fr/export.md"
+    },
+    {
+      "page": "loudness",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/loudness.md"
+    },
+    {
+      "page": "loudness",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/loudness.md"
+    },
+    {
+      "page": "recovery",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/recovery.md"
+    },
+    {
+      "page": "recovery",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/recovery.md"
+    },
+    {
+      "page": "mcp",
+      "locale": "en",
+      "source_blocks": 5,
+      "path": "docs/manual/pages/en/mcp.md"
+    },
+    {
+      "page": "mcp",
+      "locale": "fr",
+      "source_blocks": 5,
+      "path": "docs/manual/pages/fr/mcp.md"
+    },
+    {
+      "page": "shortcuts",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/shortcuts.md"
+    },
+    {
+      "page": "shortcuts",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/shortcuts.md"
+    },
+    {
+      "page": "examples",
+      "locale": "en",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/en/examples.md"
+    },
+    {
+      "page": "examples",
+      "locale": "fr",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/fr/examples.md"
+    },
+    {
+      "page": "troubleshooting",
+      "locale": "en",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/en/troubleshooting.md"
+    },
+    {
+      "page": "troubleshooting",
+      "locale": "fr",
+      "source_blocks": 3,
+      "path": "docs/manual/pages/fr/troubleshooting.md"
+    },
+    {
+      "page": "glossary",
+      "locale": "en",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/en/glossary.md"
+    },
+    {
+      "page": "glossary",
+      "locale": "fr",
+      "source_blocks": 2,
+      "path": "docs/manual/pages/fr/glossary.md"
+    }
+  ],
+  "preserved_chapter_ids": [
+    "welcome",
+    "quickstart",
+    "workspaces",
+    "projects",
+    "media",
+    "source",
+    "timeline",
+    "editing",
+    "composition",
+    "containers",
+    "layers",
+    "track-graphs",
+    "shaders",
+    "library",
+    "animation",
+    "motion",
+    "titles",
+    "masks",
+    "transitions",
+    "grading",
+    "scopes",
+    "luts",
+    "precision",
+    "audio-edit",
+    "mixer",
+    "devices",
+    "dsp",
+    "plugins",
+    "markers",
+    "multicam",
+    "export",
+    "loudness",
+    "recovery",
+    "mcp",
+    "shortcuts",
+    "examples",
+    "troubleshooting",
+    "glossary"
+  ],
+  "screenshots": 9,
+  "static_diagrams": 5,
+  "changed_behavior": [
+    "CyDoc file reader replaces native ImGui reader",
+    "Search uses Ctrl+K",
+    "Print guide derived from compiled CyDoc pages"
+  ]
+}

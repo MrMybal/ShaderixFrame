@@ -5,6 +5,12 @@ Development and maintenance: Cyberalien.
 **Alpha preview for Windows x64.** Licensed under [GNU AGPL v3](LICENSE).
 See [alpha downloads and limitations](docs/RELEASE_ALPHA.md) and [licensing/source information](docs/LICENSING.md).
 
+**[Documentation](https://mrmybal.github.io/ShaderixFrame/#/en/welcome)** ·
+[Documentation en français](https://mrmybal.github.io/ShaderixFrame/#/fr/welcome)
+
+Read the complete CyDoc manual online, with the same reader, search, images and
+diagrams as the help bundled with the application. The installed manual also works offline.
+
 ShaderixFrame is a native Windows video editor with layered compositing, HLSL effects,
 VFX graphs and audio editing. It uses modular CyUI for common interface components,
 Shaderixel's shader graph compiler and composition algorithms, and CyDAW v2's DSP
@@ -46,6 +52,20 @@ Click an image to view it at full size.
 | --- | --- |
 | [![Motion design editor with a widget hierarchy and selected title on the canvas](docs/screenshots/motion-design.png)](docs/screenshots/motion-design.png) | [![Clip editor with its own composition preview, timeline and audio waveform](docs/screenshots/clip-editor.png)](docs/screenshots/clip-editor.png) |
 | Arrange text and shapes using a widget hierarchy and canvas. | Edit a container's local timeline, composition and effects. |
+
+## Integrated user manual
+
+**Help > User Manual** opens the bundled **CyDoc** reader through a local `file://` URL.
+`Ctrl+F1` opens the chapter for the active panel. The guide retains **38 English/French
+chapters, nine screenshots and five SVG diagrams**, and adds the actual 163-tool MCP
+reference, public SDK/shader source index and clearly labelled technical archives.
+English is the default. Reader search (`Ctrl+K`), language switching, bookmarks, notes
+and reading positions are provided by CyDoc. Image zoom/enlargement stays inside the
+documentation window. **Print guide** opens the complete printable guide.
+
+All scripts, styles, licences and media ship under `help/`; no server, CDN or reader-side
+Node.js is required. Historical reference documents retain their original language.
+See [manual maintenance](docs/manual/README.md) and [CyDoc migration](docs/CYDOC_MIGRATION.md).
 
 ## Start editing
 
@@ -317,7 +337,8 @@ Examples are in `examples/`. Their demo soundtrack is generated locally.
 
 ## Build and package
 
-Install Visual Studio 2022 with C++ tools, CMake, Ninja and Python 3.
+Install Visual Studio 2022 with C++ tools, CMake, Ninja, Python 3 and Node.js 22+.
+Node is used only to generate CyDoc help; the installed reader needs no Node runtime.
 
 ```powershell
 python tools/prepare_dependencies.py --audio-only
@@ -342,7 +363,7 @@ Binary/media downloads, builds, caches and local settings are excluded from Git;
 
 `ShaderixFrame.exe --mcp` starts the built-in stdio JSON-RPC server. The client and that process's
 window share one sequence; it does not attach to a separate running instance. `--hidden` supports
-automation and tests. The current catalogue exposes **160 tools**, with English descriptions,
+automation and tests. The current catalogue exposes **163 tools**, with English descriptions,
 covering editing, graphs, motion, color, audio, media, analyses, exports and history.
 See [MCP configuration and tool contracts](docs/MCP.md).
 

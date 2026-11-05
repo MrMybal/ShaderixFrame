@@ -13,7 +13,7 @@ def generate():
             continue
         if '\0' not in english and not english.startswith(('//@','#include')):
             catalog.setdefault(english,french)
-    catalog.update({'Appearance':'Apparence','Theme':'Thème','Density':'Densité','Compact':'Compacte','Comfortable':'Confortable','Language':'Langue','Frames / second':'Images / seconde'})
+    catalog.update({'Appearance':'Apparence','Theme':'Thème','Density':'Densité','Compact':'Compacte','Comfortable':'Confortable','Language':'Langue','Frames / second':'Images / seconde','Help':'Aide','Timeline Navigator Help':'Aide du navigateur temporel','MCP and SDK Reference':'Référence MCP et SDK','User Manual':'Manuel utilisateur','Getting Started':'Bien commencer','Troubleshooting':'Dépannage'})
     text='// Generated from tools/english_strings.json; English remains the default.\n#pragma once\n#include <cyui/Locale.h>\nnamespace sf { inline void registerUiTranslations() {\n    cyui::registerTranslations("fr",{\n'
     for en,fr in sorted(catalog.items()):
         text+='        {'+json.dumps(en,ensure_ascii=False)+','+json.dumps(fr,ensure_ascii=False)+'},\n'

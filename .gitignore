@@ -43,3 +43,5 @@ workspace.ini
 *.pyc
 
 /ui-preferences.json
+
+node_modules/

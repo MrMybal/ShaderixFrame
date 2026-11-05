@@ -1,6 +1,19 @@
 # Building ShaderixFrame
 
 Use Windows 10/11 x64, Visual Studio 2022 C++ x64 tools, CMake, Ninja and Python 3.
+Node.js 22+ generates the local CyDoc documentation. Reading the installed help does
+not require Node, npm, a web server or Internet access. Generation uses the pinned
+CyDoc archive and the locked packages in `tools/cydoc/package-lock.json`:
+
+```powershell
+npm ci --prefix tools/cydoc --omit=peer --ignore-scripts
+python tools/build_cydoc.py --check --test
+```
+
+The first dependency restoration needs an npm cache or access to the package registry.
+The CyDoc archive itself is bundled in `vendor/cydoc/`; no public npm CyDoc package is
+assumed. CMake generates and copies the complete `build/help` tree automatically.
+See [CyDoc maintenance](manual/README.md) for translations, MCP refresh and updates.
 The copied CyUI, Shaderixel, CyDAW v2, Dear ImGui and OpenFX sources are in `vendor/`.
 Their original files, licences and SHA-256 fingerprints are retained. The upstream
 projects are read only; video-specific code and English labels live in adapters.

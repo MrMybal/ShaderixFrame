@@ -25,8 +25,18 @@ with zipfile.ZipFile(archive) as zipped:
                      'JUCE-LICENSE.md', 'sdk/ShaderixFramePlugin.h', 'examples/VfxStudy.sframe',
                      'examples/ParallelEQ.json', 'examples/GradingStudy.sframe', 'examples/LayerGraphStudy.sframe',
                      'examples/MotionStudy.sframe', 'examples/ClipStudy.sframe', 'docs/BUILDING.md',
-                     'docs/RELEASE_0.13.md', 'docs/RELEASE_0.14.md', 'plugins/shaderixel-library/plugin.json', 'sdk/openfx/ofxImageEffect.h'):
+                     'docs/RELEASE_0.13.md', 'docs/RELEASE_0.14.md', 'help/index.html', 'help/manifest.json',
+                     'help/data.js', 'help/viewer-app.js', 'help/media-image.js', 'help/licenses/CyDoc-LICENSE.txt',
+                     'docs/manual/en.html', 'docs/manual/fr.html', 'docs/screenshots/editing.png',
+                     'plugins/shaderixel-library/plugin.json', 'sdk/openfx/ofxImageEffect.h'):
         assert 'ShaderixFrame/' + required in names
+    help_data = json.loads(zipped.read('ShaderixFrame/help/manifest.json'))
+    assert help_data['defaultLocale'] == 'en' and [item['code'] for item in help_data['locales']] == ['en', 'fr']
+    assert 'ShaderixFrame/docs/manual/book.json' not in names
+    assert not any('media-'+module+'.js' in name for name in names for module in ('mesh','video','gif','graph','gallery'))
+    for page in help_data['pages']:
+        for asset in re.findall(r'src="(assets/[^"?]+)', page['html']):
+            assert 'ShaderixFrame/help/' + asset in names
     zipped.extractall(target)
 exe = target / 'ShaderixFrame/ShaderixFrame.exe'
 assert hashlib.sha256(exe.read_bytes()).digest() == hashlib.sha256((ROOT/'build/Release/ShaderixFrame.exe').read_bytes()).digest()
@@ -80,6 +90,15 @@ snapshots += [capture('grading', 'GradingStudy.sframe', 2, 4), capture('scopes',
 snapshots += [capture('layers', 'LayerGraphStudy.sframe', 2, 4)]
 snapshots += [capture('motion', 'MotionStudy.sframe', 6, 4), capture('clip', 'ClipStudy.sframe', 2, 4),
               capture('library', 'MotionStudy.sframe', 6, 4)]
+help_routes = []
+for language, topic in (('en', 'quickstart'), ('fr', 'layers')):
+    report = QA / f'cydoc-{language}-{version}.json'
+    subprocess.run([str(exe), '--hidden', '--warp', '--help-language='+language,
+                    '--help-topic='+topic, '--help-url-report='+str(report)], cwd=target,
+                   check=True, timeout=30, creationflags=subprocess.CREATE_NO_WINDOW)
+    route = json.loads(report.read_text('utf-8'))
+    assert not route['error'] and route['url'].startswith('file:///') and route['url'].endswith('#/'+language+'/'+topic)
+    help_routes.append(route['url'])
 viewports = QA / f'viewports-{version}.json'
 subprocess.run([str(exe), '--hidden', '--warp', '--viewport-smoke='+str(viewports)], cwd=target,
                check=True, timeout=20, creationflags=subprocess.CREATE_NO_WINDOW)
@@ -116,7 +135,7 @@ assert personal.read_text('utf-8') == 'Personal project preservation fixture'
 assert modified.read_text('utf-8').endswith('Personal modification\n')
 assert not (install/'ShaderixFrame.exe').exists() and not (install/'installed-files.txt').exists()
 result = {'version': version, 'archive': str(archive), 'entries': len(names), 'isolated': str(target),
-          'snapshots': snapshots, 'installer': str(setup), 'installed_files': len(manifest),
+          'snapshots': snapshots, 'help_routes': help_routes, 'installer': str(setup), 'installed_files': len(manifest),
           'installation': str(install), 'personal_files_preserved': True, 'native_windows': viewport_report,
           'native_clip_editor': clip_viewport_report}
 (QA/f'release-{version}-verification.json').write_text(json.dumps(result, indent=2)+'\n', encoding='utf-8')

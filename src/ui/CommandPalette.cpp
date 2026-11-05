@@ -175,6 +175,10 @@ std::vector<Editor::Command> Editor::commands() {
     bound("loop.toggle", [this] { loop = !loop; });
     add("Go to Start", "Start", [this] { s.time = 0; });
     add("Go to End", "End", [this] { s.time = s.project.duration; });
+    add("User Manual", "Ctrl+F1", [this] { showManual(); });
+    add("Getting Started", "", [this] { showManual("quickstart"); });
+    add("Troubleshooting", "", [this] { showManual("troubleshooting"); });
+    add("MCP and SDK Reference", "", [this] { showManual("api-links"); });
     add("Undo", "Ctrl+Z", [this] { action("undo"); });
     add("Redo", "Ctrl+Y", [this] { action("redo"); });
     add("Save Project", "Ctrl+S", [this] { saveCommand(); });

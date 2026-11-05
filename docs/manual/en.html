@@ -1,0 +1,6 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>CyDoc documentation</title>
+<p><a href="../../help/index.html#/en/welcome">CyDoc documentation</a></p>
+<script>
+const topic = /^#[a-z0-9-]+$/.test(location.hash) ? location.hash.slice(1) : 'welcome';
+location.replace(new URL('../../help/index.html', location.href).href + '#/en/' + encodeURIComponent(topic));
+</script></html>

@@ -1,5 +1,10 @@
 # ShaderixFrame Native SDK v1
 
+**[Documentation — Native SDK](https://mrmybal.github.io/ShaderixFrame/#/en/reference-sdk)** ·
+[Documentation en français](https://mrmybal.github.io/ShaderixFrame/#/fr/api-links)
+
+The CyDoc reference includes the SDK source index and the application's MCP contracts.
+
 Include `ShaderixFramePlugin.h` and export `shaderixframe_plugin_v1` with C linkage.
 Return an `SfPluginV1` table with its exact size and `version=1`. All callbacks are required.
 `create` prepares a stereo processor at 48 kHz with blocks of at most 2048 frames.

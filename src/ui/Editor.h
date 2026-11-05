@@ -7,6 +7,7 @@
 #include "ui/LayerCanvas.h"
 #include "ui/RenderCache.h"
 #include "ui/Keymap.h"
+#include "ui/Help.h"
 #include "ui/CodeFields.h"
 #include <cyui/modules/Commands.h>
 #include <cyui/modules/Nodes.h>
@@ -26,6 +27,7 @@ class Editor {
     static constexpr int modeCount = 6;
 
   private:
+    HelpDocumentation help;
     struct PendingImport {
         std::string path;
         double time;
@@ -498,6 +500,20 @@ class Editor {
   public:
     Editor(Session &session, std::filesystem::path base) : s(session), protocol(s), root(std::move(base)) {}
     void draw();
+    void showManual(const std::string &topic = {}, const std::string &language = {},
+                    const std::string &anchor = {}, HelpDocumentation::State state = {}) {
+        if (!help.open(root, topic, language.empty() ? cyui::locale() : language, anchor, std::move(state)))
+            error = help.error();
+    }
+    HelpDocumentation &documentation() { return help; }
+    void setHelpOpener(const std::function<bool(const std::string &)> &launch) {
+        help.setOpener(launch);
+        if (clipWorkspace) clipWorkspace->setHelpOpener(launch);
+    }
+    std::string helpUrl(const std::string &topic = "welcome", const std::string &language = "en",
+                        const std::string &anchor = {}, HelpDocumentation::State state = {}) {
+        return help.url(root, topic, language, anchor, std::move(state));
+    }
     void showDspGraph() {
         openPanel("DSP Graph");
         panels["Mixer & Audio Graph"] = true;

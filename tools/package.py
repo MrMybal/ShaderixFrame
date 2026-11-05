@@ -4,6 +4,8 @@ from juce_notices import dependency_notices
 import argparse
 import shutil
 import re
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -13,6 +15,7 @@ args = parser.parse_args()
 
 ROOT = Path(__file__).resolve().parents[1]
 version = release_version()
+subprocess.run([sys.executable, str(ROOT / 'tools/build_manual.py'), '--check'], check=True)
 destination = ROOT / 'dist' / 'ShaderixFrame'
 destination.mkdir(parents=True, exist_ok=True)
 with tempfile.TemporaryDirectory(prefix='package-', dir=ROOT / 'dist') as temporary:
@@ -25,8 +28,11 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=ROOT / 'dist') as tempor
     for folder in ('shaders', 'plugins', 'examples', 'docs','sdk'):
         shutil.copytree(ROOT / folder, package / folder,
                         ignore=shutil.ignore_patterns('VALIDATION_*.md', '__pycache__', '*.pyc', '.env', '*.log'))
-    for name in ('README.md', 'LICENSE', 'NOTICE.md', 'upstream.lock.json', 'openfx.lock.json', 'release-worker.lock.json', 'cyui.lock.json'):
+    shutil.copytree(ROOT / 'build/help', package / 'help')
+    for name in ('README.md', 'LICENSE', 'NOTICE.md', 'upstream.lock.json', 'openfx.lock.json', 'release-worker.lock.json', 'cyui.lock.json', 'cydoc.lock.json'):
         shutil.copy2(ROOT / name, package)
+    (package / 'licenses/cydoc').mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ROOT / 'vendor/cydoc/LICENSE', package / 'licenses/cydoc/LICENSE')
     shutil.copy2(ROOT / 'vendor/cydaw2/LICENSE', package / 'CYDAW-LICENSE.txt')
     shutil.copy2(ROOT / 'vendor/imgui/LICENSE.txt', package / 'IMGUI-LICENSE.txt')
     for notice in ('LICENSE', 'THIRD_PARTY_NOTICES.md', 'third_party/texteditor/LICENSE',
@@ -43,6 +49,12 @@ with tempfile.TemporaryDirectory(prefix='package-', dir=ROOT / 'dist') as tempor
     if not args.archive_only:
         # Update the launchable folder while preserving personal projects and recoveries.
         shutil.copytree(package, destination, dirs_exist_ok=True)
+        # Retire only the unchanged former generated book; preserve edited user content.
+        import hashlib, json
+        legacy = destination / 'docs/manual/book.json'
+        original = json.loads((ROOT / 'docs/manual/migration.json').read_text('utf-8'))['source_sha256']
+        if legacy.is_file() and hashlib.sha256(legacy.read_bytes()).hexdigest() == original:
+            legacy.unlink()
         # Remove only unchanged internal reports from earlier packages; keep edited files.
         for report in (destination / 'docs').glob('VALIDATION_*.md'):
             original = ROOT / 'docs' / report.name

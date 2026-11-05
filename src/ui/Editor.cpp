@@ -1007,6 +1007,7 @@ void Editor::menu() {
         }
         if (ImGui::BeginMenu(cyui::trLabel("View").c_str())) {
             uiPreferencesMenu();
+            if (ImGui::MenuItem(cyui::trLabel("User Manual").c_str(), "Ctrl+F1")) showManual();
             if (ImGui::MenuItem(cyui::trLabel("Command Palette...").c_str(), keymap.label("view.palette").c_str()))
                 openPalette();
             if (panelSuffix.empty() && ImGui::BeginMenu(cyui::trLabel("Mode").c_str())) {
@@ -1050,6 +1051,15 @@ void Editor::menu() {
                     ImGui::DockBuilderRemoveNode(workspace->GetID("FrameDock"));
                 pendingPanelFocus = panelTitle("Composition");
             }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu(cyui::trLabel("Help").c_str())) {
+            if (ImGui::MenuItem(cyui::trLabel("User Manual").c_str(), "Ctrl+F1")) showManual();
+            if (ImGui::MenuItem(cyui::trLabel("Getting Started").c_str())) showManual("quickstart");
+            if (ImGui::MenuItem(cyui::trLabel("Troubleshooting").c_str())) showManual("troubleshooting");
+            if (ImGui::MenuItem(cyui::trLabel("MCP and SDK Reference").c_str())) showManual("api-links");
+            if (ImGui::MenuItem(cyui::trLabel("Timeline Navigator Help").c_str()))
+                showManual("timeline", "", "usage", {{"media", "timeline-image-1"}, {"note", "navigator"}});
             ImGui::EndMenu();
         }
         ImGui::SameLine(ImGui::GetWindowWidth() - 310);
@@ -3362,6 +3372,13 @@ Editor *Editor::keyboardOwner() {
 void Editor::handleShortcuts() {
     auto &io = ImGui::GetIO();
     auto *nav = GImGui->NavWindow;
+    if (io.KeyCtrl && !io.KeyShift && !io.KeyAlt && ImGui::IsKeyPressed(ImGuiKey_F1, false)) {
+        std::string topic = "welcome";
+        for (auto *panel = nav; panel && topic == "welcome"; panel = panel->ParentWindow)
+            topic = HelpDocumentation::topicForPanel(panel->Name);
+        showManual(topic);
+        return;
+    }
     bool graph = nav && (std::string(nav->Name).find("graphCanvas") != std::string::npos ||
                          std::string(nav->Name).find("ShaderixelComposition") != std::string::npos ||
                          std::string(nav->Name).find("dspCanvas") != std::string::npos);
@@ -3640,7 +3657,7 @@ void Editor::draw() {
     }
     menu();
     modeBar();
-    if (!ImGui::GetIO().WantTextInput && !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId)) {
+    if (!ImGui::GetIO().WantTextInput && !ImGui::GetIO().KeyCtrl && !ImGui::GetIO().KeyAlt && !ImGui::GetIO().KeyShift && !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId)) {
         constexpr ImGuiKey keys[] = {ImGuiKey_F1, ImGuiKey_F2, ImGuiKey_F3, ImGuiKey_F4, ImGuiKey_F5, ImGuiKey_F6};
         for (int m = 0; m < modeCount; ++m)
             if (ImGui::IsKeyPressed(keys[m], false))
