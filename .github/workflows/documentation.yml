@@ -12,10 +12,8 @@ on:
       - 'sdk/**'
       - 'shaders/**'
       - 'src/mcp/Protocol.cpp'
-      - 'cydoc.*.json'
+      - '.CyDocBuild/**'
       - 'tools/build_cydoc.py'
-      - 'tools/cydoc/**'
-      - 'vendor/cydoc/**'
   workflow_dispatch:
 
 permissions:
@@ -39,19 +37,19 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: tools/cydoc/package-lock.json
+          cache-dependency-path: .CyDocBuild/package-lock.json
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
       - name: Restore pinned documentation tools
-        run: npm ci --prefix tools/cydoc --omit=peer --ignore-scripts --no-audit --no-fund
+        run: npm ci --prefix .CyDocBuild --omit=peer --ignore-scripts --no-audit --no-fund
       - name: Generate and verify the complete CyDoc reader
         run: python tools/build_cydoc.py --check --test
       - name: Upload only the documentation export
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: build/help
+          path: Documentation
           retention-days: 1
 
   deploy:

@@ -25,18 +25,21 @@ with zipfile.ZipFile(archive) as zipped:
                      'JUCE-LICENSE.md', 'sdk/ShaderixFramePlugin.h', 'examples/VfxStudy.sframe',
                      'examples/ParallelEQ.json', 'examples/GradingStudy.sframe', 'examples/LayerGraphStudy.sframe',
                      'examples/MotionStudy.sframe', 'examples/ClipStudy.sframe', 'docs/BUILDING.md',
-                     'docs/RELEASE_0.13.md', 'docs/RELEASE_0.14.md', 'help/index.html', 'help/manifest.json',
-                     'help/data.js', 'help/viewer-app.js', 'help/media-image.js', 'help/licenses/CyDoc-LICENSE.txt',
+                     'docs/RELEASE_0.13.md', 'docs/RELEASE_0.14.md', 'Documentation/Documentation.html', 'Documentation/DocData/manifest.json',
+                     'Documentation/DocAI.md', 'Documentation/DocData/data.js', 'Documentation/DocData/viewer-app.js', 'Documentation/DocData/media-image.js', 'Documentation/DocData/media-gallery.js', 'Documentation/DocData/licenses/CyDoc-LICENSE.txt',
                      'docs/manual/en.html', 'docs/manual/fr.html', 'docs/screenshots/editing.png',
                      'plugins/shaderixel-library/plugin.json', 'sdk/openfx/ofxImageEffect.h'):
         assert 'ShaderixFrame/' + required in names
-    help_data = json.loads(zipped.read('ShaderixFrame/help/manifest.json'))
+    help_data = json.loads(zipped.read('ShaderixFrame/Documentation/DocData/manifest.json'))
     assert help_data['defaultLocale'] == 'en' and [item['code'] for item in help_data['locales']] == ['en', 'fr']
     assert 'ShaderixFrame/docs/manual/book.json' not in names
-    assert not any('media-'+module+'.js' in name for name in names for module in ('mesh','video','gif','graph','gallery'))
+    assert not any('.CyDocBuild' in name or 'node_modules' in name or 'docs/manual/pages/' in name for name in names)
+    assert all(p.get('kind') != 'source' for p in help_data['pages'])
+    assert 'ShaderixFrame/help/manifest.json' not in names
+    assert not any('media-'+module+'.js' in name for name in names for module in ('mesh','video','gif','graph'))
     for page in help_data['pages']:
         for asset in re.findall(r'src="(assets/[^"?]+)', page['html']):
-            assert 'ShaderixFrame/help/' + asset in names
+            assert 'ShaderixFrame/Documentation/DocData/' + asset in names
     zipped.extractall(target)
 exe = target / 'ShaderixFrame/ShaderixFrame.exe'
 assert hashlib.sha256(exe.read_bytes()).digest() == hashlib.sha256((ROOT/'build/Release/ShaderixFrame.exe').read_bytes()).digest()

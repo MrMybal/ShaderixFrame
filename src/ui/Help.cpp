@@ -1,6 +1,6 @@
 #include "ui/Help.h"
 #include "core/Json.h"
-#include "../../vendor/cydoc/cydoc_link.hpp"
+#include "../../.CyDocBuild/vendor/cydoc/cydoc_link.hpp"
 #include <windows.h>
 #include <shellapi.h>
 #include <shlwapi.h>
@@ -30,13 +30,13 @@ std::string HelpDocumentation::fileUrl(const std::filesystem::path &file) {
 std::string HelpDocumentation::url(const std::filesystem::path &application, const std::string &requested,
                                    const std::string &language, const std::string &anchor, State state) {
     failure.clear();
-    const auto root = application / "help";
+    const auto root = application / "Documentation";
     std::string raw;
     sx::Json manifest;
-    if (!std::filesystem::is_regular_file(root / "index.html") ||
-        !sx::ReadTextFile(sx::Narrow((root / "manifest.json").wstring()), raw) ||
+    if (!std::filesystem::is_regular_file(root / "Documentation.html") ||
+        !sx::ReadTextFile(sx::Narrow((root / "DocData/manifest.json").wstring()), raw) ||
         !sx::Json::Parse(raw, manifest) || manifest["schemaVersion"].I() != 1) {
-        failure = "CyDoc help is unavailable. Restore the complete help folder from the application package.";
+        failure = "CyDoc help is unavailable. Restore the complete Documentation folder from the application package.";
         return {};
     }
     std::string page = requested.empty() ? "welcome" : requested, section = anchor;
@@ -67,7 +67,7 @@ std::string HelpDocumentation::url(const std::filesystem::path &application, con
             failure = "Unknown help media: " + value; return {};
         }
     }
-    auto base = fileUrl(root / "index.html");
+    auto base = fileUrl(root / "Documentation.html");
     if (base.empty()) { failure = "Cannot create the local help URL"; return {}; }
     std::sort(state.begin(), state.end());
     return cydoc_native::link(base, locale, page, section, state);

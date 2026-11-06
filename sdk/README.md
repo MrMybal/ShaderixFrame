@@ -3,7 +3,7 @@
 **[Documentation — Native SDK](https://mrmybal.github.io/ShaderixFrame/#/en/reference-sdk)** ·
 [Documentation en français](https://mrmybal.github.io/ShaderixFrame/#/fr/api-links)
 
-The CyDoc reference includes the SDK source index and the application's MCP contracts.
+The CyDoc reference includes the public SDK signatures and the application's MCP contracts.
 
 Include `ShaderixFramePlugin.h` and export `shaderixframe_plugin_v1` with C linkage.
 Return an `SfPluginV1` table with its exact size and `version=1`. All callbacks are required.

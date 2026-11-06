@@ -1,0 +1,562 @@
+{
+  "alignment": {
+    "en": "Text alignment: 0 left, 1 center, 2 right.",
+    "fr": "Alignement du texte : 0 gauche, 1 centre, 2 droite."
+  },
+  "amount": {
+    "en": "Processing amount; auto_duck uses decibels.",
+    "fr": "Intensité du traitement ; auto_duck utilise les décibels."
+  },
+  "angle": {
+    "en": "Camera angle number, starting at 1.",
+    "fr": "Numéro d’angle caméra, à partir de 1."
+  },
+  "attack": {
+    "en": "Gain attack time in seconds.",
+    "fr": "Durée d’attaque du gain en secondes."
+  },
+  "audio": {
+    "en": "Include audio or copy audio attributes, according to the operation.",
+    "fr": "Inclure le son ou copier ses attributs selon l’opération."
+  },
+  "audio_track": {
+    "en": "Destination audio track ID; 0 chooses an available track.",
+    "fr": "Identifiant de piste audio de destination ; 0 choisit une piste disponible."
+  },
+  "b": {
+    "en": "Blue component of the linear RGB sample.",
+    "fr": "Composante bleue de l’échantillon RGB linéaire."
+  },
+  "backgroundAlpha": {
+    "en": "Composition background alpha from 0 to 1.",
+    "fr": "Alpha du fond de composition, de 0 à 1."
+  },
+  "begin": {
+    "en": "Beginning of the interval in seconds.",
+    "fr": "Début de l’intervalle en secondes."
+  },
+  "bins": {
+    "en": "Include the detailed scope bin arrays in the result.",
+    "fr": "Inclure les tableaux détaillés de valeurs des scopes dans le résultat."
+  },
+  "blend": {
+    "en": "Blend-mode name or number from 0 to 26.",
+    "fr": "Nom ou numéro du mode de fusion, de 0 à 26."
+  },
+  "blend_effect": {
+    "en": "Library blend-effect ID; an empty string restores the blend mode.",
+    "fr": "Identifiant d’effet de fusion ; une chaîne vide rétablit le mode de fusion."
+  },
+  "bold": {
+    "en": "Enable bold text.",
+    "fr": "Activer le texte gras."
+  },
+  "box": {
+    "en": "Subtitle background-box setting.",
+    "fr": "Réglage du cadre de fond des sous-titres."
+  },
+  "bus": {
+    "en": "Destination or selected bus ID.",
+    "fr": "Identifiant du bus cible ou sélectionné."
+  },
+  "clip": {
+    "en": "Stable clip ID, obtained from status or a creation operation.",
+    "fr": "Identifiant stable de clip, obtenu via status ou une création."
+  },
+  "clips": {
+    "en": "List of stable clip IDs.",
+    "fr": "Liste d’identifiants stables de clips."
+  },
+  "code": {
+    "en": "HLSL shader source text to compile.",
+    "fr": "Texte source HLSL à compiler."
+  },
+  "collapsed": {
+    "en": "Collapse or expand the track group.",
+    "fr": "Replier ou développer le groupe de pistes."
+  },
+  "color": {
+    "en": "Color value; the tool specifies RGB encoding or a named key color.",
+    "fr": "Valeur de couleur ; l’outil précise son encodage RGB ou sa couleur de détourage."
+  },
+  "curve": {
+    "en": "Curve selector or interpolation mode; see the tool’s behavior.",
+    "fr": "Courbe ou interpolation à sélectionner ; voir le comportement de cet outil."
+  },
+  "delta": {
+    "en": "Relative timing change in seconds.",
+    "fr": "Modification relative du temps en secondes."
+  },
+  "duration": {
+    "en": "Duration in seconds.",
+    "fr": "Durée en secondes."
+  },
+  "effect": {
+    "en": "Zero-based effect index; clip-parameter tools may accept -1 or omission.",
+    "fr": "Index d’effet à partir de zéro ; certains outils acceptent −1 ou l’omission pour viser le clip."
+  },
+  "effects": {
+    "en": "Copy effect-stack attributes.",
+    "fr": "Copier les attributs de la pile d’effets."
+  },
+  "enabled": {
+    "en": "Enable or bypass the selected element.",
+    "fr": "Activer ou désactiver l’élément choisi."
+  },
+  "end": {
+    "en": "End of the interval in seconds.",
+    "fr": "Fin de l’intervalle en secondes."
+  },
+  "exposure": {
+    "en": "Exposure setting or whether to compute it, as specified by this tool.",
+    "fr": "Exposition ou demande de calcul selon cet outil."
+  },
+  "fade_in": {
+    "en": "Input fade duration in seconds.",
+    "fr": "Durée du fondu d’entrée en secondes."
+  },
+  "fade_out": {
+    "en": "Output fade duration in seconds.",
+    "fr": "Durée du fondu de sortie en secondes."
+  },
+  "first": {
+    "en": "First number in the batch rename.",
+    "fr": "Premier numéro du renommage en série."
+  },
+  "folder": {
+    "en": "Local destination or search folder.",
+    "fr": "Dossier local de destination ou de recherche."
+  },
+  "font": {
+    "en": "Installed Windows font name.",
+    "fr": "Nom d’une police Windows installée."
+  },
+  "font_size": {
+    "en": "Text size.",
+    "fr": "Taille du texte."
+  },
+  "format": {
+    "en": "Output format selector.",
+    "fr": "Sélecteur de format de sortie."
+  },
+  "fps": {
+    "en": "Frame rate in frames per second.",
+    "fr": "Cadence en images par seconde."
+  },
+  "from": {
+    "en": "Source clip ID for copied attributes.",
+    "fr": "Identifiant du clip source des attributs copiés."
+  },
+  "g": {
+    "en": "Green component of the linear RGB sample.",
+    "fr": "Composante verte de l’échantillon RGB linéaire."
+  },
+  "gain": {
+    "en": "Channel/send gain in dB, from -80 to +12.",
+    "fr": "Gain de canal/envoi en dB, de −80 à +12."
+  },
+  "graph": {
+    "en": "Native JSON graph object for the selected graph type.",
+    "fr": "Objet JSON natif correspondant au type de graphe choisi."
+  },
+  "group": {
+    "en": "Stable track-group ID.",
+    "fr": "Identifiant stable du groupe de pistes."
+  },
+  "height": {
+    "en": "Sequence pixel height or timeline track height, according to the tool.",
+    "fr": "Hauteur de séquence en pixels ou hauteur de piste selon l’outil."
+  },
+  "hold": {
+    "en": "Hold the source frame at the in point.",
+    "fr": "Figer l’image source au point d’entrée."
+  },
+  "id": {
+    "en": "Exact effect or generator ID from list_effects.",
+    "fr": "Identifiant exact d’effet ou de générateur obtenu via list_effects."
+  },
+  "identifier": {
+    "en": "OFX plugin identifier within the selected binary.",
+    "fr": "Identifiant OFX du plugin dans le binaire choisi."
+  },
+  "imageFormat": {
+    "en": "Image sequence format: png8, png16 or exr16.",
+    "fr": "Format de séquence d’images : png8, png16 ou exr16."
+  },
+  "in": {
+    "en": "Source in point in seconds.",
+    "fr": "Point d’entrée source en secondes."
+  },
+  "index": {
+    "en": "Destination index, starting at zero.",
+    "fr": "Index de destination à partir de zéro."
+  },
+  "input": {
+    "en": "LUT input color-space selector.",
+    "fr": "Espace couleur d’entrée de la LUT."
+  },
+  "inverted": {
+    "en": "Invert the mask.",
+    "fr": "Inverser le masque."
+  },
+  "italic": {
+    "en": "Enable italic text.",
+    "fr": "Activer le texte italique."
+  },
+  "job": {
+    "en": "Job ID returned by the corresponding asynchronous operation.",
+    "fr": "Identifiant du travail retourné par l’opération asynchrone correspondante."
+  },
+  "key": {
+    "en": "Exact parameter identifier, including a vector component when needed.",
+    "fr": "Identifiant exact du paramètre, avec composante de vecteur si nécessaire."
+  },
+  "kind": {
+    "en": "Element or export kind accepted by the operation.",
+    "fr": "Type d’élément ou d’export accepté par l’opération."
+  },
+  "layout": {
+    "en": "Widget, image-LUT or split-screen layout, as specified by the tool.",
+    "fr": "Disposition de widgets, LUT image ou écran partagé selon l’outil."
+  },
+  "left": {
+    "en": "Adjust the clip’s left/source-in edge.",
+    "fr": "Modifier le bord gauche ou point d’entrée source du clip."
+  },
+  "length": {
+    "en": "Microfade length in seconds.",
+    "fr": "Durée du microfondu en secondes."
+  },
+  "limit": {
+    "en": "Add the loudness operation’s master limiter.",
+    "fr": "Ajouter le limiteur master de l’opération de sonie."
+  },
+  "locked": {
+    "en": "Protect the track or channel against editing.",
+    "fr": "Protéger la piste ou le canal contre l’édition."
+  },
+  "margin": {
+    "en": "Inset margin as a fraction of the image.",
+    "fr": "Marge d’incrustation en fraction de l’image."
+  },
+  "marker": {
+    "en": "Stable marker ID.",
+    "fr": "Identifiant stable du repère."
+  },
+  "mask": {
+    "en": "Copy mask attributes.",
+    "fr": "Copier les attributs de masque."
+  },
+  "max_lag": {
+    "en": "Maximum audio synchronization offset in seconds.",
+    "fr": "Décalage maximal de synchronisation audio en secondes."
+  },
+  "measured": {
+    "en": "Previously measured integrated loudness in LUFS.",
+    "fr": "Sonie intégrée déjà mesurée en LUFS."
+  },
+  "media_folder": {
+    "en": "Folder used to locate EDL media.",
+    "fr": "Dossier de recherche des médias EDL."
+  },
+  "min_gap": {
+    "en": "Minimum time between detected markers in seconds.",
+    "fr": "Temps minimal entre repères détectés, en secondes."
+  },
+  "min_length": {
+    "en": "Minimum silence duration in seconds.",
+    "fr": "Durée minimale de silence en secondes."
+  },
+  "mode": {
+    "en": "Edit or image-fitting mode accepted by the tool.",
+    "fr": "Mode de montage ou d’adaptation d’image accepté par l’outil."
+  },
+  "muted": {
+    "en": "Mute the selected track or channel.",
+    "fr": "Mettre la piste ou le canal en sourdine."
+  },
+  "name": {
+    "en": "Display name or exact preset name, as specified by the tool.",
+    "fr": "Nom affiché ou nom exact de préréglage selon l’outil."
+  },
+  "new_track": {
+    "en": "Force a new title track.",
+    "fr": "Forcer la création d’une piste de titres."
+  },
+  "next": {
+    "en": "Adjacent following clip ID.",
+    "fr": "Identifiant du clip adjacent suivant."
+  },
+  "node": {
+    "en": "Composition node ID.",
+    "fr": "Identifiant du nœud de composition."
+  },
+  "note": {
+    "en": "Marker note text.",
+    "fr": "Texte de note du repère."
+  },
+  "opacity": {
+    "en": "Opacity from 0 to 1.",
+    "fr": "Opacité de 0 à 1."
+  },
+  "other": {
+    "en": "Other clip ID for linking.",
+    "fr": "Identifiant de l’autre clip à lier."
+  },
+  "out": {
+    "en": "Source out point in seconds.",
+    "fr": "Point de sortie source en secondes."
+  },
+  "outline": {
+    "en": "Subtitle outline setting.",
+    "fr": "Réglage du contour des sous-titres."
+  },
+  "output": {
+    "en": "Output bus or LUT color space, as specified by the tool.",
+    "fr": "Bus de sortie ou espace couleur de LUT selon l’outil."
+  },
+  "padding": {
+    "en": "Extra time around retained speech in seconds.",
+    "fr": "Marge temporelle autour de la parole conservée, en secondes."
+  },
+  "pan": {
+    "en": "Stereo pan from -1 (left) to +1 (right).",
+    "fr": "Panoramique stéréo de −1 (gauche) à +1 (droite)."
+  },
+  "path": {
+    "en": "Local source or destination file path.",
+    "fr": "Chemin de fichier local source ou destination."
+  },
+  "pattern": {
+    "en": "Rename pattern using # and {nom}.",
+    "fr": "Motif de renommage utilisant # et {nom}."
+  },
+  "peak": {
+    "en": "Target audio sample peak in dBFS.",
+    "fr": "Crête d’échantillon audio cible en dBFS."
+  },
+  "playing": {
+    "en": "Start or stop playback.",
+    "fr": "Lancer ou arrêter la lecture."
+  },
+  "points": {
+    "en": "Mask control-point arrays in the documented coordinate system.",
+    "fr": "Tableaux de points du masque dans le repère documenté."
+  },
+  "position": {
+    "en": "Effect position or named picture-in-picture position.",
+    "fr": "Position d’effet ou position nommée d’incrustation."
+  },
+  "pre_fader": {
+    "en": "Place the send before the channel fader.",
+    "fr": "Placer l’envoi avant le fader du canal."
+  },
+  "premultiplied": {
+    "en": "Interpret source RGB as premultiplied by alpha.",
+    "fr": "Interpréter le RGB source comme prémultiplié par l’alpha."
+  },
+  "preset": {
+    "en": "Exact animation or export preset identifier.",
+    "fr": "Identifiant exact de préréglage d’animation ou d’export."
+  },
+  "previous_time": {
+    "en": "Previous key time when moving an existing key.",
+    "fr": "Ancien temps de clé lors du déplacement d’une clé existante."
+  },
+  "project": {
+    "en": "Validated nested project JSON object.",
+    "fr": "Objet JSON de projet imbriqué à valider."
+  },
+  "proxy": {
+    "en": "Request a preview proxy during import.",
+    "fr": "Demander un proxy de prévisualisation à l’import."
+  },
+  "r": {
+    "en": "Red component of the linear RGB sample.",
+    "fr": "Composante rouge de l’échantillon RGB linéaire."
+  },
+  "radius": {
+    "en": "Mask-tracking search radius.",
+    "fr": "Rayon de recherche du suivi de masque."
+  },
+  "range": {
+    "en": "Export interval selector, such as work or selection.",
+    "fr": "Sélecteur d’intervalle d’export, par exemple work ou selection."
+  },
+  "reference": {
+    "en": "Stable reference clip ID.",
+    "fr": "Identifiant stable du clip de référence."
+  },
+  "reference_time": {
+    "en": "Reference clip sampling time in seconds.",
+    "fr": "Temps d’échantillonnage du clip de référence en secondes."
+  },
+  "regions": {
+    "en": "Export duration-bearing marker regions.",
+    "fr": "Exporter les régions de repères possédant une durée."
+  },
+  "release": {
+    "en": "Gain release time in seconds.",
+    "fr": "Durée de relâchement du gain en secondes."
+  },
+  "replace_effects": {
+    "en": "Replace the destination effect stack instead of appending.",
+    "fr": "Remplacer la pile d’effets cible au lieu d’ajouter."
+  },
+  "reset_progress": {
+    "en": "Restore automatic transition progress.",
+    "fr": "Rétablir la progression automatique de transition."
+  },
+  "reverse": {
+    "en": "Reverse source playback.",
+    "fr": "Inverser la lecture de la source."
+  },
+  "ripple": {
+    "en": "Close or propagate the timing change through later material.",
+    "fr": "Refermer ou propager la modification temporelle dans la suite du montage."
+  },
+  "role": {
+    "en": "Lower-third role or occupation text.",
+    "fr": "Texte de fonction ou métier du bandeau."
+  },
+  "scope": {
+    "en": "Processing scope: clip, track, bus or master where supported.",
+    "fr": "Niveau de traitement : clip, track, bus ou master lorsqu’il est accepté."
+  },
+  "sensitivity": {
+    "en": "Transient-detection sensitivity from 0 to 1.",
+    "fr": "Sensibilité de détection des transitoires, de 0 à 1."
+  },
+  "settings": {
+    "en": "Correction settings JSON object.",
+    "fr": "Objet JSON de réglages de correction."
+  },
+  "shape": {
+    "en": "Mask shape or CyDAW curve-shape value, as specified by the tool.",
+    "fr": "Forme de masque ou valeur de courbure CyDAW selon l’outil."
+  },
+  "side": {
+    "en": "Trim side: start or end.",
+    "fr": "Côté à rogner : start ou end."
+  },
+  "size": {
+    "en": "Picture-in-picture width as a fraction of the frame.",
+    "fr": "Largeur d’incrustation en fraction de l’image."
+  },
+  "solo": {
+    "en": "Solo the selected track or channel.",
+    "fr": "Isoler la piste ou le canal choisi."
+  },
+  "space": {
+    "en": "Exact supported color-space identifier.",
+    "fr": "Identifiant exact d’espace couleur pris en charge."
+  },
+  "spans": {
+    "en": "Explicit interval data for the silence operation.",
+    "fr": "Intervalles explicites pour l’opération de suppression des silences."
+  },
+  "speed": {
+    "en": "Source playback speed multiplier.",
+    "fr": "Multiplicateur de vitesse de lecture source."
+  },
+  "split": {
+    "en": "Split clips at detected scene changes.",
+    "fr": "Couper les clips aux changements de plan détectés."
+  },
+  "start": {
+    "en": "Placement or beginning time in seconds.",
+    "fr": "Temps de placement ou de début en secondes."
+  },
+  "state": {
+    "en": "Base64-encoded VST3 state.",
+    "fr": "État VST3 encodé en base64."
+  },
+  "style": {
+    "en": "Exact built-in title style identifier.",
+    "fr": "Identifiant exact du style de titre intégré."
+  },
+  "target": {
+    "en": "Channel target ID or target loudness, according to the operation.",
+    "fr": "Identifiant de canal cible ou sonie cible selon l’opération."
+  },
+  "template": {
+    "en": "Sequence template: youtube, short, podcast or cinema.",
+    "fr": "Modèle de séquence : youtube, short, podcast ou cinema."
+  },
+  "text": {
+    "en": "Text content of the title or subtitle.",
+    "fr": "Contenu du texte ou du sous-titre."
+  },
+  "threshold": {
+    "en": "Detection or keying threshold in the units stated by the tool.",
+    "fr": "Seuil de détection ou de détourage dans les unités précisées par l’outil."
+  },
+  "time": {
+    "en": "Time in seconds in the operation’s documented timeline.",
+    "fr": "Temps en secondes dans la timeline indiquée par l’opération."
+  },
+  "times": {
+    "en": "Explicit scene-change times in seconds.",
+    "fr": "Temps explicites de changements de plan en secondes."
+  },
+  "tone": {
+    "en": "Display tone operator: clip, reinhard or aces.",
+    "fr": "Opérateur tonal d’affichage : clip, reinhard ou aces."
+  },
+  "track": {
+    "en": "Stable track ID.",
+    "fr": "Identifiant stable de piste."
+  },
+  "tracks": {
+    "en": "List of stable track IDs.",
+    "fr": "Liste d’identifiants stables de pistes."
+  },
+  "transform": {
+    "en": "Copy position, scale and rotation attributes.",
+    "fr": "Copier position, échelle et rotation."
+  },
+  "true_peak": {
+    "en": "Previously measured true peak in dBTP.",
+    "fr": "Crête vraie déjà mesurée en dBTP."
+  },
+  "value": {
+    "en": "New parameter or keyframe value.",
+    "fr": "Nouvelle valeur de paramètre ou de clé."
+  },
+  "values": {
+    "en": "Ordered curve points [x,y].",
+    "fr": "Points de courbe [x,y] dans l’ordre."
+  },
+  "versions": {
+    "en": "Keep a replaced saved project as a previous version.",
+    "fr": "Conserver le projet remplacé comme version précédente."
+  },
+  "video": {
+    "en": "Include the video stream in the source edit.",
+    "fr": "Inclure le flux vidéo dans le montage source."
+  },
+  "video_track": {
+    "en": "Destination video track ID; 0 chooses an available track.",
+    "fr": "Identifiant de piste vidéo cible ; 0 choisit une piste disponible."
+  },
+  "visible": {
+    "en": "Show or hide the external plugin editor.",
+    "fr": "Afficher ou masquer l’éditeur du plugin externe."
+  },
+  "voice": {
+    "en": "Voice-track ID used to detect speech for ducking.",
+    "fr": "Identifiant de piste de voix utilisée pour la réduction musicale."
+  },
+  "white_balance": {
+    "en": "Compute white-balance correction.",
+    "fr": "Calculer la correction de balance des blancs."
+  },
+  "width": {
+    "en": "Output or sequence width in pixels.",
+    "fr": "Largeur de sortie ou de séquence en pixels."
+  },
+  "y": {
+    "en": "Normalized vertical text position.",
+    "fr": "Position verticale normalisée du texte."
+  }
+}

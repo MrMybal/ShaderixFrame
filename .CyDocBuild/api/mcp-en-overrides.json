@@ -1,0 +1,18 @@
+{
+  "set_sequence": {
+    "description": "Change sequence format: even width and height from 64 to 8192 pixels, frame rate from 1 to 120 fps, and name. These are the validated project limits.",
+    "source_sha256": "501f3f1e613c9a4ec078f56b62a359a31d43312efe400a1632241657b8b800d0"
+  },
+  "set_work_area": {
+    "description": "Set the work/loop interval; end <= begin disables it.",
+    "source_sha256": "838f4f4d1259d19ca4f881b6af0dee66ef77a326d785ac1939a2c37c0597b1cf"
+  },
+  "set_transition": {
+    "description": "Set the incoming transition between the video clip and layers below; reset_progress restores automatic progress.",
+    "source_sha256": "5e02575b0602d75f83ca29951ad772326aa26d6a13fabd76c522ce27868c2439"
+  },
+  "set_mix_channel": {
+    "description": "Set a track, bus or master channel. Gain is in dB, pan ranges from -1 to 1, and output 0 is master. Solo applies only to source tracks; master accepts gain and pan, while output, muted, locked, name and solo are rejected.",
+    "source_sha256": "e9e02350368cd3f0dec5eb7d963bdc3c4043e8062830f21a9dec737ced1a733a"
+  }
+}

@@ -54,9 +54,10 @@ retain their respective notices under the same package directory.
 ## CyDoc
 
 The offline help reader and native route helper use CyDoc 0.1.0 under MIT, pinned
-to commit `774f2a7eabf7dd181a98ffc5add115b580b67f42`. Its locally built npm archive,
-native helper and licence are in `vendor/cydoc/`; hashes are in `cydoc.lock.json`.
-Windows packages include `licenses/cydoc/LICENSE` and `help/licenses/CyDoc-LICENSE.txt`.
-ShaderixFrame and its original documentation remain under AGPL-3.0-only. The reader
-footer distinguishes the application's licence from CyDoc's licence. Only the image
-reader is exported; Three.js and other optional media readers are not distributed.
+to commit `6ddf9a582defb2f11fbb3f992afef6f98dcadc93`. Its locally built archive, helper and licence
+are in `.CyDocBuild/vendor/cydoc/`; hashes are in `.CyDocBuild/cydoc.lock.json`.
+Windows packages include `licenses/cydoc/LICENSE` and
+`Documentation/DocData/licenses/CyDoc-LICENSE.txt`. ShaderixFrame and its original
+documentation remain under AGPL-3.0-only. The human licence page identifies the
+application and component licences. Only image/gallery readers are exported;
+Three.js is not part of the manual.

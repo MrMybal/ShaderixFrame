@@ -1,4 +1,4 @@
-# ShaderixFrame 0.14.0-alpha.1
+# ShaderixFrame 0.14.0-alpha.2
 
 Development and maintenance: Cyberalien.
 
@@ -29,6 +29,9 @@ CyUI is MIT-licensed. See its
 and the [bundled licence](vendor/cyui/LICENSE).
 See [0.14 release notes](docs/RELEASE_0.14.md).
 
+Alpha 2 adds the complete bilingual CyDoc manual, contextual help and public API
+reference. See [the alpha 2 changes](docs/RELEASE_0.14-alpha.2.md).
+
 ## Screenshots
 
 Captured from **0.14.0-alpha.1** using the bundled example projects.
@@ -55,17 +58,21 @@ Click an image to view it at full size.
 
 ## Integrated user manual
 
-**Help > User Manual** opens the bundled **CyDoc** reader through a local `file://` URL.
-`Ctrl+F1` opens the chapter for the active panel. The guide retains **38 English/French
-chapters, nine screenshots and five SVG diagrams**, and adds the actual 163-tool MCP
-reference, public SDK/shader source index and clearly labelled technical archives.
-English is the default. Reader search (`Ctrl+K`), language switching, bookmarks, notes
-and reading positions are provided by CyDoc. Image zoom/enlargement stays inside the
-documentation window. **Print guide** opens the complete printable guide.
+**Help > User Manual** opens `Documentation/Documentation.html` through a local
+`file://` URL. `Ctrl+F1` chooses the active panel; F1 continues to select Edit.
+The complete English/French guide has 38 chapters, nine screenshots, five SVG diagrams
+and a workspace gallery. The nested navigation also contains 163 translated MCP
+contracts and public C/C++ SDK signatures, without implementation listings.
 
-All scripts, styles, licences and media ship under `help/`; no server, CDN or reader-side
-Node.js is required. Historical reference documents retain their original language.
-See [manual maintenance](docs/manual/README.md) and [CyDoc migration](docs/CYDOC_MIGRATION.md).
+CyDoc provides global header search (`Ctrl+K`), fast descriptive tooltips, language
+switching, themes, bookmarks, notes and reading positions. Image and gallery enlargement
+stays inside the window; Escape reduces the media. **Print guide** opens all guide chapters.
+
+The complete generated `Documentation/` folder ships with the application. Scripts,
+styles, media and notices stay in `DocData/`; `DocAI.md` is a separate assistant sidecar.
+The reader needs no server, CDN or Node runtime. Authoring and tooling stay in
+`.CyDocBuild/` and are excluded from the installed manual.
+See [documentation tooling](.CyDocBuild/README.md) for generation commands.
 
 ## Start editing
 

@@ -1,0 +1,33 @@
+{
+  "name": "ShaderixFrame",
+  "version": "0.14.0-alpha.2",
+  "defaultLocale": "en",
+  "locales": [
+    {
+      "code": "en",
+      "label": "English"
+    },
+    {
+      "code": "fr",
+      "label": "Français"
+    }
+  ],
+  "homePage": "welcome",
+  "content": "generated/manual",
+  "assets": "assets",
+  "logo": "assets/app-logo.png",
+  "out": "../Documentation",
+  "modules": [
+    "image",
+    "gallery"
+  ],
+  "aliases": {
+    "overview": "welcome",
+    "user-manual": "welcome",
+    "getting-started": "quickstart",
+    "layer-graph": "layers",
+    "shader-graph": "shaders",
+    "dsp-graph": "dsp",
+    "translation-report": "welcome"
+  }
+}

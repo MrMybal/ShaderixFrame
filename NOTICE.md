@@ -32,11 +32,11 @@ Existing third-party copyright notices and licences remain applicable.
   `vendor/cyui/THIRD_PARTY_NOTICES.md` and `cyui.lock.json`.
 - `vendor/imgui/`: the Dear ImGui docking snapshot used by Shaderixel; MIT licence
   in `vendor/imgui/LICENSE.txt`, distributed as `IMGUI-LICENSE.txt`.
-- `vendor/cydoc/`: CyDoc 0.1.0 and its C++ local-route helper, MIT licence, pinned
-  at `774f2a7eabf7dd181a98ffc5add115b580b67f42`. Provenance and SHA-256 hashes are
-  in `cydoc.lock.json`. The offline reader exports only the image module and static
+- `.CyDocBuild/vendor/cydoc/`: CyDoc 0.1.0 and its C++ local-route helper, MIT licence, pinned
+  at `6ddf9a582defb2f11fbb3f992afef6f98dcadc93`. Provenance and SHA-256 hashes are
+  in `.CyDocBuild/cydoc.lock.json`. The offline reader exports image/gallery modules and static
   SVG diagrams; no Three.js runtime is included. Licence copies accompany the
-  source and the Windows package under `licenses/cydoc/` and `help/licenses/`.
+  source and the Windows package under `licenses/cydoc/` and `Documentation/DocData/licenses/`.
 - `vendor/openfx/`: ASWF OpenFX headers/examples at commit
   `e40728885390ec16276d11e00025de9b4282060c`, recorded in `openfx.lock.json`.
   BSD 3-Clause licence in `vendor/openfx/LICENSE.md`, distributed as

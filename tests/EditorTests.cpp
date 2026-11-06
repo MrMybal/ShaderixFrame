@@ -1669,7 +1669,7 @@ int main(int argc, char **argv) {
             const auto timeBefore = s.time;
             const bool dirtyBefore = s.dirty;
             editor.showManual("quickstart", "en");
-            require(opened.starts_with("file:///") && opened.ends_with("#/en/quickstart"),
+            require(opened.starts_with("file:///") && opened.find("/Documentation/Documentation.html#") != std::string::npos && opened.ends_with("#/en/quickstart"),
                     "Help opens a real installed local CyDoc route through the native launcher");
             require(editor.helpUrl("layers", "fr", "usage").ends_with("#/fr/layers/usage"),
                     "French contextual help preserves shared page and section identifiers");

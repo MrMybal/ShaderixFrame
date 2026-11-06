@@ -1,0 +1,219 @@
+{
+  "symbols": [
+    {
+      "key": "entry",
+      "name": "shaderixframe_plugin_v1",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "SF_PLUGIN_EXPORT const SfPluginV1 *SF_PLUGIN_CALL shaderixframe_plugin_v1(void);",
+      "description": "Exportez ce point d’entrée C depuis une DLL Windows x64. Retournez une table valide tant que le plugin est chargé. Définissez size = sizeof(SfPluginV1), version = 1 et fournissez chaque fonction de rappel.",
+      "returnType": "const SfPluginV1*",
+      "returns": "Table ABI du plugin ; aucun pointeur d’hôte ou d’interface n’est transmis.",
+      "parameters": [],
+      "references": [
+        {
+          "key": "parameter-name",
+          "name": "SfPluginV1::parameter_name"
+        },
+        {
+          "key": "parameter-default",
+          "name": "SfPluginV1::parameter_default"
+        },
+        {
+          "key": "create",
+          "name": "SfPluginV1::create"
+        },
+        {
+          "key": "destroy",
+          "name": "SfPluginV1::destroy"
+        },
+        {
+          "key": "set-parameter",
+          "name": "SfPluginV1::set_parameter"
+        },
+        {
+          "key": "process",
+          "name": "SfPluginV1::process"
+        }
+      ]
+    },
+    {
+      "key": "parameter-name",
+      "name": "SfPluginV1::parameter_name",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "const char *(SF_PLUGIN_CALL *parameter_name)(uint32_t index);",
+      "description": "Retourne le nom affiché du paramètre index. L’ABI accepte jusqu’à 64 paramètres.",
+      "returnType": "const char*",
+      "returns": "Nom du paramètre utilisé par l’hôte.",
+      "parameters": [
+        {
+          "name": "index",
+          "type": "uint32_t",
+          "description": "Index du paramètre à partir de zéro."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "parameter-default",
+      "name": "SfPluginV1::parameter_default",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "float (SF_PLUGIN_CALL *parameter_default)(uint32_t index);",
+      "description": "Retourne la valeur initiale normalisée d’un paramètre.",
+      "returnType": "float",
+      "returns": "Valeur normalisée par défaut, de 0 à 1.",
+      "parameters": [
+        {
+          "name": "index",
+          "type": "uint32_t",
+          "description": "Index du paramètre à partir de zéro."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "create",
+      "name": "SfPluginV1::create",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "void *(SF_PLUGIN_CALL *create)(double sample_rate, uint32_t maximum_frames);",
+      "description": "Crée une instance de traitement stéréo dans le processus isolé. L’hôte fournit actuellement du son à 48 kHz par blocs de 2 048 échantillons au maximum.",
+      "returnType": "void*",
+      "returns": "Pointeur d’instance appartenant au plugin.",
+      "parameters": [
+        {
+          "name": "sample_rate",
+          "type": "double",
+          "description": "Fréquence d’échantillonnage en Hz."
+        },
+        {
+          "name": "maximum_frames",
+          "type": "uint32_t",
+          "description": "Longueur maximale d’un bloc."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "destroy",
+      "name": "SfPluginV1::destroy",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "void (SF_PLUGIN_CALL *destroy)(void *instance);",
+      "description": "Libère l’instance créée par create. Ne conservez pas de pointeurs vers les buffers audio de l’hôte.",
+      "returnType": "void",
+      "returns": "Aucune valeur.",
+      "parameters": [
+        {
+          "name": "instance",
+          "type": "void*",
+          "description": "Instance retournée par create."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "set-parameter",
+      "name": "SfPluginV1::set_parameter",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "void (SF_PLUGIN_CALL *set_parameter)(void *instance, uint32_t index, float normalized);",
+      "description": "Actualise un paramètre normalisé du traitement. Les appels restent dans le processus isolé ; aucun pointeur d’éditeur ne traverse l’ABI.",
+      "returnType": "void",
+      "returns": "Aucune valeur.",
+      "parameters": [
+        {
+          "name": "instance",
+          "type": "void*",
+          "description": "Instance de traitement."
+        },
+        {
+          "name": "index",
+          "type": "uint32_t",
+          "description": "Index du paramètre à partir de zéro."
+        },
+        {
+          "name": "normalized",
+          "type": "float",
+          "description": "Valeur de 0 à 1."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "process",
+      "name": "SfPluginV1::process",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "int (SF_PLUGIN_CALL *process)(void *instance, const float *left, const float *right, float *out_left, float *out_right, uint32_t frames);",
+      "description": "Traite l’audio stéréo flottant dans quatre plans indépendants. Écrivez les deux sorties ; ne conservez pas leurs pointeurs et ne créez pas de thread d’interface. Déclarez la latence fixe dans latency_samples, jusqu’à 480 000 échantillons.",
+      "returnType": "int",
+      "returns": "1 indique une réussite. Une défaillance du processus est signalée à l’hôte.",
+      "parameters": [
+        {
+          "name": "instance",
+          "type": "void*",
+          "description": "Instance de traitement."
+        },
+        {
+          "name": "left",
+          "type": "const float*",
+          "description": "Entrée gauche en lecture seule."
+        },
+        {
+          "name": "right",
+          "type": "const float*",
+          "description": "Entrée droite en lecture seule."
+        },
+        {
+          "name": "out_left",
+          "type": "float*",
+          "description": "Sortie gauche à écrire."
+        },
+        {
+          "name": "out_right",
+          "type": "float*",
+          "description": "Sortie droite à écrire."
+        },
+        {
+          "name": "frames",
+          "type": "uint32_t",
+          "description": "Nombre d’échantillons par plan, au plus maximum_frames."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "symbols": [
+    {
+      "key": "entry",
+      "name": "shaderixframe_plugin_v1",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "SF_PLUGIN_EXPORT const SfPluginV1 *SF_PLUGIN_CALL shaderixframe_plugin_v1(void);",
+      "description": "Export this C entry point from a Windows x64 DLL. Return a table that remains valid while the plugin is loaded. Set size = sizeof(SfPluginV1), version = 1 and supply every callback.",
+      "returnType": "const SfPluginV1*",
+      "returns": "Plugin ABI table; no host or UI pointer is passed.",
+      "parameters": [],
+      "references": [
+        {
+          "key": "parameter-name",
+          "name": "SfPluginV1::parameter_name"
+        },
+        {
+          "key": "parameter-default",
+          "name": "SfPluginV1::parameter_default"
+        },
+        {
+          "key": "create",
+          "name": "SfPluginV1::create"
+        },
+        {
+          "key": "destroy",
+          "name": "SfPluginV1::destroy"
+        },
+        {
+          "key": "set-parameter",
+          "name": "SfPluginV1::set_parameter"
+        },
+        {
+          "key": "process",
+          "name": "SfPluginV1::process"
+        }
+      ]
+    },
+    {
+      "key": "parameter-name",
+      "name": "SfPluginV1::parameter_name",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "const char *(SF_PLUGIN_CALL *parameter_name)(uint32_t index);",
+      "description": "Return the display name of parameter index. The ABI supports up to 64 parameters.",
+      "returnType": "const char*",
+      "returns": "Parameter name used by the host.",
+      "parameters": [
+        {
+          "name": "index",
+          "type": "uint32_t",
+          "description": "Zero-based parameter index."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "parameter-default",
+      "name": "SfPluginV1::parameter_default",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "float (SF_PLUGIN_CALL *parameter_default)(uint32_t index);",
+      "description": "Return the normalized initial value of a parameter.",
+      "returnType": "float",
+      "returns": "Default normalized value, from 0 to 1.",
+      "parameters": [
+        {
+          "name": "index",
+          "type": "uint32_t",
+          "description": "Zero-based parameter index."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "create",
+      "name": "SfPluginV1::create",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "void *(SF_PLUGIN_CALL *create)(double sample_rate, uint32_t maximum_frames);",
+      "description": "Create one stereo processor instance inside the dedicated worker. The current host supplies 48 kHz audio and blocks of at most 2048 frames.",
+      "returnType": "void*",
+      "returns": "Plugin-owned instance pointer.",
+      "parameters": [
+        {
+          "name": "sample_rate",
+          "type": "double",
+          "description": "Sample rate in Hz."
+        },
+        {
+          "name": "maximum_frames",
+          "type": "uint32_t",
+          "description": "Maximum block length."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "destroy",
+      "name": "SfPluginV1::destroy",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "void (SF_PLUGIN_CALL *destroy)(void *instance);",
+      "description": "Release the instance created by create. Do not keep pointers to host audio buffers.",
+      "returnType": "void",
+      "returns": "No value.",
+      "parameters": [
+        {
+          "name": "instance",
+          "type": "void*",
+          "description": "Instance returned by create."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "set-parameter",
+      "name": "SfPluginV1::set_parameter",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "void (SF_PLUGIN_CALL *set_parameter)(void *instance, uint32_t index, float normalized);",
+      "description": "Update one normalized processor parameter. Calls remain in the worker; no editor pointer crosses the ABI.",
+      "returnType": "void",
+      "returns": "No value.",
+      "parameters": [
+        {
+          "name": "instance",
+          "type": "void*",
+          "description": "Processor instance."
+        },
+        {
+          "name": "index",
+          "type": "uint32_t",
+          "description": "Zero-based parameter index."
+        },
+        {
+          "name": "normalized",
+          "type": "float",
+          "description": "Value from 0 to 1."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    },
+    {
+      "key": "process",
+      "name": "SfPluginV1::process",
+      "language": "cpp",
+      "kind": "function",
+      "signature": "int (SF_PLUGIN_CALL *process)(void *instance, const float *left, const float *right, float *out_left, float *out_right, uint32_t frames);",
+      "description": "Process stereo floating-point audio in four independent planes. Write both output planes; do not retain their pointers or create a UI thread. Declare fixed processing latency in latency_samples, up to 480000 samples.",
+      "returnType": "int",
+      "returns": "1 indicates success. A failed worker is reported to the host.",
+      "parameters": [
+        {
+          "name": "instance",
+          "type": "void*",
+          "description": "Processor instance."
+        },
+        {
+          "name": "left",
+          "type": "const float*",
+          "description": "Read-only left input."
+        },
+        {
+          "name": "right",
+          "type": "const float*",
+          "description": "Read-only right input."
+        },
+        {
+          "name": "out_left",
+          "type": "float*",
+          "description": "Writable left output."
+        },
+        {
+          "name": "out_right",
+          "type": "float*",
+          "description": "Writable right output."
+        },
+        {
+          "name": "frames",
+          "type": "uint32_t",
+          "description": "Number of samples per plane, at most maximum_frames."
+        }
+      ],
+      "references": [
+        {
+          "key": "entry",
+          "name": "shaderixframe_plugin_v1"
+        }
+      ]
+    }
+  ]
+}

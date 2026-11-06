@@ -45,3 +45,8 @@ workspace.ini
 /ui-preferences.json
 
 node_modules/
+
+/Documentation/
+/.CyDocBuild/generated/
+/.CyDocBuild/internal/
+/.CyDocBuild/export.config.json

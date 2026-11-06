@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(ShaderixFrame VERSION 0.14.0 LANGUAGES CXX)
-set(SF_VERSION_SUFFIX "alpha.1")
+set(SF_VERSION_SUFFIX "alpha.2")
 set(SF_APPLICATION_VERSION "${PROJECT_VERSION}-${SF_VERSION_SUFFIX}")
 # CMake decodes French cl.exe diagnostics through the OEM codepage on this machine.
 # Ninja consumes the compiler's UTF-8 output directly. Keep the dependency prefix exact.
@@ -122,7 +122,7 @@ if(SF_BUILD_HELP)
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/build_manual.py
         VERBATIM)
     list(APPEND SF_ASSET_COPY
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/build/help $<TARGET_FILE_DIR:ShaderixFrame>/help)
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/build_cydoc.py --install-only --install $<TARGET_FILE_DIR:ShaderixFrame>)
 endif()
 add_custom_target(frame_assets ALL ${SF_ASSET_COPY} VERBATIM)
 if(SF_BUILD_HELP)
