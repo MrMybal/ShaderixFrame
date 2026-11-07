@@ -154,6 +154,10 @@ workflow. See [documentation tooling](.CyDocBuild/README.md) for authoring and
 [the native SDK](sdk/README.md) for plugin contracts. Build products, generated media
 and optional downloads stay outside Git; Git LFS is not required.
 
+To build the complete local English/French product showcase, including a copy of
+that reader, run `node website/build.mjs`. See the [showcase build and preview guide](website/README.md).
+Its generated output is `dist/website/`; it is separate from the published manual.
+
 </details>
 
 ---

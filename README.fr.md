@@ -168,6 +168,11 @@ ces guides de développement sont en anglais. Les résultats de compilation,
 médias générés et téléchargements optionnels restent hors de Git ; Git LFS
 n’est pas nécessaire.
 
+Pour générer la présentation locale complète en anglais/français, avec une copie
+de ce lecteur, lancez `node website/build.mjs`. Le [guide de génération et d’aperçu](website/README.md),
+en anglais, décrit son utilisation. Le résultat est dans `dist/website/`, séparément
+du manuel publié.
+
 </details>
 
 ---
