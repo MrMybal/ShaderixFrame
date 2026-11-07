@@ -2,6 +2,7 @@
   <tr>
     <td width="300" align="left" valign="top">
       <a href="https://mrmybal.github.io/ShaderixFrame/Documentation.html#/fr/welcome">Documentation</a><br>
+      <a href="https://mrmybal.github.io/ShaderixFrame/?lang=fr">Présentation</a><br>
       <a href="https://github.com/MrMybal/ShaderixFrame">Dépôt des sources</a><br>
       <a href="https://github.com/MrMybal/ShaderixFrame/issues">Suivi des problèmes</a><br><br>
       <sub>README</sub><br>
@@ -161,7 +162,7 @@ Pour régénérer et vérifier les deux langues de la documentation :
 python tools/build_cydoc.py --check --test
 ```
 
-Le même export est fourni localement et déployé par le workflow de documentation
+Le même export est fourni localement et déployé avec la présentation par le workflow
 GitHub Actions. Consultez l’[outillage documentaire](.CyDocBuild/README.md) pour
 la rédaction et le [SDK natif](sdk/README.md) pour les contrats des plugins ;
 ces guides de développement sont en anglais. Les résultats de compilation,
@@ -170,8 +171,9 @@ n’est pas nécessaire.
 
 Pour générer la présentation locale complète en anglais/français, avec une copie
 de ce lecteur, lancez `node website/build.mjs`. Le [guide de génération et d’aperçu](website/README.md),
-en anglais, décrit son utilisation. Le résultat est dans `dist/website/`, séparément
-du manuel publié.
+en anglais, décrit son utilisation. Le résultat autonome est dans `dist/website/`.
+`node website/pages.mjs` assemble aussi `dist/pages/` pour la publication, en
+conservant les adresses existantes du manuel.
 
 </details>
 
@@ -216,6 +218,8 @@ et tous les fichiers de licence fournis avec les sources et les paquets Windows.
 
 ## Références et liens
 
+- [Présentation interactive](https://mrmybal.github.io/ShaderixFrame/?lang=fr)
+  · [English showcase](https://mrmybal.github.io/ShaderixFrame/?lang=en).
 - [Documentation française](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/fr/welcome)
   · [English documentation](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/welcome).
 - [Notes de version et limites](docs/RELEASE_0.14-alpha.2.fr.md)

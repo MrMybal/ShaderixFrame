@@ -1,4 +1,4 @@
-name: Documentation
+name: Documentation and showcase
 
 on:
   push:
@@ -6,8 +6,12 @@ on:
     paths:
       - '.github/workflows/documentation.yml'
       - 'README.md'
+      - 'README.fr.md'
+      - 'CMakeLists.txt'
       - 'NOTICE.md'
       - 'LICENSE'
+      - 'shaderixframe-logo-orange-sombre.png'
+      - 'website/**'
       - 'docs/**'
       - 'sdk/**'
       - 'shaders/**'
@@ -46,10 +50,12 @@ jobs:
         run: npm ci --prefix .CyDocBuild --omit=peer --ignore-scripts --no-audit --no-fund
       - name: Generate and verify the complete CyDoc reader
         run: python tools/build_cydoc.py --check --test
-      - name: Upload only the documentation export
+      - name: Build the showcase and preserve existing manual URLs
+        run: node website/pages.mjs
+      - name: Upload only the static showcase and documentation
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: Documentation
+          path: dist/pages
           retention-days: 1
 
   deploy:
@@ -65,6 +71,6 @@ jobs:
     steps:
       - name: Configure GitHub Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
-      - name: Deploy the documentation reader
+      - name: Deploy the showcase and documentation
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

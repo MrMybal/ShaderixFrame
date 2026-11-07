@@ -31,6 +31,9 @@ Keep tree parents identical. Technical identifiers and code examples retain thei
 The reader has no build notes, reports, archives, source browser or translation-report page.
 `DocAI.md` remains separate. Only image and gallery are selected; no Three.js is installed.
 
-The Pages workflow builds this same export and uploads only `Documentation/`. The root
-index.html preserves previous Pages hash links; Documentation.html opens the reader
-directly. Do not publish or push until the user requests it.
+The Pages workflow builds this same export, then `node website/pages.mjs` assembles
+only the static showcase and manual in `dist/pages/`. The site root presents the
+application; root hash links preserve earlier manual routes. Both the original
+`Documentation.html`/`DocData/` URLs and the showcase's `manual/` reader remain valid.
+The application's `Documentation/` export is unchanged. Do not publish or push until
+the user requests it.

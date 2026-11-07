@@ -58,6 +58,7 @@ routes redirect to the copied reader. Context links use stable manual page IDs.
 - `main.js`: classic-script language, menu, tab, chapter and image-viewer behavior.
 - `styles.css`: graphite/orange styling, responsive layouts and reduced motion.
 - `build.mjs`: dependency-free artifact generation and checks.
+- `pages.mjs`: public static artifact with compatible root manual URLs.
 - `preview.mjs`: optional local HTTP preview; not a requirement for reading.
 
 Keep translation keys and screenshot captions/alternative text complete in both
@@ -77,10 +78,26 @@ Copy the complete generated directory beside an application, or to a static
 host under any subpath. There are no history routes or server rewrites. Keep
 HTML revalidation separate from immutable caching of hashed assets.
 
-This source directory does not register a hosted Site, alter GitHub Pages,
-change repository settings, deploy, create releases or push. The existing Pages
-workflow continues publishing the application manual. Adapting that workflow to
-publish the showcase is a separate, explicitly requested publication operation.
+For the GitHub Pages artifact, run:
+
+```powershell
+node website/pages.mjs
+```
+
+This rebuilds `dist/website/` and assembles `dist/pages/`. The showcase occupies
+the site root, with its complete reader under `manual/`. An identical copy of
+`Documentation.html`, `DocAI.md` and `DocData/` remains at the root for existing
+manual links. Root `#/en/...` and `#/fr/...` links redirect to the bundled reader.
+The standalone output and the application's embedded manual keep working offline.
+
+The [Documentation and showcase workflow](../.github/workflows/documentation.yml)
+generates and checks the reader, builds this artifact and uploads only `dist/pages/`.
+It deploys on relevant changes pushed to `main`, or through `workflow_dispatch`.
+Application binaries, user projects, downloads and authoring services are not part
+of this static artifact. Building locally does not push or publish.
+
+Public presentation: [English](https://mrmybal.github.io/ShaderixFrame/?lang=en)
+and [French](https://mrmybal.github.io/ShaderixFrame/?lang=fr).
 
 ## Licences
 

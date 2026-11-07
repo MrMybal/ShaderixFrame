@@ -2,6 +2,7 @@
   <tr>
     <td width="300" align="left" valign="top">
       <a href="https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/welcome">Documentation</a><br>
+      <a href="https://mrmybal.github.io/ShaderixFrame/?lang=en">Showcase</a><br>
       <a href="https://github.com/MrMybal/ShaderixFrame">Repository</a><br>
       <a href="https://github.com/MrMybal/ShaderixFrame/issues">Issue tracker</a><br><br>
       <sub>README</sub><br>
@@ -149,14 +150,15 @@ To regenerate and check both documentation languages:
 python tools/build_cydoc.py --check --test
 ```
 
-The same export ships locally and is deployed by the documentation GitHub Actions
+The same export ships locally and is deployed with the showcase by the GitHub Actions
 workflow. See [documentation tooling](.CyDocBuild/README.md) for authoring and
 [the native SDK](sdk/README.md) for plugin contracts. Build products, generated media
 and optional downloads stay outside Git; Git LFS is not required.
 
 To build the complete local English/French product showcase, including a copy of
 that reader, run `node website/build.mjs`. See the [showcase build and preview guide](website/README.md).
-Its generated output is `dist/website/`; it is separate from the published manual.
+Its standalone output is `dist/website/`. `node website/pages.mjs` also assembles
+`dist/pages/` for publication, preserving the existing manual URLs.
 
 </details>
 
@@ -200,6 +202,8 @@ and all license files supplied with source and Windows packages.
 
 ## References and links
 
+- [Interactive showcase](https://mrmybal.github.io/ShaderixFrame/?lang=en)
+  · [Présentation française](https://mrmybal.github.io/ShaderixFrame/?lang=fr).
 - [English documentation](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/welcome)
   · [Documentation française](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/fr/welcome).
 - [Release notes and limitations](docs/RELEASE_0.14-alpha.2.md)
