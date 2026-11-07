@@ -1,5 +1,11 @@
 # ShaderixFrame 0.14.0-alpha.2
 
+[Français](RELEASE_0.14-alpha.2.fr.md) ·
+[Published alpha and downloads](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.14.0-alpha.2)
+
+**Alpha preview for testing and feedback.** Some features may be incomplete and
+project/plugin contracts can change before a stable release.
+
 ## Integrated documentation
 
 Help > User Manual and Ctrl+F1 open the bundled CyDoc reader at
@@ -32,5 +38,25 @@ PNG16/EXR half export. OFX retains the supported CPU RGBA filter/general subset;
 VST3 requires the bundled compatible worker. Third-party plugin binaries are not
 included. The application and per-user installer are unsigned.
 
+## Known limitations
+
+- The native backend targets Windows 10/11 x64; Linux and macOS builds are not provided.
+- Video decoding and encoding remain 8-bit. RGBA16F compositing and PNG16/EXR half
+  export do not establish a complete OCIO/ACES or HDR-monitor workflow.
+- OFX hosting covers the supported CPU RGBA filter/general subset, not all OFX
+  suites or GPU backends. VST3 plugins must be Windows x64 and use the compatible worker.
+- Available import/export codecs depend on Windows Media Foundation. Native audio
+  plugins must match the documented ABI. Projects and API contracts may evolve.
+
+## Issues and downloads
+
+These release notes do not publish a bug-by-bug list. Consult the
+[issue tracker](https://github.com/MrMybal/ShaderixFrame/issues) for reports, or
+submit reproducible steps, the application version, expected/actual behavior and
+a minimal project when possible. Known limitations above describe current scope;
+they are not a list of confirmed bug tickets.
+
 Download the portable ZIP or Setup.exe, plus the matching source archive and checksums.
-See [licensing](LICENSING.md) and [alpha limitations](RELEASE_ALPHA.md).
+Use the [published alpha 2 assets](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.14.0-alpha.2).
+See [licensing](LICENSING.md), [alpha overview](RELEASE_ALPHA.md) and the
+[English manual](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/welcome).

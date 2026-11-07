@@ -8,8 +8,8 @@ There is no warranty; the alpha is supplied for evaluation and feedback.
 
 ## Sources for the Windows alpha
 
-The release `v0.14.0-alpha.1` provides the portable ZIP, per-user installer,
-`ShaderixFrame-0.14.0-alpha.1-source.zip` and `SHA256SUMS.txt` from the same release.
+The release `v0.14.0-alpha.2` provides the portable ZIP, per-user installer,
+`ShaderixFrame-0.14.0-alpha.2-source.zip` and `SHA256SUMS.txt` from the same release.
 The source ZIP contains the complete ShaderixFrame source and the exact JUCE
 8.0.15 source used to build its VST3 worker, including bundled SDK/dependency
 notices. The source pack omits three unused Android demo `google-services.json`

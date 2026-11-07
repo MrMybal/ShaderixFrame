@@ -6,7 +6,7 @@ not require Node, npm, a web server or Internet access. Generation uses the pinn
 CyDoc archive and the locked packages in `.CyDocBuild/package-lock.json`:
 
 ```powershell
-npm ci --prefix tools/cydoc --omit=peer --ignore-scripts
+npm ci --prefix .CyDocBuild --omit=peer --ignore-scripts
 python tools/build_cydoc.py --check --test
 ```
 
@@ -20,7 +20,7 @@ projects are read only; video-specific code and English labels live in adapters.
 
 ## Complete alpha from corresponding source
 
-Download `ShaderixFrame-0.14.0-alpha.1-source.zip` from the matching GitHub prerelease.
+Download `ShaderixFrame-0.14.0-alpha.2-source.zip` from the matching GitHub prerelease.
 It includes this repository and the exact JUCE 8.0.15 dependency. Extract it and
 open an x64 Visual Studio developer terminal in `ShaderixFrame-source`:
 
