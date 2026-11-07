@@ -1,6 +1,6 @@
 <table width="100%">
   <tr>
-    <td width="30%" align="left" valign="top">
+    <td width="300" align="left" valign="top">
       <a href="https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/welcome">Documentation</a><br>
       <a href="https://github.com/MrMybal/ShaderixFrame">Repository</a><br>
       <a href="https://github.com/MrMybal/ShaderixFrame/issues">Issue tracker</a><br><br>
@@ -10,7 +10,7 @@
     <td width="40%" align="center" valign="middle">
       <img src="shaderixframe-logo-orange-sombre.png" alt="ShaderixFrame" width="192">
     </td>
-    <td width="30%" align="right" valign="top">
+    <td width="300" align="right" valign="top">
       <p><sub>Application license</sub><br><a href="LICENSE"><strong>GNU AGPL v3 only</strong></a></p>
       <p><sub>Version</sub><br><a href="docs/RELEASE_0.14-alpha.2.md"><strong>0.14.0-alpha.2</strong></a><br><strong>ALPHA</strong></p>
       <p><a href="https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.14.0-alpha.2"><strong>Download</strong></a><br><sub>Windows x64 · installer / portable</sub></p>
