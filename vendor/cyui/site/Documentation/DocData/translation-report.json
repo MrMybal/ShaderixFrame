@@ -1,0 +1,356 @@
+{
+  "defaultLocale": "en",
+  "missing": [],
+  "outdated": [],
+  "untracked": [
+    {
+      "id": "api-core",
+      "title": "Core entry point",
+      "locale": "fr",
+      "expectedRevision": "4a8d816428fd"
+    },
+    {
+      "id": "api-set-locale",
+      "title": "setLocale",
+      "locale": "fr",
+      "expectedRevision": "20177f058721"
+    },
+    {
+      "id": "api-data-grid",
+      "title": "Editable cell grids",
+      "locale": "fr",
+      "expectedRevision": "624da2e7cbbf"
+    },
+    {
+      "id": "api-diff-viewer",
+      "title": "diffViewer",
+      "locale": "fr",
+      "expectedRevision": "04e66b98328b"
+    },
+    {
+      "id": "api-office-io",
+      "title": "Office document exchange",
+      "locale": "fr",
+      "expectedRevision": "361362958bc1"
+    },
+    {
+      "id": "api-paged-code-editor",
+      "title": "PagedCodeEditor",
+      "locale": "fr",
+      "expectedRevision": "2e586714ba60"
+    },
+    {
+      "id": "api-rich-document",
+      "title": "Paginated native documents",
+      "locale": "fr",
+      "expectedRevision": "267887e9682f"
+    },
+    {
+      "id": "api-spreadsheet",
+      "title": "Worksheets and formulas",
+      "locale": "fr",
+      "expectedRevision": "bbe2cc70e4dd"
+    },
+    {
+      "id": "source-include-cyui-core-h",
+      "title": "Core.h",
+      "locale": "fr",
+      "expectedRevision": "f933d09701ea"
+    },
+    {
+      "id": "source-include-cyui-corewidgets-h",
+      "title": "CoreWidgets.h",
+      "locale": "fr",
+      "expectedRevision": "2a76f44ce769"
+    },
+    {
+      "id": "source-include-cyui-cyui-h",
+      "title": "CyUI.h",
+      "locale": "fr",
+      "expectedRevision": "6651b64aed97"
+    },
+    {
+      "id": "source-include-cyui-export-h",
+      "title": "Export.h",
+      "locale": "fr",
+      "expectedRevision": "edb0bc2513e5"
+    },
+    {
+      "id": "source-include-cyui-filter-h",
+      "title": "Filter.h",
+      "locale": "fr",
+      "expectedRevision": "f0042f17e79a"
+    },
+    {
+      "id": "source-include-cyui-gallery-h",
+      "title": "Gallery.h",
+      "locale": "fr",
+      "expectedRevision": "340acf48508f"
+    },
+    {
+      "id": "source-include-cyui-icons-h",
+      "title": "Icons.h",
+      "locale": "fr",
+      "expectedRevision": "ce5eb6c712fe"
+    },
+    {
+      "id": "source-include-cyui-interaction-h",
+      "title": "Interaction.h",
+      "locale": "fr",
+      "expectedRevision": "4bfbf7969ac2"
+    },
+    {
+      "id": "source-include-cyui-layout-h",
+      "title": "Layout.h",
+      "locale": "fr",
+      "expectedRevision": "0da423d28c8b"
+    },
+    {
+      "id": "source-include-cyui-locale-h",
+      "title": "Locale.h",
+      "locale": "fr",
+      "expectedRevision": "2558e868ec9e"
+    },
+    {
+      "id": "source-include-cyui-numeric-h",
+      "title": "Numeric.h",
+      "locale": "fr",
+      "expectedRevision": "14ae626a22da"
+    },
+    {
+      "id": "source-include-cyui-theme-h",
+      "title": "Theme.h",
+      "locale": "fr",
+      "expectedRevision": "d6486c47ac33"
+    },
+    {
+      "id": "source-include-cyui-widgets-h",
+      "title": "Widgets.h",
+      "locale": "fr",
+      "expectedRevision": "dd3e272782d5"
+    },
+    {
+      "id": "source-include-cyui-adapters-imguizmo-h",
+      "title": "ImGuizmo.h",
+      "locale": "fr",
+      "expectedRevision": "0de368614dad"
+    },
+    {
+      "id": "source-include-cyui-adapters-webcef-h",
+      "title": "WebCEF.h",
+      "locale": "fr",
+      "expectedRevision": "478825ff5c90"
+    },
+    {
+      "id": "source-include-cyui-detail-codetext-h",
+      "title": "CodeText.h",
+      "locale": "fr",
+      "expectedRevision": "eb68782f08b4"
+    },
+    {
+      "id": "source-include-cyui-detail-contexthook-h",
+      "title": "ContextHook.h",
+      "locale": "fr",
+      "expectedRevision": "ac5b8c347683"
+    },
+    {
+      "id": "source-include-cyui-detail-json-h",
+      "title": "Json.h",
+      "locale": "fr",
+      "expectedRevision": "094201a1ca30"
+    },
+    {
+      "id": "source-include-cyui-examples-editorworkspace-h",
+      "title": "EditorWorkspace.h",
+      "locale": "fr",
+      "expectedRevision": "3f43da8aa24d"
+    },
+    {
+      "id": "source-include-cyui-modules-assets-h",
+      "title": "Assets.h",
+      "locale": "fr",
+      "expectedRevision": "3edada428047"
+    },
+    {
+      "id": "source-include-cyui-modules-audio-h",
+      "title": "Audio.h",
+      "locale": "fr",
+      "expectedRevision": "cf4e8d912859"
+    },
+    {
+      "id": "source-include-cyui-modules-audioviews-h",
+      "title": "AudioViews.h",
+      "locale": "fr",
+      "expectedRevision": "d52a3bdc821c"
+    },
+    {
+      "id": "source-include-cyui-modules-canvas-h",
+      "title": "Canvas.h",
+      "locale": "fr",
+      "expectedRevision": "a67c85be382d"
+    },
+    {
+      "id": "source-include-cyui-modules-code-h",
+      "title": "Code.h",
+      "locale": "fr",
+      "expectedRevision": "8d0dbd17105a"
+    },
+    {
+      "id": "source-include-cyui-modules-codeeditor-h",
+      "title": "CodeEditor.h",
+      "locale": "fr",
+      "expectedRevision": "9391ece048bd"
+    },
+    {
+      "id": "source-include-cyui-modules-codepaging-h",
+      "title": "CodePaging.h",
+      "locale": "fr",
+      "expectedRevision": "86706466cea6"
+    },
+    {
+      "id": "source-include-cyui-modules-commands-h",
+      "title": "Commands.h",
+      "locale": "fr",
+      "expectedRevision": "53cec3273dbe"
+    },
+    {
+      "id": "source-include-cyui-modules-curves-h",
+      "title": "Curves.h",
+      "locale": "fr",
+      "expectedRevision": "d9deaf5e7af3"
+    },
+    {
+      "id": "source-include-cyui-modules-datagrid-h",
+      "title": "DataGrid.h",
+      "locale": "fr",
+      "expectedRevision": "17a08099ae25"
+    },
+    {
+      "id": "source-include-cyui-modules-dataview-h",
+      "title": "DataView.h",
+      "locale": "fr",
+      "expectedRevision": "1451db27a894"
+    },
+    {
+      "id": "source-include-cyui-modules-diagnostics-h",
+      "title": "Diagnostics.h",
+      "locale": "fr",
+      "expectedRevision": "f7c3cf2f7866"
+    },
+    {
+      "id": "source-include-cyui-modules-diff-h",
+      "title": "Diff.h",
+      "locale": "fr",
+      "expectedRevision": "4647076f65b7"
+    },
+    {
+      "id": "source-include-cyui-modules-documenteditor-h",
+      "title": "DocumentEditor.h",
+      "locale": "fr",
+      "expectedRevision": "a3af87686691"
+    },
+    {
+      "id": "source-include-cyui-modules-documentio-h",
+      "title": "DocumentIO.h",
+      "locale": "fr",
+      "expectedRevision": "e16f82560e9a"
+    },
+    {
+      "id": "source-include-cyui-modules-documentviews-h",
+      "title": "DocumentViews.h",
+      "locale": "fr",
+      "expectedRevision": "c39734e0e28f"
+    },
+    {
+      "id": "source-include-cyui-modules-documentweb-h",
+      "title": "DocumentWeb.h",
+      "locale": "fr",
+      "expectedRevision": "0e483813b5e8"
+    },
+    {
+      "id": "source-include-cyui-modules-filepicker-h",
+      "title": "FilePicker.h",
+      "locale": "fr",
+      "expectedRevision": "d1fe3f0e7332"
+    },
+    {
+      "id": "source-include-cyui-modules-hierarchy-h",
+      "title": "Hierarchy.h",
+      "locale": "fr",
+      "expectedRevision": "6107eb59ab8c"
+    },
+    {
+      "id": "source-include-cyui-modules-images-h",
+      "title": "Images.h",
+      "locale": "fr",
+      "expectedRevision": "95b2a0f75516"
+    },
+    {
+      "id": "source-include-cyui-modules-inspector-h",
+      "title": "Inspector.h",
+      "locale": "fr",
+      "expectedRevision": "f52286686e14"
+    },
+    {
+      "id": "source-include-cyui-modules-media-h",
+      "title": "Media.h",
+      "locale": "fr",
+      "expectedRevision": "067d7d1513f8"
+    },
+    {
+      "id": "source-include-cyui-modules-nodes-h",
+      "title": "Nodes.h",
+      "locale": "fr",
+      "expectedRevision": "10f0779d4252"
+    },
+    {
+      "id": "source-include-cyui-modules-officeio-h",
+      "title": "OfficeIO.h",
+      "locale": "fr",
+      "expectedRevision": "9835997e010c"
+    },
+    {
+      "id": "source-include-cyui-modules-pagedcodeeditor-h",
+      "title": "PagedCodeEditor.h",
+      "locale": "fr",
+      "expectedRevision": "1f6b2dff4b31"
+    },
+    {
+      "id": "source-include-cyui-modules-plots-h",
+      "title": "Plots.h",
+      "locale": "fr",
+      "expectedRevision": "7e09aaa4b708"
+    },
+    {
+      "id": "source-include-cyui-modules-richdocument-h",
+      "title": "RichDocument.h",
+      "locale": "fr",
+      "expectedRevision": "44487bb12b56"
+    },
+    {
+      "id": "source-include-cyui-modules-spreadsheet-h",
+      "title": "Spreadsheet.h",
+      "locale": "fr",
+      "expectedRevision": "5a9dc87911ba"
+    },
+    {
+      "id": "source-include-cyui-modules-timeline-h",
+      "title": "Timeline.h",
+      "locale": "fr",
+      "expectedRevision": "b5b35a8bdb92"
+    },
+    {
+      "id": "source-include-cyui-modules-viewport-h",
+      "title": "Viewport.h",
+      "locale": "fr",
+      "expectedRevision": "ed68412310c3"
+    },
+    {
+      "id": "source-include-cyui-modules-web-h",
+      "title": "Web.h",
+      "locale": "fr",
+      "expectedRevision": "c3ae0abe47aa"
+    }
+  ],
+  "current": 21
+}

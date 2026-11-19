@@ -1,0 +1,13 @@
+{
+  "compact": true,
+  "disk_spooling": false,
+  "notifications": true,
+  "performance": false,
+  "inline_bytes": 16384,
+  "chunk_bytes": 32768,
+  "memory_bytes": 67108864,
+  "disk_bytes": 536870912,
+  "retention_seconds": 600,
+  "cache_seconds": 30,
+  "remote_servers": []
+}

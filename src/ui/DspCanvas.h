@@ -42,6 +42,9 @@ class DspCanvas {
     bool redo();
     bool draw(double time = 0); // draft changed; explicit Apply commits one project history entry
     const CanvasView &navigation() const { return view; }
+    void setNavigation(float zoom, sx::float2 pan, bool fit) {
+        view.zoom = std::clamp(zoom, .2f, 2.5f); view.pan = pan; fitPending = fit;
+    }
     ImVec2 screenPoint(sx::float2 world) const {
         auto p = view.screen(world);
         return {origin.x + p.x, origin.y + p.y};

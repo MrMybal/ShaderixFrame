@@ -1,0 +1,16 @@
+/* Application palette; the CyDoc reader retains its layout and accessibility. */
+.cydoc-viewer[data-theme=dark] {
+  --bg: #131518;
+  --sidebar: #191c20;
+  --surface: #202328;
+  --card: #1c1f23;
+  --text: #eceef1;
+  --muted: #a7adb6;
+  --line: #32363d;
+  --accent: #f2a45e;
+  --accent-bg: #3b2c20;
+}
+.cydoc-viewer[data-theme=light] {
+  --accent: #a64b12;
+  --accent-bg: #fff0e2;
+}

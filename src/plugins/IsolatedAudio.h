@@ -26,6 +26,7 @@ class IsolatedAudio {
     void process(double time, unsigned frames, std::vector<float> &data,
                  const std::map<std::string, Parameter> &params);
     unsigned latency() const;
+    DWORD processId() const { return processHandle ? GetProcessId(processHandle) : 0; }
     void terminateForTest();
 };
 bool externalAudio(const std::string &id);

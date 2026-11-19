@@ -13,8 +13,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Application license</sub><br><a href="LICENSE"><strong>GNU AGPL v3 only</strong></a></p>
-      <p><sub>Version</sub><br><a href="docs/RELEASE_0.14-alpha.2.md"><strong>0.14.0-alpha.2</strong></a><br><strong>ALPHA</strong></p>
-      <p><a href="https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.14.0-alpha.2"><strong>Download</strong></a><br><sub>Windows x64 · installer / portable</sub></p>
+      <p><sub>Version</sub><br><a href="docs/RELEASE_0.15-alpha.1.md"><strong>0.15.0-alpha.1</strong></a><br><strong>ALPHA</strong></p>
+      <p><a href="https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.1"><strong>Download</strong></a><br><sub>Windows x64 · installer / portable</sub></p>
     </td>
   </tr>
 </table>
@@ -26,11 +26,12 @@ A native Windows video editor for video editing, HLSL-powered VFX, layered
 compositing, motion design and audio processing. Assemble clips on a timeline,
 build image and sound processing graphs, then animate and export the result.
 
-> **ALPHA · 0.14.0-alpha.2**
+> **ALPHA · 0.15.0-alpha.1**
 >
 > An experimental release for testing and feedback; features and compatibility
-> remain subject to change. Alpha 2 adds the bilingual CyDoc manual, contextual
-> help and public API reference. Read the [version notes and known limitations](docs/RELEASE_0.14-alpha.2.md).
+> remain subject to change. Alpha 0.15 adds an integrated assistant, a console CLI,
+> authenticated MCP access to the open editor and interface automation. Read the
+> [version notes and known limitations](docs/RELEASE_0.15-alpha.1.md).
 
 [![ShaderixFrame video editing workspace with composition preview, linked clips and a multitrack timeline](docs/screenshots/editing.png)](docs/screenshots/editing.png)
 
@@ -79,8 +80,9 @@ audio graph validation and signal analysis; CyUI supplies common interface compo
   and the supported CPU RGBA OpenFX subset use isolated workers.
 - **Delivery and recovery:** background MP4/WAV/AVI/PNG/EXR/GIF export, EDL/SRT
   interchange, undo history, project versions and session recovery.
-- **Automation and help:** built-in MCP stdio server with 163 tools and an
-  English/French CyDoc manual with guides and public MCP/C/C++ SDK references.
+- **Automation and help:** native assistant, scriptable CLI and authenticated MCP;
+  163 business operations plus 23 editor interface tools, with an English/French
+  CyDoc manual and public MCP/C/C++ SDK references.
 
 ### Documentation
 
@@ -103,9 +105,9 @@ The published build targets **Windows 10/11 x64** and **Direct3D 11**.
 The application and installer are unsigned. Third-party plugins are supplied by
 their users; the compatible VST3 worker is included in the Windows packages.
 
-1. [Download the 0.14.0-alpha.2 release](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.14.0-alpha.2).
-   Choose the [per-user installer](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.14.0-alpha.2/ShaderixFrame-0.14.0-alpha.2-Setup.exe)
-   or the [portable ZIP](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.14.0-alpha.2/ShaderixFrame-0.14.0-alpha.2-windows-x64.zip).
+1. [Download the 0.15.0-alpha.1 release](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.1).
+   Choose the [per-user installer](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.1/ShaderixFrame-0.15.0-alpha.1-Setup.exe)
+   or the [portable ZIP](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.1/ShaderixFrame-0.15.0-alpha.1-windows-x64.zip).
 2. Run Setup, or extract the complete portable archive to a writable folder.
    Keep the workers, examples, licenses and documentation with the application.
 3. Start `ShaderixFrame.exe`. Open **File > Open Project** and choose
@@ -113,9 +115,36 @@ their users; the compatible VST3 worker is included in the Windows packages.
 
 The installer needs no administrator privileges. The distributed application
 does not require the Shaderixel or CyDAW source projects. `--warp` selects software
-D3D11 rendering. Release assets include [SHA-256 checksums](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.14.0-alpha.2/SHA256SUMS.txt)
-and [corresponding source with JUCE](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.14.0-alpha.2/ShaderixFrame-0.14.0-alpha.2-source.zip).
-See the [alpha limitations](docs/RELEASE_0.14-alpha.2.md#known-limitations) before evaluation.
+D3D11 rendering. Release assets include [SHA-256 checksums](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.1/SHA256SUMS.txt)
+and [corresponding source with JUCE](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.1/ShaderixFrame-0.15.0-alpha.1-source.zip).
+See the [alpha limitations](docs/RELEASE_0.15-alpha.1.md#known-limitations) before evaluation.
+
+## Assistant, CLI and MCP
+
+Alpha 0.15 integrates **CyMCPSDK 0.7.0** (`791d4d7`) for a native assistant,
+headless `ShaderixFrameCLI.exe` and authenticated loopback MCP access to an open
+editor. The same registry retains the 163 editing operations. Open **View > Assistant**
+or launch with `--assistant`; configure an installed provider or local model service.
+Models and credentials are supplied separately. The assistant and console companion
+are included in the alpha 0.15 packages.
+
+The assistant can also operate the live editor: modes, detachable panels, view navigation,
+preferences, shortcuts, nested clip drafts and visible controls. A connected CLI/MCP client
+shares these UI tools and permissions; native plugin controls use Windows accessibility
+when supported by the plugin. See **Editor interface automation** in the bundled manual.
+
+[![Native Assistant panel beside the live composition and timeline in ShaderixFrame alpha 0.15](docs/screenshots/assistant.png)](docs/screenshots/assistant.png)
+
+```powershell
+ShaderixFrameCLI.exe list
+ShaderixFrameCLI.exe describe set_sequence
+ShaderixFrameCLI.exe invoke status --project=examples/CutStudy.sframe --warp
+```
+
+Use **Help > User Manual**, then **Integrated MCP automation**, for chat, permissions,
+history, instance selection, JSON execution and independent runtime options. The
+same guide is bundled with the application; `docs/assistant-config.example.json`
+is the runtime configuration example. Existing `--mcp` and launch options remain.
 
 ## Source, build and required libraries
 
@@ -135,7 +164,7 @@ python tools/prepare_dependencies.py --audio-only
 ```
 
 This compiles Release without running test executables. The resulting application
-is `build/Release/ShaderixFrame.exe`. CyUI, Shaderixel, CyDAW v2, Dear ImGui and
+is `build/Release/ShaderixFrame.exe`, with `ShaderixFrameCLI.exe`. CyMCPSDK, CyUI, Shaderixel, CyDAW v2, Dear ImGui and
 OpenFX sources are pinned under `vendor/`; CyDoc uses a local archive and npm lockfile
 under `.CyDocBuild/`. Their licenses are indexed below.
 
@@ -182,6 +211,7 @@ own terms. See [licensing and corresponding source](docs/LICENSING.md).
 | [JUCE 8.0.15](https://github.com/juce-framework/JUCE) | [AGPL v3 / commercial dual license](vendor/juce-license/LICENSE.md); AGPL option used here | VST3 worker only; exact source and dependency notices accompany the corresponding-source asset. |
 | [OpenFX](https://github.com/AcademySoftwareFoundation/openfx) | [BSD-3-Clause](vendor/openfx/LICENSE.md) | Native OFX headers and host integration; selected examples also serve as development fixtures. |
 | [CyDoc 0.1.0](https://github.com/MrMybal/CyDoc) | [MIT](.CyDocBuild/vendor/cydoc/LICENSE) | Bundled offline image/gallery reader and native route helper; generation tools remain separate. |
+| [CyMCPSDK 0.7.0](https://github.com/MrMybal/CyMCPSDK) | [MIT](vendor/cymcp/LICENSE) | Pinned development sources for operations, local MCP, providers and native ChatUI; see [provenance](cymcp.lock.json). |
 
 Windows APIs provide D3D11, Media Foundation, WIC and system fonts. System fonts and
 third-party user plugins are not redistributed. CyUI's optional CEF/browser and
@@ -206,8 +236,8 @@ and all license files supplied with source and Windows packages.
   · [Présentation française](https://mrmybal.github.io/ShaderixFrame/?lang=fr).
 - [English documentation](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/welcome)
   · [Documentation française](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/fr/welcome).
-- [Release notes and limitations](docs/RELEASE_0.14-alpha.2.md)
-  · [Downloads](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.14.0-alpha.2).
+- [Release notes and limitations](docs/RELEASE_0.15-alpha.1.md)
+  · [Downloads](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.1).
 - [MCP and SDK reference](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/api-links)
   · [Build guide](docs/BUILDING.md).
 - [Source repository](https://github.com/MrMybal/ShaderixFrame)

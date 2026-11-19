@@ -4,7 +4,7 @@ title: À propos du manuel
 description: Apprenez le montage, la composition par nœuds, l’animation et l’audio dans ShaderixFrame. Ce manuel fonctionne entièrement hors ligne.
 section: Guide utilisateur
 order: 0
-sourceRevision: 3
+sourceRevision: 4
 ---
 
 Apprenez le montage, la composition par nœuds, l’animation et l’audio dans ShaderixFrame. Ce manuel fonctionne entièrement hors ligne.
@@ -18,7 +18,7 @@ Choisissez English ou Français en haut. Les identifiants de pages, sections et 
 Les images affichent leurs commandes au survol ou au focus : zoom, déplacement et agrandissement dans cette fenêtre ; Échap réduit. Les commandes restent visibles sur écran tactile. Mon espace garde favoris et notes localement si le stockage du navigateur l’autorise. Imprimer le guide imprime le guide illustré complet ; Ctrl+P imprime la page courante.
 
 ```callout
-{"type": "note", "title": "Remarque", "body": "Ce guide décrit les fonctions réalisées dans la version alpha 0.14. Les exemples et captures peuvent contenir des noms de clips et titres français : il s’agit du contenu du projet. Les restrictions techniques sont indiquées dans les chapitres concernés."}
+{"type": "note", "title": "Remarque", "body": "Ce guide décrit les fonctions réalisées dans la version alpha 0.15. Les exemples et captures peuvent contenir des noms de clips et titres français : il s’agit du contenu du projet. Les restrictions techniques sont indiquées dans les chapitres concernés."}
 ```
 
 ```diagram

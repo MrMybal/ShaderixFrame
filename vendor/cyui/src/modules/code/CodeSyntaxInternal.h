@@ -14,4 +14,5 @@ struct LanguageProfile {
 const std::vector<LanguageProfile>& builtinProfiles();
 std::vector<unsigned char> lexSource(std::string_view, const LanguageProfile&);
 TokenRole styleRole(std::string_view);
+std::vector<CodeToken> verseTokens(std::string_view, const LanguageProfile&);
 } }

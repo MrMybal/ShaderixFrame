@@ -164,16 +164,16 @@
     "fr": "Identifiant stable du groupe de pistes."
   },
   "height": {
-    "en": "Sequence pixel height or timeline track height, according to the tool.",
-    "fr": "Hauteur de séquence en pixels ou hauteur de piste selon l’outil."
+    "en": "Image height in pixels, or UI panel height when used by ui_panel.",
+    "fr": "Hauteur d’image en pixels, ou hauteur de panneau pour ui_panel."
   },
   "hold": {
     "en": "Hold the source frame at the in point.",
     "fr": "Figer l’image source au point d’entrée."
   },
   "id": {
-    "en": "Exact effect or generator ID from list_effects.",
-    "fr": "Identifiant exact d’effet ou de générateur obtenu via list_effects."
+    "en": "Stable catalogue identifier for the requested effect, command or native control.",
+    "fr": "Identifiant stable de catalogue pour l’effet, la commande ou le contrôle natif demandé."
   },
   "identifier": {
     "en": "OFX plugin identifier within the selected binary.",
@@ -208,8 +208,8 @@
     "fr": "Identifiant du travail retourné par l’opération asynchrone correspondante."
   },
   "key": {
-    "en": "Exact parameter identifier, including a vector component when needed.",
-    "fr": "Identifiant exact du paramètre, avec composante de vecteur si nécessaire."
+    "en": "Parameter key, or named ImGui keyboard key for a UI operation.",
+    "fr": "Clé de paramètre, ou nom de touche ImGui pour une opération d’interface."
   },
   "kind": {
     "en": "Element or export kind accepted by the operation.",
@@ -228,8 +228,8 @@
     "fr": "Durée du microfondu en secondes."
   },
   "limit": {
-    "en": "Add the loudness operation’s master limiter.",
-    "fr": "Ajouter le limiteur master de l’opération de sonie."
+    "en": "Maximum number of entries in this page.",
+    "fr": "Nombre maximal d’entrées de cette page."
   },
   "locked": {
     "en": "Protect the track or channel against editing.",
@@ -268,8 +268,8 @@
     "fr": "Durée minimale de silence en secondes."
   },
   "mode": {
-    "en": "Edit or image-fitting mode accepted by the tool.",
-    "fr": "Mode de montage ou d’adaptation d’image accepté par l’outil."
+    "en": "Workspace mode: edit, effects, motion, color, audio or deliver.",
+    "fr": "Mode : edit, effects, motion, color, audio ou deliver."
   },
   "muted": {
     "en": "Mute the selected track or channel.",
@@ -552,11 +552,199 @@
     "fr": "Calculer la correction de balance des blancs."
   },
   "width": {
-    "en": "Output or sequence width in pixels.",
-    "fr": "Largeur de sortie ou de séquence en pixels."
+    "en": "Image width in pixels, or UI panel width when used by ui_panel.",
+    "fr": "Largeur d’image en pixels, ou largeur de panneau pour ui_panel."
   },
   "y": {
-    "en": "Normalized vertical text position.",
-    "fr": "Position verticale normalisée du texte."
+    "en": "Vertical position in the operation coordinate space.",
+    "fr": "Position verticale dans les coordonnées de l’opération."
+  },
+  "x": {
+    "en": "Horizontal position in the operation coordinate space.",
+    "fr": "Position horizontale dans les coordonnées de l’opération."
+  },
+  "workspace": {
+    "en": "Ordered IDs of already-open ancestor clip containers; omit for the main editor.",
+    "fr": "Identifiants ordonnés des conteneurs ancêtres déjà ouverts ; omettre pour l’éditeur principal."
+  },
+  "window": {
+    "en": "Exact ImGui window name or native plugin window token returned by discovery.",
+    "fr": "Nom exact de fenêtre ImGui ou jeton natif de plugin retourné par la découverte."
+  },
+  "query": {
+    "en": "Text used to filter the discovered catalogue.",
+    "fr": "Texte utilisé pour filtrer le catalogue découvert."
+  },
+  "offset": {
+    "en": "Zero-based result offset.",
+    "fr": "Position de départ du résultat, à partir de zéro."
+  },
+  "visible_only": {
+    "en": "Return only controls currently visible inside their window.",
+    "fr": "Retourner uniquement les contrôles actuellement visibles dans leur fenêtre."
+  },
+  "include_active_text": {
+    "en": "Explicitly include text from the active standard input; password fields are excluded.",
+    "fr": "Inclure explicitement le texte du champ standard actif ; les mots de passe sont exclus."
+  },
+  "file_path": {
+    "en": "Explicit file or folder path consumed by the automated dialog.",
+    "fr": "Chemin explicite de fichier ou dossier utilisé par le dialogue automatisé."
+  },
+  "reset_layout": {
+    "en": "Restore the current workspace layout.",
+    "fr": "Restaurer la disposition du workspace actuel."
+  },
+  "panel": {
+    "en": "Stable English panel name returned by get_ui_state.",
+    "fr": "Nom anglais stable du panneau retourné par get_ui_state."
+  },
+  "focus": {
+    "en": "Give keyboard focus to the requested panel.",
+    "fr": "Donner le focus clavier au panneau demandé."
+  },
+  "detach": {
+    "en": "Detach the panel into a separate viewport.",
+    "fr": "Détacher le panneau dans une fenêtre séparée."
+  },
+  "dock_to": {
+    "en": "Name of another open docked panel to share as tabs.",
+    "fr": "Nom d’un autre panneau ouvert et ancré avec lequel partager les onglets."
+  },
+  "view": {
+    "en": "Editor view: timeline, composition, shader, layer, track, dsp or motion.",
+    "fr": "Vue : timeline, composition, shader, layer, track, dsp ou motion."
+  },
+  "zoom": {
+    "en": "View zoom; timeline uses pixels per second.",
+    "fr": "Zoom de la vue ; la timeline utilise des pixels par seconde."
+  },
+  "pan_x": {
+    "en": "Horizontal view offset in its local pixels.",
+    "fr": "Décalage horizontal de la vue, en pixels locaux."
+  },
+  "pan_y": {
+    "en": "Vertical view offset in its local pixels.",
+    "fr": "Décalage vertical de la vue, en pixels locaux."
+  },
+  "fit": {
+    "en": "Fit the selected view to its contents.",
+    "fr": "Ajuster la vue sélectionnée à son contenu."
+  },
+  "first_visible": {
+    "en": "First visible sequence time in seconds.",
+    "fr": "Premier temps visible de la séquence, en secondes."
+  },
+  "pixel_percent": {
+    "en": "Composition image scale in percent; 100 is 1:1.",
+    "fr": "Échelle de l’image en pourcentage ; 100 vaut 1:1."
+  },
+  "snap": {
+    "en": "Enable timeline snapping.",
+    "fr": "Activer l’aimantation de la timeline."
+  },
+  "loop": {
+    "en": "Enable timeline loop playback.",
+    "fr": "Activer la lecture en boucle."
+  },
+  "filmstrip": {
+    "en": "Show timeline frame previews.",
+    "fr": "Afficher les aperçus d’images de la timeline."
+  },
+  "waveforms": {
+    "en": "Show timeline audio waveforms.",
+    "fr": "Afficher les formes d’onde de la timeline."
+  },
+  "keyframes": {
+    "en": "Show timeline animation keys.",
+    "fr": "Afficher les clés d’animation de la timeline."
+  },
+  "theme": {
+    "en": "CyUI theme key from get_ui_state.",
+    "fr": "Identifiant de thème CyUI fourni par get_ui_state."
+  },
+  "locale": {
+    "en": "Available UI language code, such as en or fr.",
+    "fr": "Code de langue disponible, par exemple en ou fr."
+  },
+  "density": {
+    "en": "UI density: compact or comfortable.",
+    "fr": "Densité d’interface : compact ou comfortable."
+  },
+  "ctrl": {
+    "en": "Hold the Control modifier.",
+    "fr": "Maintenir le modificateur Contrôle."
+  },
+  "shift": {
+    "en": "Hold the Shift modifier.",
+    "fr": "Maintenir le modificateur Majuscule."
+  },
+  "alt": {
+    "en": "Hold the Alt modifier.",
+    "fr": "Maintenir le modificateur Alt."
+  },
+  "reset": {
+    "en": "Restore default shortcut bindings.",
+    "fr": "Restaurer les raccourcis par défaut."
+  },
+  "parameter": {
+    "en": "Parameter name to reveal in the animation editor.",
+    "fr": "Nom du paramètre à montrer dans l’éditeur d’animation."
+  },
+  "operation": {
+    "en": "Exact business operation name discovered from the registry.",
+    "fr": "Nom exact d’opération métier découvert dans le registre."
+  },
+  "arguments": {
+    "en": "JSON object matching the named business operation input schema.",
+    "fr": "Objet JSON respectant le schéma d’entrée de l’opération métier nommée."
+  },
+  "item": {
+    "en": "Stable hexadecimal ImGui control ID from get_ui_items.",
+    "fr": "Identifiant hexadécimal stable d’un contrôle ImGui fourni par get_ui_items."
+  },
+  "to_x": {
+    "en": "Drag destination X in the returned UI coordinate space.",
+    "fr": "Abscisse d’arrivée du glisser dans les coordonnées de l’interface retournée."
+  },
+  "to_y": {
+    "en": "Drag destination Y in the returned UI coordinate space.",
+    "fr": "Ordonnée d’arrivée du glisser dans les coordonnées de l’interface retournée."
+  },
+  "button": {
+    "en": "Mouse button: 0 left, 1 right, 2 middle.",
+    "fr": "Bouton de souris : 0 gauche, 1 droit, 2 milieu."
+  },
+  "submit": {
+    "en": "Press Enter after entering text.",
+    "fr": "Appuyer sur Entrée après la saisie du texte."
+  },
+  "wheel_x": {
+    "en": "Horizontal mouse-wheel amount.",
+    "fr": "Déplacement horizontal de la molette."
+  },
+  "wheel_y": {
+    "en": "Vertical mouse-wheel amount.",
+    "fr": "Déplacement vertical de la molette."
+  },
+  "frames": {
+    "en": "Number of render frames used for a drag.",
+    "fr": "Nombre d’images de rendu utilisé pour un glisser."
+  },
+  "language": {
+    "en": "Manual language code.",
+    "fr": "Code de langue du manuel."
+  },
+  "anchor": {
+    "en": "Stable section anchor inside the manual page.",
+    "fr": "Ancre stable d’une section de page du manuel."
+  },
+  "topic": {
+    "en": "Stable CyDoc page identifier.",
+    "fr": "Identifiant stable de page CyDoc."
+  },
+  "action": {
+    "en": "Action name accepted by this operation; inspect its description for allowed values.",
+    "fr": "Nom d’action accepté par cette opération ; les valeurs admises figurent dans sa description."
   }
 }

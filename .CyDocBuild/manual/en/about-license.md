@@ -5,7 +5,7 @@ description: Find the application licence and component notices.
 section: Developer reference
 parent: welcome
 order: 200
-revision: 1
+revision: 2
 ---
 
 ## Application licence {#usage}
@@ -15,3 +15,5 @@ ShaderixFrame is licensed under GNU AGPL-3.0-only. The application distribution 
 ## Documentation reader {#reader}
 
 CyDoc is MIT-licensed. Its licence text accompanies this manual under `DocData/licenses/CyDoc-LICENSE.txt`. It does not change the application's licence. CyUI is also MIT-licensed; Shaderixel, CyDAW and other dependencies retain their own notices in the application package.
+
+CyMCPSDK supplies the assistant, CLI and MCP integration under MIT. Its licence and dependency notices are included under `licenses/cymcp/`. MD4C and JetBrains Mono notices accompany the native chat components under `licenses/cyui/`.

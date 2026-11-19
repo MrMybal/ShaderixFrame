@@ -4,7 +4,7 @@ title: About this manual
 description: Learn video editing, node compositing, animation and audio in ShaderixFrame. This manual works entirely offline.
 section: User guide
 order: 0
-revision: 3
+revision: 4
 ---
 
 Learn video editing, node compositing, animation and audio in ShaderixFrame. This manual works entirely offline.
@@ -18,7 +18,7 @@ Choose English or Français at the top. Page, section and media IDs are shared a
 Images use minimal controls: hover or focus to zoom, pan or enlarge inside this window; Escape reduces the image. Touch devices retain visible controls. My space stores bookmarks and personal notes locally when browser file-origin storage allows it. Use Print guide for the complete illustrated guide, or browser Ctrl+P for the current page.
 
 ```callout
-{"type": "note", "title": "Note", "body": "This guide describes the implemented 0.14 alpha workflows. Demo projects and screenshots may contain French clip names and titles. Those are project content, not the interface language. Technical restrictions are called out in the relevant chapters."}
+{"type": "note", "title": "Note", "body": "This guide describes the implemented 0.15 alpha workflows. Demo projects and screenshots may contain French clip names and titles. Those are project content, not the interface language. Technical restrictions are called out in the relevant chapters."}
 ```
 
 ```diagram

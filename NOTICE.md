@@ -22,7 +22,7 @@ Existing third-party copyright notices and licences remain applicable.
   including its dependencies and their notices. Unused Android Firebase demo
   configurations are omitted. See `docs/LICENSING.md`.
 - `vendor/cyui/`: [CyUI](https://github.com/MrMybal/CyUI) 1.2.0, commit
-  `8367401fe45fc22bfed5e227cb3de343177f676b`, under [MIT](https://github.com/MrMybal/CyUI/blob/8367401fe45fc22bfed5e227cb3de343177f676b/LICENSE). The licence is also provided locally in `vendor/cyui/LICENSE` and in the package. It supplies common
+  `6ef01cfcdb197f3a89d64618ce5ef8818c704728`, under [MIT](https://github.com/MrMybal/CyUI/blob/6ef01cfcdb197f3a89d64618ce5ef8818c704728/LICENSE). The licence is also provided locally in `vendor/cyui/LICENSE` and in the package. It supplies common
   controls, themes, fonts, canvases, nodes, curves, source timelines, plots,
   inspectors and code editing. Its own ImGui copy is omitted: the application
   provides the single ImGui target. CodeEditor includes the MIT TextEditor;
@@ -32,6 +32,14 @@ Existing third-party copyright notices and licences remain applicable.
   `vendor/cyui/THIRD_PARTY_NOTICES.md` and `cyui.lock.json`.
 - `vendor/imgui/`: the Dear ImGui docking snapshot used by Shaderixel; MIT licence
   in `vendor/imgui/LICENSE.txt`, distributed as `IMGUI-LICENSE.txt`.
+- `vendor/cymcp/`: CyMCPSDK 0.7.0 development sources, commit
+  `791d4d7d7680213b282ec8529d248a10f8494d77`, MIT. The selected build snapshot and
+  fingerprints are recorded in `cymcp.lock.json`. Core, Platform, Http, MCP, AI
+  and ChatUI are linked statically. Local engine/dependency installation, examples,
+  benchmark and SDK test applications are disabled. nlohmann/json, cpp-httplib and
+  PicoSHA2 retain their MIT notices under `licenses/cymcp/`. ChatUI reuses the
+  application's single ImGui context and CyUI DocumentViews; MD4C is MIT and
+  JetBrains Mono is SIL OFL 1.1. Their notices accompany `licenses/cyui/`.
 - `.CyDocBuild/vendor/cydoc/`: CyDoc 0.1.0 and its C++ local-route helper, MIT licence, pinned
   at `6ddf9a582defb2f11fbb3f992afef6f98dcadc93`. Provenance and SHA-256 hashes are
   in `.CyDocBuild/cydoc.lock.json`. The offline reader exports image/gallery modules and static

@@ -1,6 +1,16 @@
 #include "plugins/PluginEditors.h"
 #include <chrono>
 namespace sf {
+std::vector<DWORD> PluginEditors::processIds(Project &project, bool editable) const {
+    std::vector<DWORD> result;
+    for (const auto &[key, entry] : entries) {
+        try {
+            pluginEffect(project, entry.target, editable);
+            if (entry.process && entry.process->processId()) result.push_back(entry.process->processId());
+        } catch (...) { }
+    }
+    return result;
+}
 Effect &pluginEffect(Project &p, const Json &target, bool editable) {
     std::vector<Effect> *chain = nullptr;
     auto scope = target["scope"].S();

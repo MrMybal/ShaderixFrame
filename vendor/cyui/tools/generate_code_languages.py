@@ -51,7 +51,7 @@ def generate(root, lexilla, scintilla, scite):
     for constant, prefixes in re.findall(r'^lex \w+=(SCLEX_\w+) (.+)$', (lexilla/'include/LexicalStyles.iface').read_text('utf-8'), re.M):
         lexer_prefixes[constant] = prefixes.split()
     styles = re.findall(r'^#define (SCE_\w+) (\d+)$', (lexilla/'include/SciLexer.h').read_text('utf-8'), re.M)
-    selected = sorted({item['lexer'] for item in catalogue})
+    selected = sorted({item['lexer'] for item in catalogue if item.get('lexer')})
     missing = set(selected)-symbols.keys()
     if missing: raise ValueError(f'Missing Lexilla engines: {missing}')
     folder = root/'src/modules/code'; folder.mkdir(parents=True, exist_ok=True)
@@ -68,6 +68,12 @@ def generate(root, lexilla, scintilla, scite):
         generated.append(f'static const std::array<const char*,256> styles_{name}={{{{'+','.join(literal(s) for s in names)+'}};')
     generated.append('const std::vector<LanguageProfile>& builtinProfiles() { static const std::vector<LanguageProfile> profiles={')
     for item in catalogue:
+        if item.get('native'):
+            if item['native'] != 'verse' or item.get('lexer'):
+                raise ValueError('Unknown native syntax profile')
+            info='{CodeLanguage::'+item['id']+','+literal(item['id'])+','+literal(item['name'])+', {'+','.join(literal(x) for x in item['extensions'])+'},{'+','.join(literal(x) for x in item['filenames'])+'},true}'
+            generated.append('{'+info+', nullptr, {}, {}, nullptr, {}},')
+            continue
         local = dict(values)
         tests = lexilla/'test/examples'/item['lexer']/'SciTE.properties'
         if tests.exists(): local.update(properties(tests))

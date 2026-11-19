@@ -5,14 +5,14 @@ description: Automatisez le montage ou créez des effets avec les interfaces pub
 section: Référence développeur
 parent: welcome
 order: 100
-sourceRevision: 1
+sourceRevision: 2
 ---
 
 Choisissez [MCP](doc:mcp) pour automatiser l’éditeur, [le SDK natif](doc:reference-sdk) pour créer des effets audio stéréo ou [HLSL](doc:reference-hlsl) pour traiter l’image. Chaque interface possède ses types de données et son contexte d’exécution.
 
 ## Règles des appels {#calling}
 
-Le catalogue MCP expose 163 opérations. Connectez-vous par stdio, appelez `tools/list` pour obtenir les schémas d’entrée actuels, puis `tools/call` avec `name` et `arguments`. Les identifiants de clips et pistes sont stables ; les positions d’effets sont des index à partir de zéro. Les temps sont en secondes sauf indication contraire. Consultez `status` et `list_effects` avant de réutiliser des identifiants.
+L’éditeur graphique expose 163 opérations métier et 23 outils d’interface ; le CLI autonome conserve les 163 opérations métier. La découverte compacte utilise cinq outils de portail. Connectez-vous par stdio ou HTTP loopback authentifié, appelez `tools/list` pour obtenir les schémas d’entrée actuels, puis `tools/call` avec `name` et `arguments`. Les identifiants de clips et pistes sont stables ; les positions d’effets sont des index à partir de zéro. Les temps sont en secondes sauf indication contraire. Consultez `status` et `list_effects` avant de réutiliser des identifiants.
 
 En cas de réussite, la réponse définit `isError: false`, retourne l’objet de l’opération dans `structuredContent` et inclut le même JSON dans `content[0].text`. Un outil refusé définit `isError: true` et explique le problème dans `content[0].text`. Les requêtes JSON-RPC invalides utilisent plutôt `error`. Un argument facultatif omis est interprété par l’opération ; il n’existe pas de valeur par défaut universelle.
 

@@ -11,3 +11,7 @@
 # Keep the bundled dependency byte-for-byte.
 third_party/imgui/** -text !eol
 third_party/texteditor/** -text !eol whitespace=cr-at-eol
+# Preserve the example dependencies and upstream license byte-for-byte.
+third_party/imgui-sdl3/** -text !eol -whitespace
+third_party/stb/** -text !eol -whitespace
+examples/markdown/SDL-LICENSE.txt -text !eol -whitespace

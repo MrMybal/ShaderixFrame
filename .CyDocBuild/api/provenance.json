@@ -1,8 +1,13 @@
 {
   "producer": "ShaderixFrame tools/list",
-  "tools": 163,
+  "tools": 186,
   "source": "src/mcp/Protocol.cpp",
   "source_sha256": "074892ec279b040b62eb3e806d4dc14167522ba52dfd12c916530490a1cf2f00",
-  "catalogue_sha256": "518a01c9bf856f30ba1314f3d04ac1982cf1b155bbe17381ed5ed24eb0713a72",
-  "source_line_endings": "lf"
+  "source_line_endings": "lf",
+  "catalogue_sha256": "7bfa5686a9737ea7ad75ffe33aeed102b79c5656450b0829e1041f5bffde79d3",
+  "sources": {
+    "src/mcp/Protocol.cpp": "074892ec279b040b62eb3e806d4dc14167522ba52dfd12c916530490a1cf2f00",
+    "src/mcp/Automation.cpp": "f5b2b947ddf1a38a6f4ef672508c5c379bb7ee614a7ef64b52e90473189556d7",
+    "src/ui/UiAutomation.cpp": "c609c30fd1be07df0c204ab489b724a80a65d63269e139046127f2989607e0ab"
+  }
 }

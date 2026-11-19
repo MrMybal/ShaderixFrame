@@ -89,7 +89,7 @@ std::string HelpDocumentation::topicForPanel(const std::string &name) {
             {"Source", "source"}, {"Media & Effects", "media"}, {"Shaderixel Library", "library"},
             {"Effects Browser", "library"}, {"Animation", "animation"}, {"Markers", "markers"},
             {"Subtitles", "titles"}, {"Camera Angles", "multicam"}, {"Exports", "export"},
-            {"Plugins & MCP", "plugins"}, {"Keyboard Shortcuts", "shortcuts"}, {"History", "recovery"}})
+            {"Plugins & MCP", "plugins"}, {"Assistant", "mcp"}, {"Keyboard Shortcuts", "shortcuts"}, {"History", "recovery"}})
         if (name.find(panel) != std::string::npos) return topic;
     return "welcome";
 }

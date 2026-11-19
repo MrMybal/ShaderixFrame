@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CyUI — Documentation</title></head><body><main id="main"><h1>CyUI Documentation</h1><p><a href="Documentation/Documentation.html#/en/overview">Open the local manual</a></p></main><script>
+const routes={"start":"integration","editors":"module-recipes/curves-graphs-and-timeline","data":"module-recipes/canvas-and-numeric-plots","code":"code","media":"module-recipes/images-viewport-and-optional-3d-gizmo","filtering":"filtering","python":"python","web":"web","unreal":"unreal","office-grid":"office/grid","office-sheet":"office/spreadsheet","office-writer":"office/writer","office-formats":"office/formats","markdown":"native-markdown","markdown-editor":"native-markdown/editor","playback":"native-markdown/resources","platforms":"overview/platforms"};
+const requested=new URLSearchParams(location.search).get('lang');
+const language=['en','fr'].includes(requested)?requested:"en";
+const chapter=location.hash.slice(1);
+location.replace("Documentation/Documentation.html"+'#/'+language+'/'+(routes[chapter]||'overview'));
+</script></body></html>

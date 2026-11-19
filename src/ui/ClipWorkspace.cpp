@@ -160,6 +160,7 @@ void Editor::clipEditor() {
         ImGui::SetNextWindowPos(viewport->WorkPos + ImVec2(30, 30), ImGuiCond_FirstUseEver);
         clipDetachRequested = false;
     }
+    applyPanelPlacement("Clip Editor");
     bool visible = ImGui::Begin(panelTitle("Clip Editor").c_str(), &panels["Clip Editor"]);
     ImGuiID dock = ImGui::GetID("ClipDocumentDock");
     ImVec2 dockSize = ImGui::GetContentRegionAvail();

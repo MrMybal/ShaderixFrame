@@ -1203,5 +1203,16 @@
       "logs"
     ],
     "filenames": []
+  },
+  {
+    "id": "verse",
+    "name": "Verse",
+    "lexer": null,
+    "native": "verse",
+    "sample": "sample.verse",
+    "extensions": [
+      "verse"
+    ],
+    "filenames": []
   }
 ]

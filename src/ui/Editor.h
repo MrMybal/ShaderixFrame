@@ -21,12 +21,26 @@
 #include <optional>
 namespace sf {
 class Editor {
+    friend class UiAutomation;
   public:
+    std::function<void()> assistantPanel;
+    void showAssistant() { panels["Assistant"]=true; }
     // Workspaces, as CyDAW's application modes.
     enum class Mode { Edit, Effects, Motion, Color, Audio, Deliver };
     static constexpr int modeCount = 6;
 
   private:
+    bool automationActive = false;
+    std::string automationPath;
+    std::string automationErrorCode;
+    std::function<Json(const std::string &, const Json &)> automationDispatch;
+    struct PanelPlacement {
+        bool detach = false;
+        std::optional<ImVec2> position, size;
+        std::optional<ImGuiID> dock;
+    };
+    std::map<std::string, PanelPlacement> panelPlacements;
+    void applyPanelPlacement(const char *name);
     HelpDocumentation help;
     struct PendingImport {
         std::string path;
@@ -172,6 +186,7 @@ class Editor {
                                        {"Video Scopes", true},
                                        {"Mixer & Audio Graph", true},
                                        {"Plugins & MCP", true},
+                                       {"Assistant", false},
                                        {"Exports", true},
                                        {"DSP Graph", false},
                                        {"Clip Editor", false},
@@ -399,6 +414,7 @@ class Editor {
         std::string label, shortcut;
         std::function<void()> run;
         bool enabled = true;
+        std::string id;
     };
     bool paletteOpen = false, paletteFocus = false;
     std::string paletteQuery;

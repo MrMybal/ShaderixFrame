@@ -129,7 +129,7 @@ TokenRole styleRole(std::string_view name) {
         if (has("UNKNOWN") || has("WRONG")) return TokenRole::error;
         return has("RECTYPE") || has("RECORDTYPE") ? TokenRole::keyword : TokenRole::number;
     }
-    if (has("COMMENT") || has("_REM")) return TokenRole::comment;
+    if (has("COMMENT") || has("_REM") || has("TASKMARKER")) return TokenRole::comment;
     if (has("_DIFF_")) {
         if (has("DELETED")) return TokenRole::removed;
         if (has("ADDED")) return TokenRole::added;
@@ -236,6 +236,9 @@ std::vector<CodeToken> highlightCode(std::string_view text,CodeLanguage language
     if (dynamic && dynamic->definition.rules) return ruleTokens(text,*dynamic->definition.rules);
     if (language==CodeLanguage::log || (dynamic && dynamic->definition.base==CodeLanguage::log)) return logTokens(text);
     const auto *p=dynamic ? &dynamic->profile : builtin(language);
+    if (language==CodeLanguage::verse || (dynamic && dynamic->definition.base==CodeLanguage::verse)) {
+        auto tokens=detail::verseTokens(text,*p);validate(text,tokens);return tokens;
+    }
     if (!p || !p->module || language==CodeLanguage::plain || language==CodeLanguage::nfo) return text.empty() ? std::vector<CodeToken>{} : std::vector<CodeToken>{{0,text.size(),TokenRole::text}};
     auto styles=detail::lexSource(text,*p);
     std::unordered_set<std::string> functions(p->functions.begin(),p->functions.end());

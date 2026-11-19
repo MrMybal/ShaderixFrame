@@ -1,14 +1,15 @@
 #include "ui/EnglishPanels.h"
 #include "ui/Editor.h"
 #include "ui/UiPreferences.h"
+#include "ui/Assistant.h"
+#include "ui/UiAutomation.h"
+#include "mcp/Cli.h"
 #include <atomic>
-#include <deque>
 #include <fstream>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 #include <imgui_internal.h>
 #include <mfapi.h>
-#include <mutex>
 #include <shellapi.h>
 #include <thread>
 
@@ -65,13 +66,6 @@ LRESULT CALLBACK proc(HWND w, UINT msg, WPARAM a, LPARAM b) {
     }
     return DefWindowProcW(w, msg, a, b);
 }
-void output(const sf::Json &j) {
-    if (j.IsNull())
-        return;
-    std::string text = j.Dump(0) + "\n";
-    DWORD written;
-    WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), text.data(), DWORD(text.size()), &written, nullptr);
-}
 void capture(const std::string &path) {
     sf::Com<ID3D11Texture2D> t;
     swapChain->GetBuffer(0, IID_PPV_ARGS(&t));
@@ -106,7 +100,9 @@ void capture(const std::string &path) {
 }
 } // namespace
 int main() {
-    bool mcp = false, hidden = false;
+    bool mcp = false, hidden = false, cli = false, assistantVisible = false, httpMcp = false, allowChanges = false, compactMcp = false;
+    std::string automationConfig, connectionInfo;
+    std::vector<std::string> cliArguments;
     std::string snapshot, projectPath, view, recoveryDir, viewportReport;
     std::string manualTopic, manualLanguage, helpAnchor, helpMedia, helpNote, helpReport;
     std::string uiTheme, uiDensity, uiLocale;float uiScale=0;
@@ -128,7 +124,15 @@ int main() {
     auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     for (int i = 1; i < argc; ++i) {
         std::wstring a = argv[i];
-        if(a.starts_with(L"--ui-theme="))uiTheme=sx::Narrow(a.substr(11));
+        if(a!=L"--cli")cliArguments.push_back(sx::Narrow(a));
+        if(a==L"--cli")cli=true;
+        else if(a==L"--assistant")assistantVisible=true;
+        else if(a==L"--mcp-http")httpMcp=true;
+        else if(a==L"--allow-changes")allowChanges=true;
+        else if(a==L"--mcp-compact"){mcp=true;compactMcp=true;}
+        else if(a.starts_with(L"--automation-config="))automationConfig=sx::Narrow(a.substr(20));
+        else if(a.starts_with(L"--mcp-info="))connectionInfo=sx::Narrow(a.substr(11));
+        else if(a.starts_with(L"--ui-theme="))uiTheme=sx::Narrow(a.substr(11));
         else if(a.starts_with(L"--ui-density="))uiDensity=sx::Narrow(a.substr(13));
         else if(a.starts_with(L"--help-topic="))manualTopic=sx::Narrow(a.substr(13));
         else if(a.starts_with(L"--help-language="))manualLanguage=sx::Narrow(a.substr(16));
@@ -189,13 +193,12 @@ int main() {
             projectPath = sx::Narrow(a);
     }
     LocalFree(argv);
+    if(cli){wchar_t executable[32768];GetModuleFileNameW(nullptr,executable,32768);return sf::runCli(cliArguments,std::filesystem::path(executable).parent_path());}
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     MFStartup(MF_VERSION);
     HWND window = nullptr;
     std::thread input;
     std::atomic<bool> eof = false, stop = false;
-    std::mutex mutex;
-    std::deque<std::string> requests;
     int exitCode = 0;
     try {
         wchar_t exe[32768];
@@ -304,27 +307,18 @@ int main() {
         if (viewZoom > 0)
             ui.setCompositionPixelZoom(viewZoom / 100);
 
-        sf::Protocol protocol(session);
+        auto automationOptions=sf::AutomationOptions::load(sx::Utf8Path(automationConfig));
+        auto automation=std::make_shared<sf::Automation>(session,automationOptions);
+        automation->allowChanges(mcp||allowChanges);
+        if(mcp)automation->confirmDiscard(true); // Preserve the existing dedicated stdio process contract.
+        auto uiAutomation=std::make_unique<sf::UiAutomation>(*automation,ui);
+        auto assistant=std::make_unique<sf::Assistant>(*automation,automationOptions);
+        ui.assistantPanel=[&]{assistant->draw();};
+        if(assistantVisible)ui.showAssistant();
+        if(httpMcp)automation->startHttp(0,sx::Utf8Path(connectionInfo));
         if (mcp) {
-            input = std::thread([&] {
-                std::string buffered;
-                char chunk[4096];
-                DWORD count = 0;
-                HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
-                while (!stop && ReadFile(in, chunk, sizeof(chunk), &count, nullptr) && count) {
-                    buffered.append(chunk, count);
-                    size_t at;
-                    while ((at = buffered.find('\n')) != std::string::npos) {
-                        std::string line = buffered.substr(0, at);
-                        buffered.erase(0, at + 1);
-                        if (!line.empty()) {
-                            std::lock_guard lock(mutex);
-                            requests.push_back(std::move(line));
-                        }
-                    }
-                    if (buffered.size() > 8 * 1024 * 1024)
-                        break;
-                }
+            input = std::thread([&,automation] {
+                try{automation->serveStdio(compactMcp);}catch(...){stop=true;}
                 eof = true;
             });
         }
@@ -344,33 +338,8 @@ int main() {
             }
             if (closing)
                 break;
-            if (mcp) {
-                std::deque<std::string> incoming;
-                {
-                    std::lock_guard lock(mutex);
-                    incoming.swap(requests);
-                }
-                for (auto &line : incoming) {
-                    sf::Json j;
-                    std::string err;
-                    if (sf::Json::Parse(line, j, &err))
-                        output(protocol.respond(j));
-                    else {
-                        sf::Json e = sf::Json::Object();
-                        e["jsonrpc"] = "2.0";
-                        e["id"] = {};
-                        e["error"] = sf::Json::Object();
-                        e["error"]["code"] = -32700;
-                        e["error"]["message"] = "Parse error";
-                        output(e);
-                    }
-                }
-                if (eof) {
-                    std::lock_guard lock(mutex);
-                    if (requests.empty())
-                        closing = true;
-                }
-            }
+            automation->pump();assistant->poll();
+            if(mcp&&eof)closing=true;
             if (pendingWidth && pendingHeight) {
                 context->OMSetRenderTargets(0, nullptr, nullptr);
                 backTarget.Reset();
@@ -382,9 +351,11 @@ int main() {
             ImGui_ImplDX11_NewFrame();
             ImGui_ImplWin32_NewFrame();
             cyui::applyDpi(uiScale>0?uiScale:ImGui_ImplWin32_GetDpiScaleForHwnd(window));
+            uiAutomation->beforeFrame();
             ImGui::NewFrame();
             ui.draw();
             ++ticks;
+            if(ticks==2&&assistantVisible)ui.showAssistant();
             // After the first frames, when the workspace mode has set its panels.
             if (ticks == 2 && selectClip >= 0)
                 ui.selectClipAt(selectClip);
@@ -437,6 +408,7 @@ int main() {
                                     : view == "clip"       ? "Clip Editor"
                                     : view == "animations" ? "Animation"
                                     : view == "plugins"    ? "Plugins & MCP"
+                                    : view == "assistant"  ? "Assistant"
                                     : view == "exports"    ? "Exports"
                                     : view == "markers"    ? "Markers"
                                     : view == "history"    ? "History"
@@ -500,6 +472,7 @@ int main() {
             }
             cyui::renderNotifications();
             ImGui::Render();
+            uiAutomation->afterFrame();
             float bg[] = {.05f, .06f, .075f, 1};
             auto *rt = backTarget.Get();
             context->OMSetRenderTargets(1, &rt, nullptr);
@@ -551,6 +524,8 @@ int main() {
             if (hidden)
                 Sleep(10);
         }
+        // Stop callers before destroying the session or the ImGui context.
+        automation->stop();assistant.reset();ui.assistantPanel={};uiAutomation.reset();
         // Finish cancellation and release worker COM/GPU objects before runtime shutdown.
         session.exports.shutdown();
         session.syncPluginEditors(true);

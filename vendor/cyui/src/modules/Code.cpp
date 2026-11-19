@@ -1,5 +1,6 @@
 #include "cyui/modules/Code.h"
 #include "ModuleInternal.h"
+#include "cyui/detail/CodeText.h"
 #include <set>
 #include <cstdio>
 #include <stdexcept>
@@ -120,28 +121,28 @@ bool CodeDocument::setOverlays(ArrayView<SourceSpan> spans, std::uint64_t revisi
 }
 ImU32 tokenColor(TokenRole role, ImU32 background) {
     const auto &p = palette();
-    ImU32 c = p.text;
+    ImU32 c = p.codeText;
     switch (role) {
     case TokenRole::keyword:
-        c = p.accent;
+        c = p.codeKeyword;
         break;
     case TokenRole::type:
-        c = p.info;
+        c = p.codeType;
         break;
     case TokenRole::number:
-        c = p.warning;
+        c = p.codeNumber;
         break;
     case TokenRole::string:
-        c = p.success;
+        c = p.codeString;
         break;
     case TokenRole::comment:
-        c = p.textFaint;
+        c = p.codeComment;
         break;
     case TokenRole::preprocessor:
-        c = mix(p.info, p.accent, .5f);
+        c = p.codePreprocessor;
         break;
     case TokenRole::function:
-        c = mix(p.text, p.warning, .4f);
+        c = p.codeFunction;
         break;
     case TokenRole::added: case TokenRole::ansiGreen: c=p.success;break;
     case TokenRole::removed: case TokenRole::error: case TokenRole::ansiRed: c=p.error;break;
@@ -209,6 +210,7 @@ CodeViewResult codeViewer(const char *id, CodeViewState &s, const CodeDocument &
         s.searchedQuery = s.query;
         s.match = s.matches.empty() ? -1 : 0;
     }
+    if (s.searchBar) {
     ImGui::SetNextItemWidth(-dp(100));
     detail::inputText("##find", s.query);
     ImGui::SameLine();
@@ -218,10 +220,15 @@ CodeViewResult codeViewer(const char *id, CodeViewState &s, const CodeDocument &
     }
     if (size.y > 0)
         size.y = std::max(dp(1), size.y - ImGui::GetFrameHeightWithSpacing());
+    }
     ScopedFont font(monoFont());
     ScopedColor ground(ImGuiCol_ChildBg, palette().bg0);
     ImGui::BeginChild("##source", size, ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
-    const float height = ImGui::GetTextLineHeightWithSpacing(), gutter = dp(56);
+    {
+    detail::CodeTextScope text(s.textScale, s.wheelZoom);
+    const auto lastNumber = std::to_string(std::max(std::size_t(1), doc.lines().size()));
+    const float height = ImGui::GetTextLineHeightWithSpacing(),
+                gutter = s.lineNumbers ? std::max(dp(56.f), ImGui::CalcTextSize(lastNumber.c_str()).x + dp(16.f)) : dp(8);
     const float width = std::max(ImGui::GetContentRegionAvail().x,
                                  gutter + float(doc.columns()) * ImGui::CalcTextSize("M").x);
     if (s.focusLine >= 0) {
@@ -244,7 +251,7 @@ CodeViewResult codeViewer(const char *id, CodeViewState &s, const CodeDocument &
             }
             char number[32];
             std::snprintf(number, sizeof(number), "%d", i + 1);
-            d->AddText({p.x + dp(5), p.y}, palette().textFaint, number);
+            if (s.lineNumbers) d->AddText({p.x + dp(5), p.y}, palette().textFaint, number);
             paintCodeLine(d, {p.x + gutter, p.y}, doc.lines()[std::size_t(i)]);
             if (!s.query.empty() && doc.lines()[std::size_t(i)].text.find(s.query) != std::string::npos)
                 d->AddRect({p.x + gutter, p.y}, {p.x + width, p.y + height}, palette().warning, 0, 0, dp(1));
@@ -263,6 +270,7 @@ CodeViewResult codeViewer(const char *id, CodeViewState &s, const CodeDocument &
                 ImGui::EndPopup();
             }
         }
+    } // text font is restored before leaving the source child
     ImGui::EndChild();
     return result;
 }

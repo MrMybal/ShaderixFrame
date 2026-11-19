@@ -6,6 +6,9 @@
 #include <functional>
 #include <optional>
 
+// Native code views share the bundled monospace font and per-view text zoom.
+#define CYUI_CODE_TEXT_PRESENTATION 1
+
 namespace cyui {
 // Values 0..13 remain source/ABI compatible; plugin IDs use the high bit.
 enum class CodeLanguage : std::uint32_t {
@@ -111,6 +114,9 @@ struct CodeViewState {
     std::vector<int> matches;
     std::uint64_t searchedRevision = 0;
     std::string searchedQuery;
+    float textScale = 1.f; // 0.5..3, independent of DPI/interface size
+    bool wheelZoom = true;
+    bool searchBar = true, lineNumbers = true;
 };
 struct CodeViewResult {
     int clickedLine = -1;

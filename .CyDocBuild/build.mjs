@@ -27,7 +27,8 @@ const groupNames={
   graphs:['Image graphs and shaders','Graphes d’image et shaders'], grading:['Color and LUTs','Couleur et LUT'],
   mixing:['Audio routing and DSP','Routage audio et DSP'], plugins:['External audio and OFX','Audio externe et OFX'],
   motion:['Titles, masks and motion','Titres, masques et animation'], markers:['Markers and interchange','Repères et échanges'],
-  delivery:['Rendering and delivery','Rendu et livraison']
+  delivery:['Rendering and delivery','Rendu et livraison'],
+  interface:['Editor interface and nested workspaces','Interface et espaces de travail imbriqués']
 };
 const groups={
   projects:'status new_project open_project save_project list_versions restore_version set_sequence transport undo redo get_history',
@@ -41,7 +42,7 @@ const groups={
   markers:'add_marker set_marker remove_marker export_edl import_edl export_shot_list export_markers import_subtitles export_subtitles add_subtitle set_subtitle_style detect_scenes detect_beats split_at_markers fit_to_markers switch_angle',
   delivery:'export_video export_audio export_gif export_chapters start_export list_export_presets export_status cancel_export render_frame export_marker_stills'
 };
-const groupOf=name=>Object.keys(groups).find(key=>groups[key].split(' ').includes(name))||'editing';
+const groupOf=name=>/^(ui_|get_ui_|list_ui_)/.test(name)?'interface':Object.keys(groups).find(key=>groups[key].split(' ').includes(name))||'editing';
 function frontmatter({id,title,description,parent,locale,revision='1',kind,order=0}) {
   return `---\nid: ${id}\ntitle: ${title}\ndescription: ${description.replaceAll('\n',' ')}\nsection: ${locale==='fr'?'Référence développeur':'Developer reference'}\n${parent?'parent: '+parent+'\n':''}order: ${order}\n${locale==='en'?'revision':'sourceRevision'}: ${revision}\n${kind?'kind: '+kind+'\n':''}---\n\n`;
 }
@@ -50,7 +51,7 @@ for (const locale of ['en','fr']) {
   const symbols=tools.map(tool=>({key:tool.name,name:tool.name,language:'json',kind:'tool',
     description:fr?french[tool.name].description:enDescription(tool),
     // Input schemas are public declarations, not implementation code.
-    signature:JSON.stringify({name:tool.name,inputSchema:tool.inputSchema},null,2),
+    signature:JSON.stringify({name:tool.name,inputSchema:tool.inputSchema,...(tool.outputSchema?{outputSchema:tool.outputSchema}:{})},null,2),
     parameters:Object.entries(tool.inputSchema.properties||{}).map(([name,property])=>({name,type:property.type||'JSON',optional:!(tool.inputSchema.required||[]).includes(name),description:params[name][locale],default:property.default===undefined?'':JSON.stringify(property.default)})),
     returnType:'MCP CallToolResult',
     returns:fr?'content[0].text contient le JSON du résultat ; structuredContent fournit le même objet. isError vaut false en cas de réussite. En cas de refus, isError vaut true et content[0].text explique le problème. Les champs particuliers sont décrits ci-dessus.':'content[0].text contains result JSON; structuredContent provides the same object. isError is false on success. A rejected operation sets isError to true and explains the problem in content[0].text. Operation-specific fields are described above.'}));
@@ -62,6 +63,7 @@ for (const locale of ['en','fr']) {
     const revision=hash(JSON.stringify(tool)).slice(0,16);
     const description=symbols.find(symbol=>symbol.name===page.title).description;
     let body=page.markdown;
+    if(groupOf(tool.name)==='interface')body+=`\n\n${fr?'Ces outils nécessitent une instance graphique ouverte. Le CLI utilise `--connect` et les mêmes droits que le chat. Voir [le pilotage de l’interface](doc:mcp#interface).':'These tools require an open GUI instance. The CLI uses `--connect` and the same permissions as chat. See [editor interface automation](doc:mcp#interface).'}\n`;
     body+=`\n\n[${fr?'Connexion MCP et exemples':'MCP connection and examples'}](doc:mcp) · [${fr?'Règles des appels':'Calling conventions'}](doc:api-links#calling)\n`;
     await writeFile(join(content,locale,page.id+'.md'),frontmatter({...page,description,parent:'mcp-'+groupOf(page.title),revision,order:0})+body,'utf8');
   }

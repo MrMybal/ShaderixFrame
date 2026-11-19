@@ -1,5 +1,6 @@
 #include "cyui/modules/Diff.h"
 #include "ModuleInternal.h"
+#include "cyui/detail/CodeText.h"
 #include <cstdio>
 #include <regex>
 #include <charconv>
@@ -260,118 +261,145 @@ void DiffDocument::prepare(CodeLanguage language) {
         columns_ = std::max(columns_, r.code.text.size());
     ++revision_;
 }
-DiffResult diffViewer(const char *id, DiffState &s, const DiffDocument &doc, ImVec2 size) {
+DiffResult diffViewer(const char *id, DiffState &state, const DiffDocument &doc, ImVec2 size) {
     ScopedID scope(id);
     DiffResult result;
-    ImGui::Checkbox(trLabel("Side by side").c_str(), &s.split);
+    ImGui::Checkbox(trLabel("Side by side").c_str(), &state.split);
     ImGui::SameLine();
     if (ghostButton(trLabel("Next change").c_str()) && !doc.hunks().empty()) {
-        s.hunk = (s.hunk + 1) % int(doc.hunks().size());
-        s.focus = doc.hunks()[std::size_t(s.hunk)];
+        state.hunk = (state.hunk + 1) % static_cast<int>(doc.hunks().size());
+        state.focus = doc.hunks()[state.hunk];
     }
     ImGui::SameLine();
     ImGui::SetNextItemWidth(dp(180));
-    detail::inputText("##find", s.query);
+    detail::inputText("##find", state.query);
     ImGui::SameLine();
-    if (ghostButton(trLabel("Find next").c_str()) && !s.query.empty()) {
-        for (std::size_t n = 1; n <= doc.rows().size(); ++n) {
-            const auto i = (std::size_t(std::max(-1, s.selected) + 1) + n - 1) % doc.rows().size();
-            if (doc.rows()[i].code.text.find(s.query) != std::string::npos) {
-                s.focus = s.selected = int(i);
+    if (ghostButton(trLabel("Find next").c_str()) && !state.query.empty())
+        for (size_t n = 0; n < doc.rows().size(); ++n) {
+            const auto i =
+                (static_cast<size_t>(std::max(-1, state.selected) + 1) + n) % doc.rows().size();
+            if (doc.rows()[i].code.text.find(state.query) != std::string::npos) {
+                state.selected = state.focus = static_cast<int>(i);
                 break;
             }
         }
-    }
     if (size.y > 0)
-        size.y = std::max(dp(1), size.y - ImGui::GetFrameHeightWithSpacing());
+        size.y = std::max(dp(1.f), size.y - ImGui::GetFrameHeightWithSpacing());
     ScopedFont font(monoFont());
-    const float height = ImGui::GetTextLineHeightWithSpacing();
-    auto pane = [&](const char *name, int side, ImVec2 extent) {
-        const std::size_t count = side < 0 ? doc.rows().size() : doc.pairs().size();
-        const auto columns = doc.columns();
-        const float width = std::max(extent.x, dp(90) + float(columns) * ImGui::CalcTextSize("M").x);
-        ImGui::SetNextWindowContentSize({width, float(count) * height});
-        ScopedColor ground(ImGuiCol_ChildBg, palette().bg0);
-        ImGui::BeginChild(name, extent, ImGuiChildFlags_Borders, ImGuiWindowFlags_HorizontalScrollbar);
-        if (side >= 0) {
-            if (ImGui::IsWindowHovered())
-                s.scroll = ImGui::GetScrollY();
-            else
-                ImGui::SetScrollY(s.scroll);
-        }
-        if (s.focus >= 0) {
-            int row = s.focus;
-            if (side >= 0)
-                for (std::size_t i = 0; i < doc.pairs().size(); ++i)
-                    if (doc.pairs()[i].left == s.focus || doc.pairs()[i].right == s.focus) {
-                        row = int(i);
-                        break;
-                    }
-            s.scroll = std::max(0.f, row * height - ImGui::GetWindowHeight() * .25f);
-            ImGui::SetScrollY(s.scroll);
-        }
-        ImGuiListClipper clip;
-        clip.Begin(int(count), height);
-        while (clip.Step())
-            for (int i = clip.DisplayStart; i < clip.DisplayEnd; ++i) {
-                const int index = side < 0    ? i
-                                  : side == 0 ? doc.pairs()[std::size_t(i)].left
-                                              : doc.pairs()[std::size_t(i)].right;
-                const auto p = ImGui::GetCursorScreenPos();
-                ScopedID row(i);
-                detail::listRow("##line", {width, height});
+    state.textScale = detail::codeTextScale(state.textScale);
+    const float pendingHeight = ImGui::GetTextLineHeightWithSpacing() * state.textScale;
+    const auto count = static_cast<int>(state.split ? doc.pairs().size() : doc.rows().size());
+    auto *storage = ImGui::GetStateStorage();
+    const auto scrollKey = ImGui::GetID("##diff-last-scroll"),
+               seenKey = ImGui::GetID("##diff-scroll-initialized");
+    if (!storage->GetInt(seenKey) || state.scroll != storage->GetFloat(scrollKey))
+        ImGui::SetNextWindowScroll({-1.f, std::max(0.f, state.scroll)});
+    ImGui::SetNextWindowContentSize({0, count * pendingHeight});
+    ScopedColor ground(ImGuiCol_ChildBg, palette().bg0);
+    // One child owns wheel, trackpad, keyboard and scrollbar input for both
+    // columns. Painting uses the same row origin; no delayed pane mirroring.
+    ScopedVar rowSpacing(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, 0.f));
+    ImGui::BeginChild("##aligned-diff-canvas", size, ImGuiChildFlags_Borders,
+                      ImGuiWindowFlags_HorizontalScrollbar);
+    {
+    detail::CodeTextScope text(state.textScale, state.wheelZoom);
+    const float height = ImGui::GetTextLineHeightWithSpacing(),
+                gutter = std::max(dp(state.split ? 68.f : 96.f),
+                                  ImGui::CalcTextSize(state.split ? "000000" : "00000 00000").x + dp(8.f));
+    const float available = std::max(dp(1.f), ImGui::GetCurrentWindow()->InnerRect.GetWidth() -
+                                                  ImGui::GetStyle().WindowPadding.x * 2);
+    const float gap = dp(12.f), column = std::max(dp(1.f), (available - gap) * .5f);
+    const float textWidth = gutter + float(doc.columns()) * ImGui::CalcTextSize("M").x + dp(8.f);
+    const float width = state.split ? available + std::max(0.f, textWidth - column)
+                                    : std::max(available, textWidth);
+    if (state.focus >= 0) {
+        int row = state.focus;
+        if (state.split)
+            for (size_t i = 0; i < doc.pairs().size(); ++i)
+                if (doc.pairs()[i].left == state.focus || doc.pairs()[i].right == state.focus) {
+                    row = static_cast<int>(i);
+                    break;
+                }
+        ImGui::SetScrollY(std::max(0.f, row * height - ImGui::GetWindowHeight() * .25f));
+        state.focus = -1;
+    }
+    state.scroll = ImGui::GetScrollY();
+    storage->SetFloat(scrollKey, state.scroll);
+    storage->SetInt(seenKey, 1);
+    ImGuiListClipper clip;
+    clip.Begin(count, height);
+    while (clip.Step())
+        for (int i = clip.DisplayStart; i < clip.DisplayEnd; ++i) {
+            const auto cursor = ImGui::GetCursorScreenPos();
+            const auto scrollX = ImGui::GetScrollX();
+            const ImVec2 origin{cursor.x + scrollX, cursor.y};
+            auto paint = [&](int index, int side, float x, float extent) {
                 if (index < 0)
-                    continue;
-                const auto &r = doc.rows()[std::size_t(index)];
+                    return;
+                const auto &row = doc.rows()[index];
+                const auto &p = palette();
+                const auto tint = row.kind == DiffKind::added     ? p.success
+                                  : row.kind == DiffKind::removed ? p.error
+                                  : row.kind == DiffKind::hunk    ? p.info
+                                                                  : p.bg0;
+                const auto bg = mix(p.bg0, tint, .14f);
                 auto *d = ImGui::GetWindowDrawList();
-                const auto tint = r.kind == DiffKind::added     ? palette().success
-                                  : r.kind == DiffKind::removed ? palette().error
-                                  : r.kind == DiffKind::hunk    ? palette().info
-                                                                : palette().bg0;
-                const auto bg = mix(palette().bg0, tint, .14f);
-                d->AddRectFilled(p, {p.x + width, p.y + height},
-                                 s.selected == index ? palette().selection : bg);
-                const float gutter = dp(88);
-                if (r.inlineEnd > r.inlineStart) {
-                    const float
-                        a = ImGui::CalcTextSize(r.code.text.data(), r.code.text.data() + r.inlineStart).x,
-                        b = ImGui::CalcTextSize(r.code.text.data(), r.code.text.data() + r.inlineEnd).x;
-                    d->AddRectFilled({p.x + gutter + a, p.y}, {p.x + gutter + b, p.y + height},
-                                     alpha(tint, .25f));
+                const ImVec2 a{origin.x + x, origin.y}, b{origin.x + x + extent, origin.y + height};
+                d->PushClipRect(a, b, true);
+                d->AddRectFilled(a, b, state.selected == index ? p.selection : bg);
+                d->PushClipRect({a.x + gutter, a.y}, b, true);
+                if (row.inlineEnd > row.inlineStart) {
+                    const auto left = ImGui::CalcTextSize(row.code.text.data(),
+                                                          row.code.text.data() + row.inlineStart)
+                                          .x,
+                               right = ImGui::CalcTextSize(row.code.text.data(),
+                                                           row.code.text.data() + row.inlineEnd)
+                                           .x;
+                    d->AddRectFilled({a.x + gutter + left - scrollX, a.y},
+                                     {a.x + gutter + right - scrollX, b.y}, alpha(tint, .25f));
                 }
-                char number[48];
+                char number[64];
                 if (side < 0)
-                    std::snprintf(number, sizeof(number), "%5d %5d", r.oldLine, r.newLine);
+                    std::snprintf(number, sizeof(number), "%5d %5d", row.oldLine, row.newLine);
                 else
-                    std::snprintf(number, sizeof(number), "%6d", side == 0 ? r.oldLine : r.newLine);
-                d->AddText({p.x + dp(4), p.y}, palette().textFaint, number);
-                if (r.kind == DiffKind::notice)
-                    d->AddText({p.x + gutter, p.y}, palette().textDim, tr(r.code.text.c_str()).c_str());
+                    std::snprintf(number, sizeof(number), "%6d",
+                                  side == 0 ? row.oldLine : row.newLine);
+                if (row.kind == DiffKind::notice)
+                    d->AddText({a.x + gutter - scrollX, a.y}, p.textDim,
+                               tr(row.code.text.c_str()).c_str());
                 else
-                    paintCodeLine(d, {p.x + gutter, p.y}, r.code, bg);
+                    paintCodeLine(d, {a.x + gutter - scrollX, a.y}, row.code, bg);
+                d->PopClipRect();
+                d->AddText({a.x + dp(4.f), a.y}, p.textFaint, number);
+                if (!state.query.empty() && row.code.text.find(state.query) != std::string::npos)
+                    d->AddRect(a, b, p.warning, 0, 0, dp(1.f));
+                d->PopClipRect();
+                ImGui::SetCursorScreenPos(a);
+                ImGui::PushID(side);
+                ImGui::InvisibleButton("##line", {extent, height});
                 if (ImGui::IsItemClicked()) {
-                    s.selected = index;
-                    result = {index, r.oldLine, r.newLine};
+                    state.selected = index;
+                    result = {index, row.oldLine, row.newLine};
                 }
-                if (!s.query.empty() && r.code.text.find(s.query) != std::string::npos)
-                    d->AddRect(p, {p.x + width, p.y + height}, palette().warning, 0, 0, dp(1));
                 if (ImGui::BeginPopupContextItem()) {
                     if (ImGui::MenuItem(trLabel("Copy line").c_str()))
-                        ImGui::SetClipboardText(r.code.text.c_str());
+                        ImGui::SetClipboardText(row.code.text.c_str());
                     ImGui::EndPopup();
                 }
-            }
-        ImGui::EndChild();
-    };
-    if (s.split) {
-        const float width =
-            (size.x > 0 ? size.x : ImGui::GetContentRegionAvail().x) - ImGui::GetStyle().ItemSpacing.x;
-        pane("##before", 0, {width * .5f, size.y});
-        ImGui::SameLine();
-        pane("##after", 1, {width * .5f, size.y});
-    } else
-        pane("##unified", -1, size);
-    s.focus = -1;
+                ImGui::PopID();
+            };
+            ImGui::PushID(i);
+            if (state.split) {
+                paint(doc.pairs()[i].left, 0, 0, column);
+                paint(doc.pairs()[i].right, 1, column + gap, column);
+            } else
+                paint(i, -1, 0, available);
+            ImGui::PopID();
+            ImGui::SetCursorScreenPos(cursor);
+            ImGui::Dummy({width, height});
+        }
+    } // both columns use the same text scale and scroll canvas
+    ImGui::EndChild();
     return result;
 }
 } // namespace cyui

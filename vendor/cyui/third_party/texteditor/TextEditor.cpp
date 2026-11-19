@@ -22,6 +22,7 @@
 #include "imgui_internal.h"
 
 #include "TextEditor.h"
+#include "cyui/detail/CodeText.h"
 
 
 //
@@ -76,6 +77,8 @@ bool TextEditor::render(const char* title, const ImVec2& size, ImGuiChildFlags c
 			resetDearImGuiScrolling = false;
 		}
 
+		{
+		cyui::detail::CodeTextScope textScale(fontScale, mouseWheelZoom);
 		// get drawList
 		drawList = ImGui::GetWindowDrawList();
 
@@ -237,6 +240,7 @@ bool TextEditor::render(const char* title, const ImVec2& size, ImGuiChildFlags c
 				window->DC.NavLayersActiveMaskNext |= (1 << window->DC.NavLayerCurrent);
 			}
 		}
+		} // restore the font before EndChild
 	}
 
 	ImGui::EndChild();
@@ -434,7 +438,10 @@ void TextEditor::renderMatchingBracketLines() {
 		const auto active = bracketeer.getEnclosingBrackets(cursors.getMain().getInteractiveEnd());
 		// render bracket pair lines
 		for (auto bracket = bracketeer.begin(); bracket < bracketeer.end(); bracket++) {
-			if (bracket->visible && bracket->end.line - bracket->start.line > 1) {
+			// Block guides belong to braces. Multiline argument lists must not
+			// draw a vertical stroke through parameter names.
+			if (bracket->visible && bracket->end.line - bracket->start.line > 1 &&
+				document[bracket->start.line][bracket->start.index].codepoint == '{') {
 				const auto column = std::min(docPos2VisPos(bracket->start).column, docPos2VisPos(bracket->end).column);
 
 				for (size_t i = bracket->start.line + 1; i < bracket->end.line; i++) {
@@ -3272,6 +3279,8 @@ void TextEditor::deleteText(std::shared_ptr<Transaction> transaction, DocPos sta
 //	TextEditor::SetLanguage
 //
 
+void TextEditor::SetFontScale(float value) { fontScale = cyui::detail::codeTextScale(value); }
+
 void TextEditor::SetLanguage(const Language* language) {
 	config.language = language;
 
@@ -3637,8 +3646,8 @@ TextEditor::DocPos TextEditor::Document::insertText(const Config& config, DocPos
 
 	// process all codepoints
 	while (i < endOfText) {
-		ImWchar character;
-		i = CodePoint::read(i, endOfText, &character);
+		const auto glyph = Glyph::readUtf8(i, endOfText);
+		const auto character = glyph.codepoint;
 
 		if (character == '\n') {
 			// split line
@@ -3663,7 +3672,7 @@ TextEditor::DocPos TextEditor::Document::insertText(const Config& config, DocPos
 
 		} else if (character != '\r') {
 			// insert next glyph
-			line->insert(line->begin() + (index++), Glyph(character, Color::text));
+			line->insert(line->begin() + (index++), glyph);
 		}
 	}
 
@@ -3740,7 +3749,7 @@ std::string TextEditor::Document::getSectionText(DocPos start, DocPos end) const
 		const auto& line = at(lineNo);
 
 		if (index < line.size()) {
-			section.append(std::string_view(utf8, CodePoint::write(utf8, line[index].codepoint)));
+			section.append(std::string_view(utf8, line[index].writeUtf8(utf8)));
 			index++;
 
 		} else {

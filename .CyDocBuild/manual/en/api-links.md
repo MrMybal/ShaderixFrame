@@ -5,14 +5,14 @@ description: Automate editing or develop effects through the public interfaces.
 section: Developer reference
 parent: welcome
 order: 100
-revision: 1
+revision: 2
 ---
 
 Choose [MCP](doc:mcp) to automate the editor, [the native SDK](doc:reference-sdk) to create stereo audio effects, or [HLSL](doc:reference-hlsl) to write image processing. Each interface has its own data types and execution context.
 
 ## Calling conventions {#calling}
 
-The MCP catalogue exposes 163 operations. Connect over stdio, call `tools/list` for current input schemas, then call `tools/call` with `name` and `arguments`. Clip and track IDs are stable identifiers; effect positions are zero-based indices. Time is in seconds unless the operation says otherwise. Query `status` and `list_effects` before reusing IDs.
+The graphical editor exposes 163 business operations and 23 interface tools; the standalone CLI has the 163 business operations. Compact discovery exposes five gateway tools. Connect over stdio or authenticated loopback HTTP, call `tools/list` for current input schemas, then call `tools/call` with `name` and `arguments`. Clip and track IDs are stable identifiers; effect positions are zero-based indices. Time is in seconds unless the operation says otherwise. Query `status` and `list_effects` before reusing IDs.
 
 A successful tool reply sets `isError: false`, returns the operation object in `structuredContent`, and includes the same JSON in `content[0].text`. A rejected tool sets `isError: true` and puts its explanation in `content[0].text`. Invalid JSON-RPC requests use `error` instead. An omitted optional input is interpreted by that operation; it does not imply a universal default.
 

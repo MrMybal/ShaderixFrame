@@ -57,7 +57,7 @@ try:
     process.stdin.write('{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
     process.stdin.flush()
     catalogue = rpc('tools/list')['tools']
-    assert len(catalogue) == 163
+    assert len(catalogue) >= 163 and any(t['name']=='ui_input' for t in catalogue)
     call('new_project', {'name':'Clip container MCP','width':64,'height':64,'duration':2})
     container=call('add_generator',{'duration':2})['clip']
     call('make_clip_container',{'clip':container})

@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 VENDOR = ROOT / "vendor/cyui"
 LOCK = ROOT / "cyui.lock.json"
-OMITTED = ("third_party/imgui/", "docs/screenshots/", "tests/", ".github/", "integrations/", "python/", "web/")
+OMITTED = ("third_party/imgui/", "docs/screenshots/", "assets/screenshots/", "tests/", ".github/", "integrations/", "python/", "web/", ".CyDocBuild/", "Documentation/", "website/", "AGENTS.md", "CLAUDE.md")
 
 def fingerprints(folder):
     return {p.relative_to(folder).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()

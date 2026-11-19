@@ -1,0 +1,25 @@
+{
+  "kind": "Actual CyDoc reader captured in the browser",
+  "source_revision": "6d50798f349875a86b0e039aea7e4d934bcffb8a",
+  "documentation_manifest_sha256": "67da8654f3d464ae5e530a89da753255c61868ae8a3fb7c126571f907664deba",
+  "images": [
+    {
+      "file": "reader-en.webp",
+      "locale": "en",
+      "size": [
+        1425,
+        990
+      ],
+      "sha256": "0c533b44ec4fce67cbda260f1f71a25d58ce3757ed2e958bf5185bddc615438e"
+    },
+    {
+      "file": "reader-fr.webp",
+      "locale": "fr",
+      "size": [
+        1425,
+        990
+      ],
+      "sha256": "67e57a6a221dc1fc6112397d8be2d0598f7aa817a16fd6d5ae8f0eab94555fa1"
+    }
+  ]
+}

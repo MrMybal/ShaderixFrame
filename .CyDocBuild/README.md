@@ -21,7 +21,15 @@ not an npm registry dependency. Update all hashes and the npm lock when replacin
 After a protocol change, bootstrap the Release executable with SF_BUILD_HELP=OFF, then
 run `python tools/build_cydoc.py --refresh-mcp build/Release/ShaderixFrame.exe`. Review
 and translate every changed contract in `api/mcp-fr.json` before enabling help again.
-The source fingerprints guard against stale MCP/SDK contracts. `api/parameters.json`
+The source fingerprints guard against stale MCP/SDK contracts.
+The GUI catalogue includes 163 business operations and 23 interface tools; headless
+CLI invocations expose the business operations, while connected CLI clients use
+the live editor catalogue. `api/provenance.json` fingerprints the protocol, SDK
+adapter and GUI operation definitions. After refresh, review changes in schemas and
+descriptions, update EN/FR contract hashes and add bilingual parameter descriptions.
+The generator includes both input and output schemas and a separate interface group.
+
+`api/parameters.json`
 contains bilingual parameter explanations. `api/mcp-en-overrides.json` corrects catalogue wording against verified runtime behavior without changing the protocol. Public SDK neutral imports contain only
 signatures and documentation, never implementation bodies.
 

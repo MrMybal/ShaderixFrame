@@ -21,5 +21,6 @@ class PluginEditors {
     bool capture(Project &project, bool force = false);
     void restore(Project &project, const Json &target, const std::string &state, double time);
     std::string snapshot(Project &project, const Json &target, double time);
+    std::vector<DWORD> processIds(Project &, bool editable) const;
 };
 } // namespace sf

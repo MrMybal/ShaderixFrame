@@ -20,7 +20,7 @@ projects are read only; video-specific code and English labels live in adapters.
 
 ## Complete alpha from corresponding source
 
-Download `ShaderixFrame-0.14.0-alpha.2-source.zip` from the matching GitHub prerelease.
+Download `ShaderixFrame-0.15.0-alpha.1-source.zip` from the matching GitHub prerelease.
 It includes this repository and the exact JUCE 8.0.15 dependency. Extract it and
 open an x64 Visual Studio developer terminal in `ShaderixFrame-source`:
 
@@ -92,7 +92,7 @@ The application supplies its existing Dear ImGui 1.93 docking target through
 `CYUI_IMGUI_TARGET`. CyUI's bundled ImGui is deliberately omitted.
 
 Production selects `Core`, `Audio`, `Canvas`, `Plots`, `AudioViews`, `Nodes`,
-`Curves`, `Commands`, `CodeEditor`, `Images`, `Inspector` and `Timeline` using
+`Curves`, `Commands`, `CodeEditor`, `Images`, `Inspector`, `Timeline` and `DocumentViews` using
 explicit `CyUI::<Module>` targets. CodeEditor pulls `Code`, the pinned TextEditor,
 Lexilla and Threads automatically and requires C++20, already used by the app.
 Demo, Gallery, tests, CEF, Web, Unreal, ImGuizmo and Python UI adapters are disabled
@@ -123,3 +123,59 @@ snapshot under ignored `vendor-history/`, and refreshes the lock. It never write
 to the source checkout. Run the clean build and all compatibility tests after an
 update. The native backend still supports Windows 10/11 only; this migration does
 not add a Linux/macOS backend.
+
+## CyMCPSDK assistant and command transports
+
+`vendor/cymcp` is a selected, unmodified build-source snapshot of CyMCPSDK 0.7.0,
+revision `791d4d7d7680213b282ec8529d248a10f8494d77`, recorded in `cymcp.lock.json`.
+It was imported read-only from the local source checkout. CyUI remains version
+1.2.0 but is updated to `6ef01cfcdb197f3a89d64618ce5ef8818c704728` for ChatUI's
+composer/transcript API. Upstream repositories are not changed.
+
+Core, Platform, Http, MCP, AI and ChatUI compile from source. Local engine installation,
+SDK examples/tests/benchmarks and its standalone GUI are disabled. Local model
+services remain available through the HTTP providers without bundling engines or
+weights. ChatUI reuses the existing ImGui target and CyUI DocumentViews.
+
+Verify the pinned snapshots and build in a separate x64 VS developer terminal:
+
+```powershell
+python tools/sync_cymcp.py --check
+python tools/sync_cyui.py --check
+cmake -S . -B build/AssistantRelease -G Ninja -DCMAKE_BUILD_TYPE=Release -DSF_BUILD_VST3_WORKER=OFF -DSF_BUILD_AUDIO_QUALITY_TESTS=OFF
+cmake --build build/AssistantRelease --parallel 4
+ctest --test-dir build/AssistantRelease --output-on-failure
+```
+
+This does not run a GitHub workflow. `assistant_end_to_end` uses local SSE and MCP
+fixtures, the real chat controller, the console executable and hidden real GUI
+instances. It covers tool calls, cancellation, session restoration, permissions,
+JSON/exit codes, same-instance edits, private chunked results and metadata-only
+metrics. Fixtures do not establish live authentication/inference for every provider.
+The optional standalone audio quality target remains disabled.
+
+`ui_automation` exercises the real hidden editor through authenticated MCP: modes,
+docking, commands, file-path injection, dirty-project protection, nested drafts,
+widget clicks/text, languages, shortcuts and a connected CLI. `native_ui_controls`
+uses a hidden native fixture for scoped Windows accessibility discovery and actions.
+ImGui is compiled consistently with its item-hook interface; `src/ui/UiItems.cpp`
+implements those hooks locally. No third-party test-engine framework is bundled or
+required. Native plugin accessibility uses Windows' system UIAutomation libraries.
+The GUI registers its UI extensions into the shared automation registry; standalone
+CLI processes retain the 163 headless business tools and address UI tools with `--connect`.
+
+The result is `build/AssistantRelease/ShaderixFrame.exe` plus `ShaderixFrameCLI.exe`.
+Use the app's bundled manual page `mcp` for launch and runtime configuration.
+The packager includes the CLI, SDK fingerprint lock and dependency notices; it
+accepts `--build-dir` to select a tested build and `--output-dir` to validate an
+isolated package without replacing an existing portable installation or archive.
+For example: `python tools/package.py --archive-only --build-dir build/AssistantRelease --output-dir build/qa/cymcp/package`.
+It never includes assistant
+connection descriptors, conversations, caches or performance logs.
+
+After committing the reviewed release, generate its corresponding-source ZIP with
+`python tools/package_source.py --juce-source path/to/locked-juce-checkout`. If that
+checkout is unavailable, `--juce-archive path/to/prior-corresponding-source.zip`
+reuses only the exact locked JUCE sources after verifying every dependency file
+against the prior archive's source manifest. The application source always comes
+from the current commit. Build the installer with `python tools/make_installer.py`.

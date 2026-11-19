@@ -605,6 +605,29 @@ public:
 
 		// unicode codepoint for this glyph
 		ImWchar codepoint = 0;
+#ifndef IMGUI_USE_WCHAR32
+		// Keep the original UTF-8 when a 16-bit ImGui font uses its fallback glyph.
+		std::array<char, 4> supplementary{};
+#endif
+		size_t writeUtf8(char* dest) const {
+#ifndef IMGUI_USE_WCHAR32
+			if (supplementary[0]) {
+				std::copy(supplementary.begin(), supplementary.end(), dest);
+				return supplementary.size();
+			}
+#endif
+			return CodePoint::write(dest, codepoint);
+		}
+		static Glyph readUtf8(std::string_view::const_iterator& it, std::string_view::const_iterator end) {
+			Glyph glyph;
+			const auto next = CodePoint::read(it, end, &glyph.codepoint);
+#ifndef IMGUI_USE_WCHAR32
+			if (next - it == 4)
+				std::copy(it, next, glyph.supplementary.begin());
+#endif
+			it = next;
+			return glyph;
+		}
 
 		// color for this glyph if a language is specified
 		// maintained by the Colorizer and the Bracketeer overlays
@@ -744,6 +767,11 @@ public:
 	};
 
 	void SetLanguage(const Language* language);
+	// CyUI display-only scale. These setters never create text transactions.
+	void SetFontScale(float value);
+	float GetFontScale() const { return fontScale; }
+	void SetMouseWheelZoomEnabled(bool value) { mouseWheelZoom = value; }
+	bool IsMouseWheelZoomEnabled() const { return mouseWheelZoom; }
 	inline const Language* GetLanguage() const { return config.language; };
 	inline bool HasLanguage() const { return config.language != nullptr; }
 	inline std::string GetLanguageName() const { return config.language == nullptr ? "None" : config.language->name; }
@@ -1133,8 +1161,8 @@ protected:
 			const auto end = sv.end();
 
 			while (i < end) {
-				ImWchar character;
-				i = CodePoint::read(i, end, &character);
+				const auto glyph = Glyph::readUtf8(i, end);
+				const auto character = glyph.codepoint;
 
 				if (character == '\n') {
 					appendLine();
@@ -1147,7 +1175,7 @@ protected:
 					}
 
 				} else if (character != '\r') {
-					back().emplace_back(Glyph(character, Color::text));
+					back().push_back(glyph);
 				}
 			}
 
@@ -1171,8 +1199,8 @@ protected:
 					const auto end = sv.end();
 
 					while (i < end) {
-						ImWchar character;
-						i = CodePoint::read(i, end, &character);
+						const auto glyph = Glyph::readUtf8(i, end);
+						const auto character = glyph.codepoint;
 
 						if (config.insertSpacesOnTabs && character == '\t') {
 							const auto spaces = getSpacesToTab(config, back(), back().size());
@@ -1182,7 +1210,7 @@ protected:
 							}
 
 						} else if (character != '\r') {
-							back().emplace_back(Glyph(character, Color::text));
+							back().push_back(glyph);
 						}
 					}
 				}
@@ -1276,7 +1304,7 @@ protected:
 				for (auto glyph = line->begin(); glyph < line->end(); glyph++) {
 					text.append(std::basic_string_view<T>(
 						reinterpret_cast<const T*>(utf8),
-						CodePoint::write(utf8, glyph->codepoint)));
+						glyph->writeUtf8(utf8)));
 				}
 
 				if (line != std::prev(end())) {
@@ -2036,6 +2064,8 @@ protected:
 	ImVec2 visibleSize;
 	ImDrawList* drawList;
 
+	float fontScale = 1.f;
+	bool mouseWheelZoom = true;
 	ImFont* font;
 	float fontSize;
 	float fontScaleDpi;

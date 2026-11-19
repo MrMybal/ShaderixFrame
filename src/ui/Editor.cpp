@@ -1,5 +1,6 @@
 #include "ui/EnglishPanels.h"
 #include "ui/Editor.h"
+#include "ui/UiItems.h"
 #include "ui/UiPreferences.h"
 #include "adapters/CyDawParameters.h"
 #include <cyui/modules/Audio.h>
@@ -553,7 +554,8 @@ bool Editor::action(const std::string &name, Json args) {
         if ((name == "new_project" || name == "open_project" || name == "undo" || name == "redo") &&
             hasClipDrafts() && s.recovery.enabled())
             s.recovery.preserve(projectWithClipDrafts(), s.projectPath, s.time);
-        actionResult = protocol.execute(name, args);
+        actionResult = automationActive && automationDispatch ? automationDispatch(name, args)
+                                                              : protocol.execute(name, args);
         if (name == "open_project" || name == "save_project")
             rememberProject(s.projectPath);
         if (name == "start_export")
@@ -597,6 +599,11 @@ void Editor::drop(const std::string &path) {
         say("Large video: preparing a 720p preview proxy");
 }
 std::string Editor::dialog(bool save, const wchar_t *f, const wchar_t *ext) {
+    if (automationActive) {
+        auto path = takeAutomatedDialogPath().value_or(std::string{});
+        if (path.empty()) error = "PathRequired: supply file_path with the automated command or input";
+        return path;
+    }
     wchar_t buffer[32768]{};
     OPENFILENAMEW o{};
     o.lStructSize = sizeof(o);
@@ -610,6 +617,11 @@ std::string Editor::dialog(bool save, const wchar_t *f, const wchar_t *ext) {
     return ok ? sx::Narrow(buffer) : "";
 }
 std::string Editor::folderDialog(const wchar_t *title) {
+    if (automationActive) {
+        auto path = takeAutomatedDialogPath().value_or(std::string{});
+        if (path.empty()) error = "PathRequired: supply file_path with the automated command or input";
+        return path;
+    }
     Com<IFileOpenDialog> picker;
     if (FAILED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&picker))))
         return {};
@@ -637,6 +649,7 @@ void Editor::editCheckpoint(const Project &before) {
 }
 bool Editor::beginPanel(const char *name) {
     auto &open = panels[name];
+    applyPanelPlacement(name);
     if (!ImGui::Begin(panelTitle(name).c_str(), &open)) {
         ImGui::End();
         return false;
@@ -3711,6 +3724,7 @@ void Editor::draw() {
     scopesPanel();
     mixer();
     integrations();
+    if (assistantPanel && panels["Assistant"] && beginPanel("Assistant")) { assistantPanel(); ImGui::End(); }
     recoveryPanel();
     exportPanel();
     if (!pendingPanelFocus.empty()) {

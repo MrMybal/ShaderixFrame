@@ -1,4 +1,4 @@
-# ShaderixFrame 0.14.0-alpha.2
+# ShaderixFrame 0.15.0-alpha.1
 
 Windows x64 alpha preview, licensed under GNU AGPL v3.
 
@@ -15,8 +15,8 @@ Windows 10/11 x64 and a Direct3D 11 device are required. `--warp` selects softwa
 rendering. The main interface, effect labels and MCP descriptions default to English.
 Example projects retain their own names and text.
 
-See [the alpha 2 changes](RELEASE_0.14-alpha.2.md) for the integrated CyDoc manual,
-and [the 0.14 changes](RELEASE_0.14.md) for the modular CyUI interface update.
+See [the 0.15 alpha changes](RELEASE_0.15-alpha.1.md) for the assistant, CLI and
+interface automation, and [the 0.14 changes](RELEASE_0.14.md) for the modular CyUI interface update.
 
 ## Included
 
@@ -28,7 +28,8 @@ and [the 0.14 changes](RELEASE_0.14.md) for the modular CyUI interface update.
   1D/2D/3D LUTs.
 - CyDAW v2 DSP graph, mixer/buses/sends, native plugins, Windows VST3 hosting and
   supported CPU RGBA OpenFX filters.
-- Built-in MCP stdio server with 163 tools, recovery/version history, export queue,
+- Native assistant, CLI and authenticated MCP, with 163 business operations and
+  23 live GUI tools, recovery/version history, export queue,
   MP4/WAV/AVI/PNG/EXR/GIF output and EDL/SRT interchange.
 
 - Complete English/French CyDoc help, contextual Ctrl+F1, global search, illustrated

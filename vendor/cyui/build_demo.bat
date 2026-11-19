@@ -16,18 +16,31 @@ if not exist "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" (
 )
 call "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" >nul || exit /b 1
 :compile
+if exist "%ROOT%.CyDocBuild\node_modules\cydoc\tools\cli.mjs" (
+    python "%ROOT%.CyDocBuild\build.py" || exit /b 1
+)
+if not exist "%ROOT%Documentation\Documentation.html" (
+    echo Missing documentation. Run npm ci --prefix .CyDocBuild --omit=optional and python .CyDocBuild/build.py. 1>&2
+    exit /b 1
+)
 if not exist "%ROOT%build" mkdir "%ROOT%build"
 pushd "%ROOT%build"
 rem Use relative source names and a static runtime for the portable release build.
 set IMGUI=..\third_party\imgui
-cl /nologo /std:c++20 /O2 /MT /DNDEBUG /EHsc /W4 /utf-8 /MP /DUNICODE /D_UNICODE /DCYUI_HAS_AUDIO=1 /DCYUI_HAS_GALLERY=1 /DCYUI_HAS_CANVAS=1 /DCYUI_HAS_PLOTS=1 /DCYUI_HAS_CURVES=1 /DCYUI_HAS_NODES=1 /DCYUI_HAS_TIMELINE=1 /DCYUI_HAS_AUDIOVIEWS=1 /DCYUI_CODE_LANGUAGE_CATALOGUE=1 /DCYUI_HAS_CODE=1 /DCYUI_HAS_DIFF=1 /DCYUI_HAS_CODEEDITOR=1 /DCYUI_HAS_INSPECTOR=1 /DCYUI_HAS_ASSETS=1 /DCYUI_HAS_IMAGES=1 /DCYUI_HAS_VIEWPORT=1 /DCYUI_HAS_COMMANDS=1 /DCYUI_HAS_DIAGNOSTICS=1 /DCYUI_HAS_DOCUMENTVIEWS=1 /DCYUI_HAS_WEB=1 ^
+cl /nologo /std:c++20 /O2 /MT /DNDEBUG /EHsc /W4 /utf-8 /MP /DUNICODE /D_UNICODE /DCYUI_HAS_AUDIO=1 /DCYUI_HAS_GALLERY=1 /DCYUI_HAS_CANVAS=1 /DCYUI_HAS_PLOTS=1 /DCYUI_HAS_CURVES=1 /DCYUI_HAS_NODES=1 /DCYUI_HAS_TIMELINE=1 /DCYUI_HAS_AUDIOVIEWS=1 /DCYUI_CODE_LANGUAGE_CATALOGUE=1 /DCYUI_HAS_CODE=1 /DCYUI_HAS_DIFF=1 /DCYUI_HAS_CODEEDITOR=1 /DCYUI_HAS_INSPECTOR=1 /DCYUI_HAS_ASSETS=1 /DCYUI_HAS_IMAGES=1 /DCYUI_HAS_VIEWPORT=1 /DCYUI_HAS_COMMANDS=1 /DCYUI_HAS_DIAGNOSTICS=1 /DCYUI_HAS_DOCUMENTVIEWS=1 /DCYUI_HAS_DATAGRID=1 /DCYUI_HAS_SPREADSHEET=1 /DCYUI_HAS_RICHDOCUMENT=1 /DCYUI_HAS_OFFICEIO=1 /DCYUI_HAS_DOCUMENTEDITOR=1 /DCYUI_HAS_DOCUMENTIO=1 /DCYUI_HAS_DOCUMENTWEB=1 /DCYUI_HAS_MEDIA=1 /DCYUI_HAS_WEB=1 /DCYUI_HAS_HIERARCHY=1 /DCYUI_HAS_DATAVIEW=1 /DCYUI_HAS_FILEPICKER=1 ^
    /I"..\third_party\lexilla\lexlib" /I"..\third_party\lexilla\include" /I"..\third_party\scintilla\include" /I"..\third_party\texteditor" /I"..\include" /I"%IMGUI%" /I"%IMGUI%\backends" ^
-   "..\src\Theme.cpp" "..\src\Widgets.cpp" "..\src\Layout.cpp" "..\src\Filter.cpp" "..\src\Gallery.cpp" ^
-   "..\src\modules\*.cpp" "..\src\modules\code\*.cpp" "..\third_party\lexilla\lexlib\*.cxx" "..\third_party\lexilla\lexers\*.cxx" "..\third_party\texteditor\TextEditor.cpp" ^
+   "..\src\Theme.cpp" "..\src\Widgets.cpp" "..\src\Layout.cpp" "..\src\Filter.cpp" "..\src\Numeric.cpp" "..\src\Gallery.cpp" ^
+   "..\src\modules\*.cpp" "..\src\modules\code\*.cpp" "..\third_party\md4c\md4c.cpp" "..\third_party\miniz\miniz_tinfl.cpp" "..\third_party\pugixml\pugixml.cpp" "..\third_party\lexilla\lexlib\*.cxx" "..\third_party\lexilla\lexers\*.cxx" "..\third_party\texteditor\TextEditor.cpp" ^
    "..\examples\demo_win32_dx11\main.cpp" ^
    "%IMGUI%\imgui.cpp" "%IMGUI%\imgui_draw.cpp" "%IMGUI%\imgui_tables.cpp" "%IMGUI%\imgui_widgets.cpp" "%IMGUI%\imgui_demo.cpp" ^
    "%IMGUI%\backends\imgui_impl_win32.cpp" "%IMGUI%\backends\imgui_impl_dx11.cpp" ^
-   /Fe:cyui_demo.exe /link /SUBSYSTEM:WINDOWS d3d11.lib dxgi.lib d3dcompiler.lib dwmapi.lib user32.lib gdi32.lib shell32.lib
+   /Fe:cyui_demo.exe /link /SUBSYSTEM:WINDOWS d3d11.lib dxgi.lib d3dcompiler.lib dwmapi.lib user32.lib gdi32.lib shell32.lib shlwapi.lib
 set ERR=%ERRORLEVEL%
 popd
+if not "%ERR%"=="0" exit /b %ERR%
+xcopy "%ROOT%Documentation" "%ROOT%build\Documentation\" /E /I /Y /Q >nul
+if errorlevel 1 exit /b 1
+if not exist "%ROOT%build\licenses" mkdir "%ROOT%build\licenses"
+copy /Y "%ROOT%third_party\jetbrains-mono\OFL.txt" "%ROOT%build\licenses\JetBrainsMono-OFL.txt" >nul
+if errorlevel 1 exit /b 1
 exit /b %ERR%

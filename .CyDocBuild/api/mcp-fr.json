@@ -1,654 +1,746 @@
 {
   "set_motion_widget": {
     "description": "Configure la hiérarchie et les ancrages des widgets vidéo ; widget_x, widget_y, widget_width et widget_height peuvent être animés.",
-    "source_sha256": "d42e8284868a2c363ba9af63225ec0abd4b2dc115cf4af6903c8cf111d4bd5b5"
+    "source_sha256": "9658d4d7cd6c9cd9ab0f8469faa126508717d50e663b7f2d2ee145a11741a843"
   },
   "get_motion_widgets": {
     "description": "Retourne la hiérarchie des widgets et leurs rectangles évalués au temps demandé.",
-    "source_sha256": "0653c34b9747c494456ef65e5bf434ba53c833dd1562478b563739ebf874fa35"
+    "source_sha256": "2c1df55f1ccb5d01bfc56fdbf872fcebda49e8250f0653c88d33e8ed0b75ae9f"
   },
   "make_clip_container": {
     "description": "Convertit un clip vidéo en composition imbriquée en conservant son contenu.",
-    "source_sha256": "c7d946e2d1290aaaac9670240291f7ce6806f59553b0f075d9d12a36eba0032c"
+    "source_sha256": "bd50a72c770f4f29c79d1ace51e0f00e2df06c3ba9769374910fe40c2f0677f0"
   },
   "get_clip_composition": {
     "description": "Lit la timeline et le graphe locaux d’un conteneur.",
-    "source_sha256": "1f93ab4ce318fa0fd76bad33e73fc7c0fcce55b9b040c718e70605b755ee281c"
+    "source_sha256": "6f8cb6166dd20bf5c8f649dbb88bf787ac8e681ba58f8ba57957845842ca99e7"
   },
   "set_clip_composition": {
     "description": "Remplace la composition locale du conteneur après validation.",
-    "source_sha256": "7a8619a10a1aae489529cc29f03100f8334f154c63fea203b0f6cb793115bdd1"
+    "source_sha256": "f873954c343d46379827495948fcfa12136b1702b05f5b843809d6957aa443db"
   },
   "get_layer_graph": {
     "description": "Lit le graphe de composition Shaderixel : timelines, mélanges, effets et sortie.",
-    "source_sha256": "6f1334d99588e27809208159f1c0d57fa151aeda9ffdab53fdc39942ce144bd7"
+    "source_sha256": "b75b235053eb916341be7ecaf147cdd4baa09c22327fff6912cdac1d32153e1b"
   },
   "set_layer_graph": {
     "description": "Remplace le graphe de composition avec validation Shaderixel, annulation et rendu HDR.",
-    "source_sha256": "deb4df04adb19855ddf666a7d53f2a4a4b9627c25efba6d6ff938616c897f4d6"
+    "source_sha256": "106d96f7710da61af9a39342147927e221ae4bc30a910d759ab1bc3f7aae3968"
   },
   "get_track_graph": {
     "description": "Lit le graphe d’effets d’une piste vidéo, entre la composition de ses clips et le mélange avec les pistes inférieures. Retourne graph et explicit ; false indique qu’aucun effet de piste n’est encore défini.",
-    "source_sha256": "09b79ef77d62529de615e1554632381f99803653bb2f59a93c13d705d9fc05c1"
+    "source_sha256": "de1cfc79381be41854d5c89536da39fe356d8a3a1b371ac63290e04aeb781b09"
   },
   "set_track_graph": {
     "description": "Remplace le graphe d’effets d’une piste vidéo. Le schéma est celui du graphe de calques ; les surfaces lisibles sont la piste elle-même et les pistes inférieures. graph à null retire ses effets.",
-    "source_sha256": "58497d0124b6336e89132b75790006bf331ddff4a25e9213057176c12f729c77"
+    "source_sha256": "d0ecee373e06e0d4b048c4ca6dfdc1b072f814887f19063462450e8e95c8d933"
   },
   "add_track_effect": {
     "description": "Ajoute un effet de bibliothèque à la fin de la chaîne d’une piste vidéo et retourne node.",
-    "source_sha256": "2114552aa8f1797cee1563959559d0bc374aff635e8cc1f7893a5ca450e9d651"
+    "source_sha256": "88f124e6fc19256727b7c3f369df317654ba71c8c129b497a93aea056a318579"
   },
   "set_layer_parameter": {
     "description": "Définit la valeur de base d’un paramètre de nœud de composition.",
-    "source_sha256": "33e7d7dec10b5114bf93c253e448c148cbbaa55a6a36a166fc237d97fcc275ff"
+    "source_sha256": "702f44a71e36d0e73d4ce0a5c77c806880ef0a78f0692eef4a65bd6a75faedf8"
   },
   "set_layer_keyframe": {
     "description": "Anime un paramètre du graphe de mélange en temps de séquence.",
-    "source_sha256": "db478e3bf9fb711a5309b72d9562b9fed3027a1abeabc645599bb0250f9df7d0"
+    "source_sha256": "fd40d05ffe160513fe1f2f2cf08d3168b119c49e1cb9bd8ef73c575925611ed9"
   },
   "status": {
     "description": "Retourne l’état de la séquence, du transport et du contenu du projet.",
-    "source_sha256": "bb7df1943c33b7a494db7023e818a3f18dd222371574c7c6f918276a048359fc"
+    "source_sha256": "6d73a0cf09a2d3afe4f04f43946d1545ee1d1c1b62153ef79e756198b72d729e"
   },
   "add_grade": {
     "description": "Ajoute une correction HDR à un clip vidéo. set_effect, set_parameter et set_keyframe règlent son ordre et son animation.",
-    "source_sha256": "6338bc3c0a7a616aa6730a9b83edbfa01bbb027576df4999b4d25f2717c5cdb2"
+    "source_sha256": "236e45f826a04211bd7c9246c9b599551a588db55511eef7acbbfa7cd2d0f933"
   },
   "set_grade": {
     "description": "Définit une correction de schéma 1 : nom, courbes, maskPoints et lutInput/lutOutput. Les paramètres animables passent par set_parameter.",
-    "source_sha256": "43bf560ac94508da5c586bd20a9d82c061a0d2dfb4fee79d854767a2da0965f1"
+    "source_sha256": "5a76b76baefcf8379502a9e77951a324dbedd1c82f5b45cb9997c50e42ffa3f2"
   },
   "set_grade_curve": {
     "description": "Définit une courbe master, r, g, b, hue_hue, hue_sat, hue_luma ou luma_sat avec 2 à 32 points [x,y] et des extrémités en 0 et 1.",
-    "source_sha256": "08b28dace4863b99ed02031fd6a13c377a2a99188f9c32c33c3c01c520e1f199"
+    "source_sha256": "c21274d0c87726ce9b88c738341cb9b940978cdf3da0d305f6fcb3ba0add8d0c"
   },
   "import_grade_lut": {
     "description": "Importe et incorpore une LUT image 2D ou .cube 1D/3D, avec domaine et espaces explicites. Le projet ne conserve pas de dépendance au fichier externe.",
-    "source_sha256": "11dac834bc2c8b605f5a46f4a402841e6fb98cce478e65a8a06d93d9dcfc2178"
+    "source_sha256": "5d5bdae213f7f818c78a2cfff9ca812c9ca592123a4188d1ce43ed08977ec902"
   },
   "neutral_grade": {
     "description": "Calcule une balance neutre à partir d’un échantillon RGB linéaire Rec.709 avant correction ; remplace les gains de balance des blancs et leurs clés.",
-    "source_sha256": "924ea184f6eccb915a5dbd7bf83fdb92f41304be93580cb15ecf46af3c0a3d1a"
+    "source_sha256": "57ecb904c4f1453dd86363f23ee9c64c8bdf543a50cd9d948d298aafc42c676d"
   },
   "list_grade_presets": {
     "description": "Liste les préréglages d’étalonnage intégrés.",
-    "source_sha256": "45491469e20a16cad2397280ab19c7468fd3a057bf062a238777ac34e059a594"
+    "source_sha256": "518ab9b33f2474414f9afd328c9e33a336559ebe2464e2263946b8c59b471bce"
   },
   "apply_grade_preset": {
     "description": "Remplace une correction par un préréglage intégré.",
-    "source_sha256": "65bac5a9cb00c7ea1fcf48242e9d840dfa6377214d0ca95850e840ac7dbd5107"
+    "source_sha256": "9a8e5f5f011ba8878e6ec67844885598f07dc3a10bc66627a949283e2d28c942"
   },
   "save_grade_preset": {
     "description": "Enregistre une correction transportable, avec sa LUT et son animation.",
-    "source_sha256": "7a7a3c05105293c7775885f26dbfd2aabef860275021f68567ad56238ee96e3f"
+    "source_sha256": "16b9d47d7dde9463aa7e2df3d79fcf6f9361388fd9d402183e250204e33c448b"
   },
   "load_grade_preset": {
     "description": "Remplace une correction depuis un fichier .sgrade validé.",
-    "source_sha256": "31d591c88477eb9bf8baec61d00bb5620b76343f03c86d3b96a2dd971440e8fa"
+    "source_sha256": "53387cdafe0ee689506a720fe124fac44fd11477b411087a236392e471d45b46"
   },
   "video_scopes": {
     "description": "Analyse jusqu’à 640×360 pixels et retourne une forme d’onde 256×128, une parade 3×128×128, un vecteurscope 256×256 et un histogramme 3×256.",
-    "source_sha256": "b62a3169cd88569f80c86d150a49e9fe1fce837d94febf91b119a4447a6a2bf2"
+    "source_sha256": "c9655819f18bf6022a3630b52beb3c928f9800cb11d228eca58088a7e345329f"
   },
   "set_color_management": {
     "description": "Règle la composition RGBA16F, l’espace de travail, l’affichage et les séquences d’images haute précision.",
-    "source_sha256": "b6cf0ec4f994847f23080f5af2121b142d09e39fa6f2935328036ad39823a9a8"
+    "source_sha256": "96172d43d33c026a5f6e8d82ec3a4b97ff26be986576ebc9004197bd323bc7a6"
   },
   "set_source_color": {
     "description": "Définit l’interprétation de l’espace couleur et de l’alpha d’une source vidéo.",
-    "source_sha256": "632be10b7179c57a677059d7a11b0c94105c9390f13fef971770b25b5b2473d2"
+    "source_sha256": "9e5520a9462934dd9ddb22788d27ca36ee7a3cce37a4eb6f0bb3622455d8af0e"
   },
   "new_project": {
     "description": "Crée une séquence vide ou utilise un modèle youtube, short, podcast ou cinema, avec format, cadence et pistes nommées.",
-    "source_sha256": "f7998a723861733894b6eb622d29a64e34f21a539f02b44e494beaa43a3034e0"
+    "source_sha256": "81220505ff8094f1f78e6909f79e28f0dfe877830a2e6c679f71dd832371da3f"
   },
   "open_project": {
     "description": "Ouvre un projet .sframe.",
-    "source_sha256": "f7b5bd0e56a30b2c77fbf1e5ae4ea451e33dd49b41b17874665c1c347b7e8ee9"
+    "source_sha256": "a9d667ebfecc4e4c96d8159617cb0eb9d3c949e6024e460d81a1ec1adbf573e4"
   },
   "save_project": {
     "description": "Enregistre un projet .sframe et garde le fichier remplacé parmi les dix versions les plus récentes si versions est activé.",
-    "source_sha256": "2b53f5f5aba2fbf54fc7c43de2dca4db14f2d698bd26ca02424a14ee76578a3f"
+    "source_sha256": "4cfdfaf6e68a730bb1ee78330492a52c7bb9e373772dc30a7d4b3a6676598cc4"
   },
   "list_versions": {
     "description": "Liste les versions enregistrées, de la plus récente à la plus ancienne, avec path et saved.",
-    "source_sha256": "2532ae319ec4bd554c182b3db450467ec2a1707abde2db9960aa65eb577b85d4"
+    "source_sha256": "0fd250612920e2501710a0ea7c081a239c677370baa32f4e548cbf7981f34206"
   },
   "restore_version": {
     "description": "Remplace la séquence par une version antérieure en une opération annulable.",
-    "source_sha256": "20dd32f63ea85ec14fecd312af59ad1d0960e4bd8ba915b6f5150f074ca8c637"
+    "source_sha256": "61b55e43abfdc230b1a943e44bab625a9ba44d1de7bab7586139fcc76591e128"
   },
   "import_media": {
     "description": "Importe une vidéo, une image ou du son et crée les clips, avec audio séparé. proxy prépare une copie 720p des vidéos de plus de 1440 lignes. Retourne clips et proxy_job.",
-    "source_sha256": "20aa5b4cb9344f68816b5654cb9229c3d56ba180da14f5a60c4b0a3c9a83b7ff"
+    "source_sha256": "700d11785c8a3cca86b5a5c4f4f24111616b3bf79db78f8d212fc804c1ac437b"
   },
   "remove_unused_media": {
     "description": "Retire de la médiathèque les médias qu’aucun clip n’utilise et retourne removed.",
-    "source_sha256": "c506fb36400098ed5c6a3875278634946a3389d3a2c5434b9a631b95c4f0f37b"
+    "source_sha256": "42f030596ab523b5e46a40fd4e829a1bbe2fb6e608d5c99ce99d8caaea6c93dd"
   },
   "add_track": {
     "description": "Ajoute une piste vidéo ou audio.",
-    "source_sha256": "02c55cb20b3b40509f5b995fba9255d01069a2ea2c0f0f96fc4ba66659a89486"
+    "source_sha256": "62c1218f1fe9fe840d03f5467395980f8bb9c01940b525de2dd6c3e13b085913"
   },
   "set_track": {
     "description": "Renomme et règle une piste : couleur 0xRRGGBB, hauteur, sourdine, solo et verrouillage. Pour la vidéo, blend accepte un mode 0–26 ou un nom comme Multiply, Screen ou Overlay ; opacity va de 0 à 1 ; blend_effect désigne un effet de fusion, ou une chaîne vide pour revenir au mode.",
-    "source_sha256": "79ab0047b3617da397b6eba00aee1587cd9282edb07d0bd151805a46628c549d"
+    "source_sha256": "d3d35410c032b1ca46b3608e503e1aed094d1fe640e28cf43a807a123ebb0044"
   },
   "remove_track": {
     "description": "Supprime une piste et ses clips ; les partenaires liés restent en place.",
-    "source_sha256": "0581bcacd7be96088480ff4930c49de6246276d7c2526805357dc05bd149023e"
+    "source_sha256": "0507e3571aaf31a64f7c76799a1bccfb99ab6b13cdb3015825d7de4efd636362"
   },
   "move_track": {
     "description": "Déplace une piste vers l’index demandé. L’index 0 est en haut et au premier plan de la composition.",
-    "source_sha256": "3b28533ea8105803b9cbaf9650fa4ead8eb81f7e9a07592c5f15a3b62ee46416"
+    "source_sha256": "cc0c50f54814bf159d6b44333eaf202f94b870533d7198ddb0d9feae5dd1de4a"
   },
   "group_tracks": {
     "description": "Regroupe des pistes dans un groupe repliable et retourne group.",
-    "source_sha256": "7b5026fca76e52ee78806c955088b0437281abf60cf8f19e6153c9890ce05641"
+    "source_sha256": "1369e15efcc356958cea066d713c99c8ed45fb1c67612a3a372f4b7d7568d1ab"
   },
   "set_group": {
     "description": "Renomme, recolore en 0xRRGGBB ou replie un groupe de pistes.",
-    "source_sha256": "be581a0182db59042611612e21c050531cf694da9005f49d682f27a062c2fc6b"
+    "source_sha256": "9ab161fe623d5a48031ee512087649addf0cde864dc733ed4fd344f893b97a09"
   },
   "ungroup": {
     "description": "Dissout un groupe en laissant ses pistes en place.",
-    "source_sha256": "3eb67e65c37787bf91f097471099ce46b5366e77488b101448adb514d417883c"
+    "source_sha256": "373256db4595271afc1585ea0fda81cad593739f3b60bf4d32c867c695ff8908"
   },
   "edit_source": {
     "description": "Réalise un montage trois points : place la plage média [in,out) à start. insert décale les clips suivants ; overwrite remplace les pistes ciblées, avec 0 pour la première disponible. fit adapte la vitesse à la zone de travail ou à start + duration.",
-    "source_sha256": "ec71d019ab4ba89c2cd348a9482bcd77ff755d0e55eb0aa12102a8d1d483667c"
+    "source_sha256": "5c50f3816a6f091600897de223b6e17af81e7d35167110fcf6b09459068005e4"
   },
   "duplicate_track": {
     "description": "Duplique une piste juste en dessous, avec clips, effets, animation et mixage ; retourne track.",
-    "source_sha256": "e9348c921dce3ec9f42e880c44402aa2500884ee749e371a8be3a282544a35fb"
+    "source_sha256": "98a0d1ec651f3570bbcf56c1bef9b64b73354bf82b7f84d6dfc44fa3b7f8ed17"
   },
   "lift_range": {
     "description": "Coupe aux limites de [begin,end), retire l’intérieur sur toutes les pistes et laisse un vide.",
-    "source_sha256": "49c088d73f3b434a5be1887b4d606cd7f92c03ee0cb68cc84282d152ac66ef31"
+    "source_sha256": "bf47b8aca3e264e394e787cd22c3a947386f8547eb2dd5f901175951bccbe234"
   },
   "add_marker": {
     "description": "Ajoute un repère sur la règle de timeline.",
-    "source_sha256": "c684feb75a2d1a606313d1f86ecaae8d370137cfe155224e3d1b34a7f0b83b93"
+    "source_sha256": "dd8a79fc4d64064754d0a07ab42023e72f693670aeb9fbb131fb30c8d8e95294"
   },
   "set_marker": {
     "description": "Déplace, renomme ou recolore un repère. duration > 0 définit une région ; 0 conserve un repère ponctuel.",
-    "source_sha256": "42945d8eba138abde3dedc56c06bbd21127c994d7abd86265484071791ad178d"
+    "source_sha256": "0459a5ab8de8776e8edac832f1486dd3c0a328540ba38ac11bc6f1b30bf24fce"
   },
   "remove_marker": {
     "description": "Supprime un repère.",
-    "source_sha256": "3a45ff42ee9905160f1cafe02ff395fede95f4a859aab6f1905dda03d2a46fcb"
+    "source_sha256": "74a7bbc7a96afb66e8bf497e8aeeef0d1c79f39c38074f380ef0356a5d67873c"
   },
   "export_marker_stills": {
     "description": "Rend l’image à chaque repère. path fournit dossier et nom de base .png ou .exr ; les fichiers prennent la forme base_01_Name.png. Retourne files.",
-    "source_sha256": "8768c466700e4d9242c75438a3f863cefe4922ad5592e3571e5b4a69ef361b08"
+    "source_sha256": "723067e91dfb994d9cacd4b21d51651705fcf4ecc6153ea28cb75c6f13c25cce"
   },
   "export_edl": {
     "description": "Produit une liste de montage CMX 3600 pour track ou la première piste vidéo contenant des clips. path est facultatif. Retourne text et events pour échange avec Premiere, Resolve ou Avid.",
-    "source_sha256": "2bdf893619e4e2195815fe1fc133f6e6062b40feb811e9ae8cbcfe4995b3e088"
+    "source_sha256": "685afed8c419177711f3f9235871328c4897742c61680baf7f101444fe312990"
   },
   "import_edl": {
     "description": "Importe une liste CMX 3600 sur une nouvelle piste vidéo, avec piste audio liée pour les événements audio. Cherche les médias via SOURCE FILE, puis leur nom dans media_folder ou le dossier EDL ; sinon ils restent hors ligne. Retourne clips et offline.",
-    "source_sha256": "6ae490b7c6004e336417a378a5903a94bfb9341fa3efe57a05d7cd7c81802ad8"
+    "source_sha256": "4907732242520f78f1774c61cf466ad81ff17e8a8f1a4aea6c6e3231850a1699"
   },
   "export_shot_list": {
     "description": "Produit une liste de plans CSV : piste, nom, timecodes, source, vitesse et effets. path est facultatif ; retourne text.",
-    "source_sha256": "09d3de61eba2c7daf388a2cebb23431cf3c8af1755023855c1e54be87e186bfd"
+    "source_sha256": "c472b68c7adc06b25ed2a37c0bde44d179f0d0447e8378a049319cb697cd0a6d"
   },
   "export_markers": {
     "description": "Exporte les repères comme chapitres YouTube avec format youtube, ou en CSV. path écrit facultativement un fichier UTF-8 ; retourne text.",
-    "source_sha256": "fda92794d61a9e379ff11d67901a58355c7725cf5307162dc195727377780eb5"
+    "source_sha256": "f1f138196a2789b8584d0ae789022ef428cdcab0cd992f0c141fc85be40fd22c"
   },
   "set_work_area": {
     "description": "Règle la zone de travail et de boucle ; end inférieur ou égal à begin la désactive.",
-    "source_sha256": "838f4f4d1259d19ca4f881b6af0dee66ef77a326d785ac1939a2c37c0597b1cf"
+    "source_sha256": "0cb57e6005fdee6a276c665c48bc69a0a9afe0057933868b53b7d7ddb057d54d"
   },
   "add_bus": {
     "description": "Ajoute un bus de mixage stéréo.",
-    "source_sha256": "29df82e0eccb417d7c94cb3772dac41bde301db6920e71f49fe55cb85d7ca863"
+    "source_sha256": "7e2475115235f06641e8c847b2f029f3ee6a304359c63cb609b568cb6087bdc3"
   },
   "remove_bus": {
     "description": "Supprime un bus, reconnecte ses sources au master et retire ses envois.",
-    "source_sha256": "31fbc72f5cc16d4ff84dd748b0c3d0f6a54095946901b79b233c23b00934ba53"
+    "source_sha256": "5a506a8dc065265940f43da795649f856411e2684e840a9d63777740c5a81787"
   },
   "set_mix_channel": {
     "description": "Règle un canal de piste, de bus ou du master. Le gain est en dB, le panoramique va de −1 à 1 et output 0 désigne le master. Solo concerne uniquement les pistes sources ; le master accepte gain et pan, mais refuse output, muted, locked, name et solo.",
-    "source_sha256": "e9e02350368cd3f0dec5eb7d963bdc3c4043e8062830f21a9dec737ced1a733a"
+    "source_sha256": "79a515afbe92b65177b34d1647829796e969d051f496673b80e8fde6e00c1713"
   },
   "set_send": {
     "description": "Crée ou règle un envoi vers un bus, avant ou après le fader.",
-    "source_sha256": "701391424669415ef2e0d9790b8df13312880f8b783d693f47c0bdcfd8a9ef80"
+    "source_sha256": "d1683a2efeaed147b010e89049c48236a441217979bafa24bdb3d3b4e26236d7"
   },
   "remove_send": {
     "description": "Retire un envoi vers un bus.",
-    "source_sha256": "86c0f0fca5b326e9939ce0c43d85b20d91666e2abe90e15ccf699fe9450af6ff"
+    "source_sha256": "6f4d8c7a809c10beb1174452bb3c7570caf0cf51a03733d6e471fcd2968594e3"
   },
   "add_mix_effect": {
     "description": "Ajoute un DSP CyDAW 2 sur une piste, un bus ou le master.",
-    "source_sha256": "397d7d9d890092c63f4a76c3c9278fb265be13b8f4f9b1dc876f16e5506adda3"
+    "source_sha256": "df85e279a768431e5072a8bc09ffd8783525b6716b8655d18cc59b63123e7262"
   },
   "set_mix_effect": {
     "description": "Active ou réordonne un DSP de canal.",
-    "source_sha256": "4149e829994dc5f84fc45ee9bc1d4a37199e12555da6575dcd7d4810ee5e703a"
+    "source_sha256": "fc38f62b499922c983a0dcf81092404a1e708da9295915cda7c4833fa6fd6b74"
   },
   "remove_mix_effect": {
     "description": "Retire un DSP de canal et son animation.",
-    "source_sha256": "f28dda5824fc96362e39e8e45d87db3bbcc18128829d84d7f1c0363624908c5e"
+    "source_sha256": "968592b8b05b6cf7b8bfc4c019c880d473260b3986bdf8ae47625f7ecc83c770"
   },
   "set_mix_parameter": {
     "description": "Règle gain, panoramique ou paramètre DSP d’un canal.",
-    "source_sha256": "485c14e1992cd669280821aa9969df7e7f997509abf78424df34f6761ad648a5"
+    "source_sha256": "f36e1c56a7b8deaf6027c63aad729455f1c077ad365216f0d477c8a5158d729f"
   },
   "set_mix_keyframe": {
     "description": "Anime un canal ou un DSP en temps de séquence.",
-    "source_sha256": "a54408aa78cb54923a26498784ad26ed5ffb4bcd1c662d3c806ead0d7d0123b6"
+    "source_sha256": "9b32ce10b58ed05449a99d38e154740c55a283dade5913448d35388755c6de42"
   },
   "remove_mix_keyframe": {
     "description": "Retire une clé ; sans time, rétablit la valeur de base du canal.",
-    "source_sha256": "34a46e5f260de7b65b59516d32a347f0409477de77ce818c845f8e393ad5ddcc"
+    "source_sha256": "505fd82f276be97bcc13b130936c6cab0cb01593a26a3f9dda948c3df92843dc"
   },
   "get_audio_graph": {
     "description": "Lit le graphe de routage et DSP stéréo validé par CyDAW 2.",
-    "source_sha256": "d44102b5aee04014d2776d319a464b11cbcaa7ef39e4c9c73dde92750eaced2a"
+    "source_sha256": "819b43d474305e5823cb45c2ad162df66224581ff9414ca638b197347b83a3b7"
   },
   "set_dsp_graph": {
     "description": "Compile et incorpore un graphe DSP stéréo v2 pour clip, track, bus ou master. effect permet de remplacer un effet existant.",
-    "source_sha256": "f7db1d11c6e64396d095a97b4ac2f8c0ed4f9263f44e323ff0c993a512e23fac"
+    "source_sha256": "8a2584dd668d3f240fcce9a6248c5dc66f2e05df55ca5cd218cba6959301824f"
   },
   "get_dsp_graph": {
     "description": "Lit un graphe DSP incorporé.",
-    "source_sha256": "f8189191a1015bd3e95e1b9078dc36541aa51b905ece894f82a0e955c86eeb1c"
+    "source_sha256": "6e670843755f83a9c86c4c50aa48f4106045b6d3fad8da2908b19b4870dd350e"
   },
   "add_external_audio": {
     "description": "Charge un effet SDK natif v1 ou VST3 dans un processus isolé pour clip, track, bus ou master.",
-    "source_sha256": "53c5b5a129b98c415b9c97900ac08d64d4512232ccd96a17273b84c00ba8ed5c"
+    "source_sha256": "7ce50f4aef90c0caaea5a4b36e51850723082094401ad4f27127bebc8c628e18"
   },
   "show_plugin_editor": {
     "description": "Affiche ou masque la fenêtre VST3 dans son processus isolé.",
-    "source_sha256": "f7681bfb3ff249549800a9443325822ebc87fba2a98e6dabcf892faae89b3061"
+    "source_sha256": "aa6f5ebb5b4b00e1e19ec9251daea9900f5a5a032abf762c5d54b4df8fa76842"
   },
   "capture_plugin_state": {
     "description": "Incorpore l’état VST3 complet au projet.",
-    "source_sha256": "9d39c63c32027dd06f1d72c4dd08516c75eeea3a74b850c4d6123bb7166aaf20"
+    "source_sha256": "1d4518e915c5a781cd331c7e74873ac25af7d3e3113f3c4a8766ea001b7938a0"
   },
   "get_plugin_state": {
     "description": "Lit l’état VST3 et les noms de ses commandes.",
-    "source_sha256": "7889540f583a564d5d52df7d99a21e07462960bb2edc21b3582aa1935f215915"
+    "source_sha256": "e1f0046cea4c9af54b088028603ad1ce63325e4511847ca9f07ddc4044c86b71"
   },
   "set_plugin_state": {
     "description": "Restaure un état VST3 encodé en base64, limité à 4 Mio.",
-    "source_sha256": "6f8e340ad20dd465f5be4811a325deef3aa199f6c6ba15c22cfcdf6bd597c438"
+    "source_sha256": "ae1bebad0b8020f2372e88004d1b01d8b9a10e01c20a92124dc2650d697270b9"
   },
   "save_plugin_preset": {
     "description": "Enregistre un préréglage VST3 complet.",
-    "source_sha256": "e57149380fbd0e1eccb3c6a30ded1259991ec7ac5009a79e8533f021dcdbe335"
+    "source_sha256": "dcc1e1eeba8861b2d05c6c7e0b99dfb566c267bf09f3becb2440a0a6270a811a"
   },
   "load_plugin_preset": {
     "description": "Charge un préréglage VST3 tout en préservant les courbes d’automation.",
-    "source_sha256": "dacd1f42fcb44aafe6655e09972dd957e352d06265bf16727abfc616c3945209"
+    "source_sha256": "1fac282920ef9403473f5cfdd64de43126a12177ad0d05d8965a0a5241eb2fa7"
   },
   "add_generator": {
     "description": "Ajoute un générateur vidéo HLSL animé.",
-    "source_sha256": "bd5f06fcdd7a4c556520628dfabec25daa4578998ce7b1c1c99d6afb78709e88"
+    "source_sha256": "c7d528b7b8ecb8148c8a76b2e118a27b51c270234a256f5953ab555aec073a47"
   },
   "add_title": {
     "description": "Ajoute un texte transparent, avec effets et animation, sur une piste de titres disponible à cet instant. new_track force une nouvelle piste. Retourne clip et track.",
-    "source_sha256": "09d792031b052a018fd3b73ad32ce8d543056f6d97414b11327cb00c41f98d5b"
+    "source_sha256": "8bfd47f21812eb46c0dc2950114f37d2735aea2f4e34d54c8f6fc73c1cdd11ec"
   },
   "apply_title_style": {
     "description": "Applique aux titres un style classic, subtitle_yellow, boxed, cinema ou neon, respectivement blanc détouré avec ombre, jaune détouré, blanc sur noir, sérif à ombre douce ou cyan lumineux. Retourne clips.",
-    "source_sha256": "c2d1dd74c0745214d90de121d51fbfd74a9edd14231ee50cd1e2aa35e416730f"
+    "source_sha256": "b8ac1d5a62ab66d7d9bb8b8a5a27775ff43b974c15f6973fbef67e78e799fba5"
   },
   "enhance_voice": {
     "description": "Améliore les voix des clips audio en ajoutant une porte de bruit douce, une égalisation réduisant les graves et renforçant la présence, puis un compresseur CyDAW. Retourne clips.",
-    "source_sha256": "51f95386bd83d71f38fb84a18fca3d4b3d7c78a482bd12558bd0cfcbf3271182"
+    "source_sha256": "8505f98a3e223979d43cd7243a04ebabf3754638f9f2f19ed7e51c01548d40c4"
   },
   "add_lower_third": {
     "description": "Ajoute un bandeau de nom et fonction en bas à gauche sur un cadre sombre, avec glissement et fondu. start utilise la tête de lecture par défaut ; duration vaut 5 secondes par défaut. Retourne clip et track.",
-    "source_sha256": "5170e21c4341241268f2ee91cf6ea3b9ecffa1aae72e05957f4aa1001c2c4be4"
+    "source_sha256": "c85c705a308f1ba87f4d8baca5857f97c4dbd756fb13092721af54e48047cc7d"
   },
   "set_title": {
     "description": "Règle texte, police, style et alignement : 0 à gauche, 1 centré, 2 à droite.",
-    "source_sha256": "832ccf23e892dde58e8b662dd9230e35d74ca77e240ee99972649acea3448453"
+    "source_sha256": "fc12edf6ea592506c708a045d0e1e2b75dae0a1ca1d9832fa9ce4603df4affc8"
   },
   "set_mask": {
     "description": "Règle la forme du masque, none, rectangle ou ellipse, et son inversion.",
-    "source_sha256": "20ee1faba4be6d3417cbbba5ec9048e6ac53ec9e123fb50433b4df39710efc59"
+    "source_sha256": "83bd1f9876a1b0cec6bcefdd464739c28ae29692efef430ca1252b03ca4ca4af"
   },
   "set_bezier_mask": {
     "description": "Définit un masque fermé par des points [x,y,inX,inY,outX,outY] en coordonnées normalisées centrées.",
-    "source_sha256": "a82f26b1e38d639bf46d340d0863cf48d2ec43e34809f04ee9c5e54218356d34"
+    "source_sha256": "234cbb165f3fad5f16ad5aa73f42677a333deb0e18249c0b30f6eef0d993100a"
   },
   "start_mask_tracking": {
     "description": "Lance un suivi de translation du masque par corrélation en arrière-plan, sur 1 800 images au maximum.",
-    "source_sha256": "c5c7709a1d2f7fa980131190d01ec93e19c1bf9a0c938459b7255794b5347be9"
+    "source_sha256": "ec677e93afd41ff08abfd1fa6828ee144ed62bd8a9d4bea3abe5896bc71f8d5e"
   },
   "mask_tracking_status": {
     "description": "Lit l’état du dernier travail de suivi de masque.",
-    "source_sha256": "e82bf7524915348fcdd501fe41014f6fc22bba81e6fd904d900a6c713cbb9fb7"
+    "source_sha256": "de6727367031fc9912ca4e8a8041c0363ad89c467938d860c9c08a9bd9ba81d9"
   },
   "cancel_mask_tracking": {
     "description": "Annule le suivi actif.",
-    "source_sha256": "4a3215339c201ee1a02562428cb9dedd770003e03f49a7bb6d251fc7011262d2"
+    "source_sha256": "45067acb4b721971f31929009dbce2cdc6f2f81c8ded205dc3f640b5f5eeec4f"
   },
   "apply_mask_tracking": {
     "description": "Applique les courbes mask_x et mask_y si le clip n’a pas changé.",
-    "source_sha256": "c3f2e8c4c38ceec48fbf72949f0a145105c8577184d36a869640c02bc6157139"
+    "source_sha256": "2b14b9c8e24b30ddf8e7aaf766e67f8f6052f73617762b6b9c1d6f6fa7c5dddd"
   },
   "set_transition": {
     "description": "Règle la transition d’entrée entre le clip vidéo et les calques inférieurs ; reset_progress rétablit la progression automatique.",
-    "source_sha256": "5e02575b0602d75f83ca29951ad772326aa26d6a13fabd76c522ce27868c2439"
+    "source_sha256": "c68484f49e8c6f45da54aecdc633a2d6cb458c712e2a88de3b2c8bc7f842e8a1"
   },
   "remove_transition": {
     "description": "Retire la transition ainsi que ses paramètres transition_ et leur animation.",
-    "source_sha256": "3ecac39a3ddf6c9e92c126177915631269bc789922d1673284a9344a98f21ab5"
+    "source_sha256": "5012e47815710337ad61f4b5e00aced76432ee30719da3b7b30c92cbdf50e036"
   },
   "set_transition_shader": {
     "description": "Compile un shader de transition à deux entrées et l’enregistre dans le clip.",
-    "source_sha256": "db77ac2a525231fd85de4065ee7ce4f637ebeadd0632cb1d7e08cb52f93ce6e3"
+    "source_sha256": "ec207520d2688e8962f36cde5d1523112cbd42d80edc646ec0013d72a0334c43"
   },
   "set_clip": {
     "description": "Modifie les temps, le nom ou la couleur 0xRRGGBB d’un clip. hold fige la source au temps in.",
-    "source_sha256": "207fd51585a0d39e8b6d252640143c906160f381393038e779d6277f408a9645"
+    "source_sha256": "7731b0ae7045f2787ee1576d7aeed6bca4e9d67cd4bee3156cb5ce64494ada18"
   },
   "ripple_trim": {
     "description": "Raccourcit ou prolonge de delta secondes en décalant les clips suivants. left ajuste le point d’entrée source.",
-    "source_sha256": "8dc47beabcc18c54319cb5b042af1b03139230704cdbf8a677303ff3166abbba"
+    "source_sha256": "3996369a46c3e32b338275c4f94efcb6ce7d0460a85759b031951b6844a6a966"
   },
   "normalize_audio": {
     "description": "Règle le gain des clips audio pour amener leur crête à peak dBFS, −1 par défaut. Retourne gains.",
-    "source_sha256": "67345ec31a64ac99bc4c7b4d576b9195087cc1694233d64dca2ed70e027ac759"
+    "source_sha256": "1c8eff356fbad8b60884532d4a20d0e3ba832f55855cd81fe4baaad6a734afb4"
   },
   "replace_source": {
     "description": "Remplace la source d’un clip et des membres liés utilisant le même média, à partir de in, sans changer leur position ni leur durée.",
-    "source_sha256": "06f7df71b4e9312826786f1a115fa3820498a1407a3546a557686e623fe36659"
+    "source_sha256": "48baa8871d7d08b81cadb432067fe8dc263612eb14fbc94711700b2fa25d74f3"
   },
   "remove_silences": {
     "description": "Supprime les silences d’un clip audio ou de l’audio lié d’une vidéo, en refermant les vides sur toutes les pistes. threshold vaut −40 dB, min_length 0,5 s et padding 0,1 s par défaut. Retourne cuts et seconds.",
-    "source_sha256": "1515b23aa3dc4481e273868b480cf559842caba2fec54ef558d5bac3c4521470"
+    "source_sha256": "fd47f67655a6704c7420c2da7ef9a5a92cccf3b60a3d9f8066e28ceb670babdf"
   },
   "auto_duck": {
     "description": "Réduit le gain des clips de la piste musicale pendant la voix : amount −12 dB, threshold −40 dB, attack 0,25 s et release 0,5 s par défaut. Retourne spans.",
-    "source_sha256": "604c3c1544936cdbb450dea667376e9efcdbb4494da30622a3bfae0225a15c6e"
+    "source_sha256": "3d42efec77e61ce6bbf50359fe94a85942f7169cdce42d0be40acadf836004ce"
   },
   "detect_scenes": {
     "description": "Détecte les changements de plan d’un clip vidéo. split, vrai par défaut, coupe les clips ; sinon ajoute des repères. threshold va de 0 à 1, avec 0,15 par défaut. Retourne times.",
-    "source_sha256": "f927598d9b4403c9facc9c35baca203155189e8a6510003ed9f9f94b7dd5fb5c"
+    "source_sha256": "a9794b291cac779c8975c5b55bd60a2c311e9ca4b8bbc79ba959872fd46faf3d"
   },
   "detect_beats": {
     "description": "Ajoute un repère à chaque transitoire audio. sensitivity va de 0 à 1, avec 0,5 par défaut ; min_gap vaut 0,12 s par défaut. Retourne markers.",
-    "source_sha256": "50542a4006e594e1e087299981e3751633d2eb847b3dfe0905a17a56db3ea4a5"
+    "source_sha256": "40c89e1c7335340fceb7a76b8944aaf28a79aefc82b7a73bae05ab8605cad19d"
   },
   "import_subtitles": {
     "description": "Importe un fichier SubRip .srt comme clips de texte sur une nouvelle piste. Retourne track et clips.",
-    "source_sha256": "0d982722fff79fb349708f8fc0b8293775c510dee80f0c4923116c07af6d0664"
+    "source_sha256": "9a0eda244fa86648eb2325f765e4584e53c9627c1697e15cb51d6ee5631bb352"
   },
   "export_subtitles": {
     "description": "Écrit les titres d’une piste, ou de toutes les pistes, en SubRip. Retourne text.",
-    "source_sha256": "d7d67bedb9b19d94a31287dd36863d48afbb1c6ee47152ca2732ec17a3c873a1"
+    "source_sha256": "4167d47475906f5d4c553e46937f024fb7e5131a2a75b04db937b20a5fe4a1b8"
   },
   "add_subtitle": {
     "description": "Ajoute un sous-titre avec le style du précédent et le termine au clip suivant. Retourne clip.",
-    "source_sha256": "8dec7255ac61bfed250b1de21d62cdfb804c91a32f3257287d82f0bebd5ec87c"
+    "source_sha256": "b99ed16b68efa47a2bf042e986b69a1acfa9eff8962574f425b93ea6c3502bbd"
   },
   "set_subtitle_style": {
     "description": "Applique font_size, la position verticale y de −0,5 à 0,5, et le contour à tous les titres d’une piste.",
-    "source_sha256": "93584a1218d5c9d33c2fc47ee3890d2a9b79e07065f1474fb9a996c0cef6e15e"
+    "source_sha256": "3cf63b9394a4fe54573f0767fad32299b632ac803005f6bb4bda365e2ceebf18"
   },
   "normalize_loudness": {
     "description": "Mesure la sonie intégrée du mixage selon BS.1770 et règle le master vers target LUFS, −14 par défaut. measured et true_peak fournis évitent la mesure. limit ajoute un limiteur master à −1 dBTP. Retourne measured, gain, master et true_peak.",
-    "source_sha256": "fd5cc078054a57bb3484571c8a97fbeb9fcc38d184a52cee66f91cf4f495d1f5"
+    "source_sha256": "a4c56a1402e80421c1fd800216818ca946c5ceb48410ce635bab598e84f62969"
   },
   "set_sequence": {
     "description": "Modifie le format de séquence : largeur et hauteur paires de 64 à 8 192 pixels, cadence de 1 à 120 images/s et nom. Ces limites sont celles de la validation du projet.",
-    "source_sha256": "501f3f1e613c9a4ec078f56b62a359a31d43312efe400a1632241657b8b800d0"
+    "source_sha256": "9e904ae674454eb1dc5d0ff89478c77c4778c2dd8700adaddf677b38560e0bcc"
   },
   "fit_clips": {
     "description": "Adapte les clips vidéo à un autre rapport d’image : fill recadre pour remplir ; fit ajoute des bandes. Retourne scales.",
-    "source_sha256": "bba3077151a13c7ce2faba245e097a39d65038e82719bc1d53ba723acdb42630"
+    "source_sha256": "31877499ee86b1010093c15f09b8936d2679f14503feb85276c4f98edc9d95fb"
   },
   "media_status": {
     "description": "Liste les médias de la médiathèque et des clips, avec path, online et uses.",
-    "source_sha256": "99517007020d2b9139abb4d70ce620556a3ffd6950bd05fa25e15af908d315d6"
+    "source_sha256": "91e44738a485fb67fab0a29a52cc52c043cb1a8fbaca0fee2863f2c9987ac25f"
   },
   "relink_media": {
     "description": "Reconnecte les médias hors ligne aux fichiers de même nom dans folder et ses sous-dossiers. Retourne relinked et missing.",
-    "source_sha256": "e8c8c806fd800a94526262d69269cca83504591ca7605bf318d438f7c5b9b4e4"
+    "source_sha256": "04f8e29ed3b64359c19965d1a7648f9d658a5a3c4bbf920e2591ea855f7d90e0"
   },
   "collect_media": {
     "description": "Copie les médias utilisés dans folder et met à jour leurs chemins dans le projet. Retourne copied et bytes.",
-    "source_sha256": "3f03446c132d50de69369cb59e3964afc8dd4a3ca134f580cbaea66803711230"
+    "source_sha256": "b344206f518eb551168a49c27d8f6704113ecaa99dbfd471cf81f3a430a61b7c"
   },
   "rename_clips": {
     "description": "Renomme les clips dans l’ordre de timeline. # devient un numéro complété par des zéros ; {nom} conserve le nom courant ; first vaut 1 par défaut. Retourne names.",
-    "source_sha256": "bbe0603bfd355c1d376197ab9d83af9a328c189e13b1da0360e935df58b612c7"
+    "source_sha256": "3a28ccfcf147fad2fa7f813bd7b8d2124b7b755f624f157acef668a2ec8e0763"
   },
   "sync_audio": {
     "description": "Aligne un clip et son groupe lié sur une référence à partir des enveloppes audio, dans ±max_lag secondes, 30 par défaut. Retourne offset en secondes et confidence de 0 à 1.",
-    "source_sha256": "80043819c9f75276675ef302ab95650d08398c16c2399dcb3b90328fbebc2798"
+    "source_sha256": "2e8c916fa56ff7a85cfdf01f64740c0f1a870c4b2a3aead8a7d9d2d86f7f2035"
   },
   "apply_animation": {
     "description": "Applique fade_in, fade_out, fade_in_out, slide_up, zoom_in, ken_burns pour les images, typewriter pour les titres, ou ramp_up, ramp_down, ramp_middle pour la vitesse. La durée de fondu/glissement vaut 0,5 s par défaut. Retourne clips.",
-    "source_sha256": "304eb05a9f2f09663972640f56cb0b259894865062b27d8926414854fda75e05"
+    "source_sha256": "3207b42c90624dfab101a96870bf19d1ce66d58ab5e191b83efa8258034cf3a4"
   },
   "paste_attributes": {
     "description": "Copie les attributs de from vers clips : effets ajoutés ou remplacés avec replace_effects, transform pour x/y/scale/rotation, opacity, audio pour gain/pan, et mask. Les clés suivent le début de chaque clip. Retourne clips.",
-    "source_sha256": "72ba83722d2fa6385d1f499e4a2580bf87edf9ebb795a9f8d7c0952ceaf4afad"
+    "source_sha256": "e3ba5061df2f5e35e22659600668e13aa549b54d560338d2ec1f119c066174fe"
   },
   "switch_angle": {
     "description": "Au temps demandé, ou à la tête de lecture par défaut, coupe chaque angle vidéo et n’active que l’angle choisi jusqu’au prochain changement. L’angle 1 est la piste vidéo la plus haute contenant une image. Retourne angles.",
-    "source_sha256": "37b0cbb12407a4886af01d8def361f11296b3ebc4e0dae364494b15e5f48fd03"
+    "source_sha256": "1828ac3a22cb5abb91debc13d81713bc0558e9de9f66b43344d917dc8710a13c"
   },
   "auto_grade": {
     "description": "Équilibre un clip vidéo au temps demandé, ou à la tête de lecture : balance par moyenne grise et exposition vers un gris moyen de 18 %. Ajoute ou actualise sa correction. Retourne exposure et gains.",
-    "source_sha256": "ec54c9fc82cddebd68d9466ec1b7cf1b5d9cae619f979126f732a0994b570097"
+    "source_sha256": "1fce4c0f05ae9fa716b3a381b204b38f5c865428efa8c4404a4a811459a6fb48"
   },
   "match_grade": {
     "description": "Raccorde la couleur et la luminosité moyennes d’un clip ou d’une sélection à un clip de référence : balance des blancs et exposition, avec seconde correction si nécessaire. time et reference_time sont facultatifs. Retourne clips, exposure, gains et clamped.",
-    "source_sha256": "5d5f748b0dc5acb149a08944255b78cd9f6f0dfef01a61e5a28a98da29dbc637"
+    "source_sha256": "e26825cf849d03860a08befc7f205216cd90972f9435ea14f053ef26c40a0e41"
   },
   "split_at_markers": {
     "description": "Coupe les clips demandés, ou ceux de toutes les pistes déverrouillées, aux repères qu’ils traversent. Retourne cuts.",
-    "source_sha256": "fb00e2b0133bb4c81e728bbc219080a359be48ebcc63517cb448b69afac7c1c3"
+    "source_sha256": "0f8f8c1fd7c0eaa5624c2199c130223dbd073478060a8f4404be53be4df70d25"
   },
   "close_gaps": {
     "description": "Referme les vides d’une piste en déplaçant aussi les membres liés. Sans track, retire les zones où toutes les pistes sont vides et raccourcit la séquence. Retourne gaps.",
-    "source_sha256": "680ec3cba9ca363362e58b96b2d7dc1e9eead4f01e510df7177bd2c7e4e249ec"
+    "source_sha256": "0d6078835e27a80ff71dd6cfc388ccb886057532cd1b6c64643dca2b5d5c8ad5"
   },
   "fit_to_markers": {
     "description": "Dispose les clips sur la piste du premier clip, dans l’ordre, à partir de ce clip puis de chaque repère suivant. Leur durée va jusqu’au repère suivant, limitée par la source. Retourne clips.",
-    "source_sha256": "b24412b7b104c882eb67660db88018f9c7f663ba3d71013668accc4dd56f9aa6"
+    "source_sha256": "2cbecc2beb93c1b61839aab4f98c25b9731cc0199e7a57922c93b83227956d20"
   },
   "insert_gap": {
     "description": "Insère un vide sur toutes les pistes, coupe les clips traversants et décale les clips et repères suivants.",
-    "source_sha256": "31e8a7539a47941d4c0f6543f7bfb9affde53d495ab9564bae3a844ae204a9a9"
+    "source_sha256": "bad44cbb9affecfe2a30fc6b1f2cdb40fa20ddbad165d8d38da7395b3de7d9be"
   },
   "freeze_frame": {
     "description": "Coupe un clip vidéo au temps demandé et insère une image figée pendant duration. Retourne clip.",
-    "source_sha256": "4a926ecd8b12f4abd0f79517d2bddd7e75e4860b9f444c68637011d618389f49"
+    "source_sha256": "8b4a605106aff4cfe6b89b9c8c8b590e241e5457123cc41c0f5b8998f6a6290c"
   },
   "trim_clip": {
     "description": "Rogne un clip et son groupe lié à un temps intérieur : side start retire le début, end retire la fin. ripple, vrai par défaut, referme le vide.",
-    "source_sha256": "ca0951b445568c379d11cf9ff748ba04e0234cd8b09452e5cb704e4f26f62389"
+    "source_sha256": "df109d4e14b133942b7d5bab53ed9b225904d15d5a1137de238bc8f2379acba5"
   },
   "roll_trim": {
     "description": "Déplace la coupe entre deux clips adjacents sans changer leur durée totale.",
-    "source_sha256": "9072ec5bf282b2f516c9617810510d60c473674aa6dc70961028614b9aac9df6"
+    "source_sha256": "fe33f253964186648e8db31eb71ebff3e29116f6b6078f028132b352cf932e2a"
   },
   "overlap_transition": {
     "description": "Crée un chevauchement et un fondu audio avec les marges source disponibles.",
-    "source_sha256": "6614c362799aa8f46d8b24c94082b5ef98b2efe9df54f40d8e3823bd16478ce2"
+    "source_sha256": "2d88a08c6e4431a00706e97dce2c6759b7101e10e1f92919267244ccd30a1a64"
   },
   "remove_range": {
     "description": "Coupe et retire un intervalle sur toutes les pistes en refermant le vide.",
-    "source_sha256": "b7a4c39ccbd4e2a0ec29cfbbd2eca31440b1b695d16457073f9780d98e9f89f7"
+    "source_sha256": "e501f390a43bee6e95b97a55ad8981bbe968895bec1014f5619c2530d46a869f"
   },
   "split_clip": {
     "description": "Coupe un clip au temps indiqué.",
-    "source_sha256": "97eaca8d0f48ddf9aa7be507ec1b9dc5f19ec6915795da7ca7576e8751fd8798"
+    "source_sha256": "954514357b779e26dac60c3446ce069fdf08fde6304f16f0e784cb973f3ccddd"
   },
   "delete_clip": {
     "description": "Supprime un clip et son groupe ; ripple referme leurs intervalles sur toutes les pistes.",
-    "source_sha256": "5272f17a867519084f6a31045e1c6b9c77f9a8240275db5827ebef11d4d8e09d"
+    "source_sha256": "0c89b060ed877e548f25959a7294d7020868a672fa65021b3b3aa497b0b6e40a"
   },
   "select_clips": {
     "description": "Sélectionne les clips et leurs groupes dans l’interface. Une liste vide désélectionne tout.",
-    "source_sha256": "dbe2dcdd2f7499f1014577e475b0e1bc5c9f60624eff5741dc4b77264d7892f4"
+    "source_sha256": "70bd38826eaf982ea9c48bd1421f52ab3ed938e8a20c5a857d46d63993745989"
   },
   "move_clips": {
     "description": "Déplace une sélection et ses clés de delta secondes, y compris les clips liés.",
-    "source_sha256": "3c2c03f38fceb3a608674d88ae3b347278ecd43ce8398796d94ec25555c2c462"
+    "source_sha256": "816eb3668bb6d4716ced1032d7f516399497e4af934a895a62409cb940fc5685"
   },
   "delete_clips": {
     "description": "Supprime une sélection. ripple referme l’union de ses intervalles sur toutes les pistes sans couper les clips non sélectionnés.",
-    "source_sha256": "2a195968789601ff5917094ae1e7b21f1e79d49acf6c007dbba20096e2ad947f"
+    "source_sha256": "440369f236f7691e96fe18ce88d314bd122890ea84eafa960772ea794a7ed402"
   },
   "duplicate_clips": {
     "description": "Duplique une sélection en bloc après sa fin, en conservant liens et animation.",
-    "source_sha256": "7471360cf8c991922fdd85d863c01d43d579436a5c31d275aed49d07f25c35db"
+    "source_sha256": "9272dd2dd94b757050239bb56754c32f4cacc4904153e1f759a2f614168af6de"
   },
   "split_clips": {
     "description": "Coupe les clips sélectionnés traversant time, y compris les clips liés.",
-    "source_sha256": "c9c7b37c12d3b89bf36486f93e0cbf9dfdaaf9fd7d4930b26a36321f07cfd0f7"
+    "source_sha256": "0b7768d7cc0bd007179890b89cbda967e4fcb54a9dddd8620016fca14245f32d"
   },
   "duplicate_clip": {
     "description": "Duplique un clip et son groupe lié, avec leur animation.",
-    "source_sha256": "8cc8be32568d3fcd7e686376f04609b0d1fb306104693df87788fed322d2f342"
+    "source_sha256": "8e1c5e1a3e093896cb496149ae6b6fcd6b4e77df03995d24fc3e39c51e9dabec"
   },
   "link_clips": {
     "description": "Lie deux clips ou fusionne leurs groupes pour les opérations de montage.",
-    "source_sha256": "4b6f791e27a51f8f615b6deaad6dd0fc1ec16de2844de51cd5fe646f3a61b649"
+    "source_sha256": "811c32c9bac03028d4fa9e92e62a42d9de3cba76587476bfed5ea72addc335da"
   },
   "unlink_clip": {
     "description": "Délie tous les clips du groupe.",
-    "source_sha256": "860ddc55be59862566e7acb09e4632e93803d64833093baccf267348e82801a2"
+    "source_sha256": "40d7b2873650687efa55bd5f1abf893f24750683aca91918469ee1ca30191094"
   },
   "set_parameter": {
     "description": "Règle un paramètre de clip, opacity, x, y, scale, rotation, gain ou pan, ou un paramètre d’effet.",
-    "source_sha256": "3c140bfc271e1df8f89dff92991fd46d50d3682054c783c40b5aeeb0954c5131"
+    "source_sha256": "8e9d4ec978889ec5e773f4601d9a8e1db1becd6168b21d3d3eb3f972e3db2172"
   },
   "set_keyframe": {
     "description": "Définit une clé d’animation : interpolation 0 linéaire, 1 lissée, 2 constante, 3 courbe CyDAW.",
-    "source_sha256": "6fb22e2a72a774120846dd02a8ee99f37f421dae07fc41c13fc8a2e3a9093e9d"
+    "source_sha256": "c70d65c3a321269474f909c4ffb410e7783759b849199f39e20511a17ee365aa"
   },
   "add_effect": {
     "description": "Ajoute un effet HLSL de la bibliothèque.",
-    "source_sha256": "10e98939d11ae883f597ba224ec50e5c49877d075eec5cc9915818320037e23f"
+    "source_sha256": "6891170cad85ab8d557e252d5c2b0c8be89bd2b79743a829a0eb869a9b311ee7"
   },
   "add_audio_effect": {
     "description": "Ajoute un effet DSP natif CyDAW 2.",
-    "source_sha256": "15a80d9551d8bb68a7458aa0f6ca9a48e93ab9e23c0d0094355b8571c6e360d4"
+    "source_sha256": "bebc0138dd7937e2ea202809f5866e4ae8668fdbd50f0c8911de49dd60d66511"
   },
   "set_effect": {
     "description": "Active ou réordonne un effet dans la pile vidéo/audio, avec index commençant à zéro.",
-    "source_sha256": "5a5450a7359ed7c9d6ae9e7c9142e2f025217b0570531dab14f3d14921475a3f"
+    "source_sha256": "9582936e8888a8a920bbd3dee7d49f32903defe65430b82786049953de4b43dd"
   },
   "remove_effect": {
     "description": "Retire un effet vidéo/audio et son animation.",
-    "source_sha256": "3c51f86d0c2f4ed1e6940b802a4303fc6a505d6d76a255afeab925dba66e8959"
+    "source_sha256": "97fa4216d8cd7204970e055909cb9adb7c4e54e9360ff06ff77f31eb121399ad"
   },
   "list_effects": {
     "description": "Liste les effets et plugins disponibles.",
-    "source_sha256": "19a57cc37acb1b61051b589c6b94ad1153046b7c9eb6b018b42cfad38e04546a"
+    "source_sha256": "2c1d62e611f21e40e3a06124a3924fd0f2523b34956e7b9b54515f2a0c52d6f5"
   },
   "inspect_ofx": {
     "description": "Décrit un plugin OFX float RGBA de contexte Filter/General dans un processus isolé.",
-    "source_sha256": "6b127ff5309853423857872301d3b1cea077623a59f309d37fc8c874723ac7a5"
+    "source_sha256": "1e5fb4a352726baf516e23b21b0019740b4dd1660db18bb73f593bb67efd485e"
   },
   "add_ofx_effect": {
     "description": "Ajoute un OFX à un clip vidéo avec paramètres animables.",
-    "source_sha256": "9c46174154c4796d353c02177530e128340d6aacba520ffff5326ffbfc732037"
+    "source_sha256": "8fa8bf85b60478899c866073024d04b6a5e6b1bbe72c1b479ad313b5a3d5f268"
   },
   "set_shader": {
     "description": "Compile et remplace le shader d’un effet.",
-    "source_sha256": "383771f92e5d336ccde09abd3c69c02c627de9d781d1cc668ce1f9e4570b6d22"
+    "source_sha256": "a91c0907dc5e17f4e71140545baf4f9aeee4233cf7e414abebd38c462c174eaa"
   },
   "get_graph": {
     "description": "Lit un graphe Shaderixel incorporé.",
-    "source_sha256": "a35b9a023428ade3885f103952267d49aff29788472c980684adce7492973c14"
+    "source_sha256": "0ca8f0fceecf766344c4a86ddb97877a6290316353117dfab5bddb1d55c03b21"
   },
   "set_graph": {
     "description": "Compile un graphe Shaderixel à une entrée, fourni comme objet JSON natif.",
-    "source_sha256": "60b6b70f92c60076213a28c7f1619c5a07a59aeed56e1b5c6fca6cb28c32c0b2"
+    "source_sha256": "c321ed9845337259268686916dee865b341357cad9dc1c2b1d9479622913751b"
   },
   "transport": {
     "description": "Lance ou arrête la lecture et déplace la tête en secondes.",
-    "source_sha256": "a2a67c5bcf3c9d58ed01eebe80cfb30b9699d7129b151db41c18b18e4bb17586"
+    "source_sha256": "1a08c59f3de1481e21411a63d6fb3dbc49f07369f858c9990693f0bc0ef3e923"
   },
   "export_video": {
     "description": "Rend la séquence au format MP4 H264/AAC.",
-    "source_sha256": "271f791134a67f50b3b1b291701fa62661ff89f03f7f7354cc645a38df91bd43"
+    "source_sha256": "8ba68ff5833bda445c0d2cd1b8911d6edb196c27ae3af0703e0210229add8f98"
   },
   "export_audio": {
     "description": "Rend le mixage comme fichier WAV stéréo à 48 kHz.",
-    "source_sha256": "62418a9998a2789cbcfb326d66c5635d9132c1a983796a2d2a92c0f0ade7f9cc"
+    "source_sha256": "c652b8e5932e36559413e7e458bc0658f8be289f7ba22389e97f38099958a71b"
   },
   "place_clip": {
     "description": "Dispose les clips vidéo en incrustation : top_left, top_right, bottom_left, bottom_right, center ou full. size est la fraction de largeur, 0,33 par défaut ; margin vaut 0,04 par défaut. Retourne clips.",
-    "source_sha256": "fda64d6488f0ea6f212731731fc215831c1bb385eec89201e1537b13d3d71902"
+    "source_sha256": "d63fe6f74f9c63e298642e0444ce513bf7fae40b755f5c32624367b700aa8519"
   },
   "split_screen": {
     "description": "Partage l’image entre 2 à 4 clips : side_by_side, stacked ou grid, pour gauche/droite, haut/bas ou quatre cases. Chaque image s’adapte à sa case. Retourne clips.",
-    "source_sha256": "8ba5c615d1470961cbf7edaf09308dce26bd9ff8d098c2334420b3b404012c98"
+    "source_sha256": "2f8f5cb0f19ec1cf347144ccac0aa3c229636361b4c0757790ad526c2a6afd4f"
   },
   "key_background": {
     "description": "Détoure les clips vidéo sur fond green ou blue en ajoutant un effet de chrominance avec threshold égal à 0,35 par défaut. Retourne clips.",
-    "source_sha256": "fe08055573602038254e6508bd04dd8e8214654bba762c729641f2cd47034558"
+    "source_sha256": "4c4c9763dfc2cee76daae13fd5e1a35b2367e659f06d0717b8f816a90a150ba5"
   },
   "audio_cut_fades": {
     "description": "Ajoute des microfondus anticlics de part et d’autre des coupes d’une piste audio. length vaut 0,05 s par défaut. Retourne cuts.",
-    "source_sha256": "83781cdeebfcf37371a32ee2e36049cf8b2028c5488f157d518c320e98bfd697"
+    "source_sha256": "31a54445ad2562540a53d3d3c7809464b8b441135f2c10a414285f7b0aa1649b"
   },
   "add_adjustment_layer": {
     "description": "Ajoute un calque de réglage sur une nouvelle piste vidéo supérieure ; ses effets traitent l’image des pistes inférieures. Retourne clip et track.",
-    "source_sha256": "1119f7d8491e0708f3828dab0ec0f7bd93cb389c540b48e6f48ff040fa45dafb"
+    "source_sha256": "1ff0c037aa225d7c0e4fc728f52a40763e3e93534228db00a0814a53273348c6"
   },
   "export_gif": {
     "description": "Exporte un GIF animé en boucle depuis range work ou begin/end. width vaut 480 et fps 15 par défaut. Retourne frames.",
-    "source_sha256": "21c2465202c0d291016905da3984551e03816151679b61a2bd9466602c874494"
+    "source_sha256": "cd413ad888f026f11b5c7a9479df4824e975992be7fc7f4c0b156e719d503721"
   },
   "export_chapters": {
     "description": "Lance un export par chapitre, du début ou d’un repère au suivant, dans folder. kind vaut video pour MP4 ou audio pour WAV. Les fichiers sont nommés 01 Name ; regions exporte les repères avec durée. Retourne jobs.",
-    "source_sha256": "4b9e4b439442e822dd21fe92b89d4073131cc4a3776a5bbc0ae2049c128b82a8"
+    "source_sha256": "0c11efe6f33fd9eea2daa7f811a78100b9c1d06dd75c83c527ef07a410506eac"
   },
   "start_export": {
     "description": "Lance un export en arrière-plan depuis un instantané. kind vaut video pour MP4 ou audio pour WAV ; range work vise la zone de travail, selection l’étendue des clips choisis, sinon begin/end sont en secondes.",
-    "source_sha256": "6bc6f2e04cda8538e6934cfdaf615775420c432180b48999a49a76306719c954"
+    "source_sha256": "4696417778b415ef74fe8fcf0d86d80a5e5d673e57b359c56adc304b3f56ab1f"
   },
   "list_export_presets": {
     "description": "Liste les préréglages de résolution et de cadence pour la file de rendu.",
-    "source_sha256": "a91ea83ac6e9fdd98a50d509e1d5eeefb253d0fa3fbe1353cf945f9b2ea518f7"
+    "source_sha256": "565bacdc9e2ed1b278bfe5c6fe4d66f6851f28de6ca9ed3ac430bcd057c967ca"
   },
   "prepare_proxy": {
     "description": "Prépare une copie de prévisualisation H264 720p ; les exports utilisent la source originale.",
-    "source_sha256": "a6ff6e51cbc956c7a50acbf6892a263797895edf8135163870f8701bd868bfd0"
+    "source_sha256": "b7ebfee355ebfb284ea90e357d413579f43afc2ebeff9ed714d42c36b54f261f"
   },
   "set_preview_proxies": {
     "description": "Active ou désactive les proxies de prévisualisation prêts.",
-    "source_sha256": "b55567d4941460d2d491f1a981c9b817f647d87a01bb30b29fc3cbfef7e0b457"
+    "source_sha256": "664f666582788e79ef0737a1ba5465bdaaf0f993e54d16126eacc2edee61d52b"
   },
   "export_status": {
     "description": "Lit l’état d’un export, la file et les huit rendus terminés les plus récents.",
-    "source_sha256": "7747e9a04598827dd7042526a533b85fc25863ef0e072a44b898c2b68bc62b6d"
+    "source_sha256": "70f709bbd5c2d23a115f7f011afc792f8777b52ba0a1d0d1c2a80af7938665f9"
   },
   "cancel_export": {
     "description": "Demande l’annulation avant le remplacement du fichier final et retourne accepted.",
-    "source_sha256": "4874e887724d4905305aeca818d6fda598195276f3eb0a0ffdc01f6ad04c9a73"
+    "source_sha256": "bb7955d6a52b807570914755070a658a8ea214eff6103b088d7c45f491888757"
   },
   "render_frame": {
     "description": "Rend une image PNG8, PNG16 ou EXR en demi-précision.",
-    "source_sha256": "9653bb8741c57f42489d2da36107bf3dfc153c493d1b0f95a6b9140b3c94b897"
+    "source_sha256": "88e3a78872a5cefc3136b6104e3451f406dfedd91d765465e12385d2fab94838"
   },
   "undo": {
     "description": "Annule la dernière modification.",
-    "source_sha256": "3a1c446af222e5822076d21cef12ce16817cd0c46420375056c834f58f1cdcc1"
+    "source_sha256": "f5145eb4f42c785b0c97307e4e9e125162dd04d2936e9b6a417057a9446ed217"
   },
   "get_history": {
     "description": "Liste par nom les opérations annulables, de la plus ancienne à la plus récente, et rétablissables, de la prochaine à la dernière.",
-    "source_sha256": "01b128a0c85cba5971197e81a604f3eb5ff37e92cf5973cfd205831182807a07"
+    "source_sha256": "96c6c4bb7adc4997b6c26184efb2a654d26b4a0736842a91c1657f48e0fa0821"
   },
   "redo": {
     "description": "Rétablit la modification annulée.",
-    "source_sha256": "f0fc0eafba01ebe2a30b4d65a9594858d533039d6aa56e14b7055973b21b68a6"
+    "source_sha256": "a44faf315d8c3d279d3ea6e1763d421ce5d6fc64dacc790eed713d38c77756b6"
+  },
+  "get_ui_state": {
+    "description": "Inspecte les panneaux, écrans, vues, préférences et espaces de travail imbriqués de l’éditeur ouvert. Ces outils nécessitent une instance graphique.",
+    "source_sha256": "07da975970e8ef687c274675a4bcc28cc7b90ae04dd728528da9ab902955285a"
+  },
+  "get_ui_native_windows": {
+    "description": "Liste les fenêtres natives des processus VST3 ouverts dans ce workspace. Les autres applications et fenêtres de compte restent exclues.",
+    "source_sha256": "7846028ed99f01f706966a84c9e6107b6f4571e11f20702f5a0209b6b10a3a45"
+  },
+  "get_ui_native_controls": {
+    "description": "Découvre les contrôles accessibles et actions prises en charge d’une fenêtre de plugin autorisée. Une interface personnalisée sans contrôles accessibles reste pilotable par ses paramètres et états exposés.",
+    "source_sha256": "2f9ec8525ffdc33d7a10541898983b56a46ba0b6128db52f8e4568b2edeb83e3"
+  },
+  "ui_native_control": {
+    "description": "Active ou modifie un contrôle natif découvert : invoke, set_value, set_range, toggle, select, expand, collapse ou focus. Seuls les processus de plugins autorisés et canaux non verrouillés sont admis. La synchronisation normale conserve les modifications et Undo.",
+    "source_sha256": "e65ce9d316c8892d32c7b79f64315b431786b96d10c1e548efcfe0e83549d317"
+  },
+  "get_ui_items": {
+    "description": "Recherche les contrôles du dernier rendu ImGui : menus, champs et canevas. Utilisez leur identifiant stable avec ui_input et ouvrez d’abord les panneaux ou menus parents. include_active_text lit explicitement le texte du champ actif, sauf les mots de passe.",
+    "source_sha256": "d13790a19dfb1040bb676a87b3604a4e7cc3a1517197024b6bfaf5a1e9ef96e1"
+  },
+  "list_ui_commands": {
+    "description": "Découvre les identifiants stables, libellés traduits, raccourcis et disponibilités réelles de la palette de commandes. Accepte un workspace de clip imbriqué ouvert.",
+    "source_sha256": "8e75243bb38f0d20faed50832c2078c23eed9bf8ea7b9007de400227fc82772f"
+  },
+  "ui_command": {
+    "description": "Exécute une commande disponible de list_ui_commands. file_path remplace les sélecteurs de fichier ou dossier ; son absence signale PathRequired sans blocage. Les modifications conservent validation, droits et Undo.",
+    "source_sha256": "86ed01a33aed5fe29336fccbfc9cc51065088ca1d1bd84cc9e4e93a677c7ae64"
+  },
+  "ui_workspace": {
+    "description": "Change le mode ou réinitialise sa disposition. Modes : edit, effects, motion, color, audio, deliver. Les panneaux détachés et l’assistant visible restent disponibles.",
+    "source_sha256": "8dbb7e9f5ae769bac14b5b8e00164ac4c701f75791bedf72b538abb5cdccaa62"
+  },
+  "ui_panel": {
+    "description": "Ouvre, ferme, focalise, détache, déplace, redimensionne ou ancre un panneau. dock_to ajoute un onglet à un panneau déjà ancré. La géométrie demandée s’applique au rendu suivant.",
+    "source_sha256": "c5392856b47d0c56916c555663f4968b26af2859ecad8dc3b0bde2e66d4b147d"
+  },
+  "ui_view": {
+    "description": "Pilote navigation, zoom et panoramique de timeline, composition, graphes shader/calques/pistes/DSP et motion. pixel_percent vaut 100 à l’échelle 1:1 ; fit ajuste la vue.",
+    "source_sha256": "c9f082c4d5671537542787ad11a3c8a4b7980386a76a7b033aafc2caba53bfa7"
+  },
+  "ui_preferences": {
+    "description": "Change et enregistre thème, densité ou langue par les véritables préférences CyUI. get_ui_state fournit les identifiants de thème et langue acceptés.",
+    "source_sha256": "8f87e3803503fbedb1e619b8229f198c7e71cb4db923f37c57361f1594dcfb50"
+  },
+  "list_ui_shortcuts": {
+    "description": "Lit les identifiants des raccourcis modifiables, leurs combinaisons et conflits actuels.",
+    "source_sha256": "b16a49d46c30a5054230f426acf6c26ee9f8423cbb7dac27641d33ece86d8dd5"
+  },
+  "ui_shortcut": {
+    "description": "Réaffecte un raccourci par identifiant et nom de touche ImGui. La touche None retire l’affectation ; reset restaure les valeurs par défaut. Utilise la persistance habituelle du clavier.",
+    "source_sha256": "ad0e6b10f35a80dea4b27b515ddd4aaf5e163eb28b43818843ce4df7c7aa8147"
+  },
+  "ui_focus": {
+    "description": "Sélectionne le clip, l’effet, le canal et le paramètre d’animation montrés dans l’éditeur. track ouvre le graphe d’effets d’une piste vidéo. workspace cible un éditeur imbriqué ouvert.",
+    "source_sha256": "5947328a90c3a5925fc4817f843e4e791a0f7c437d5b9b202cf2ee1ed9f732ac"
+  },
+  "ui_clip_editor": {
+    "description": "Ouvre un clip vidéo dans son éditeur imbriqué, en créant son conteneur si nécessaire, applique les brouillons ou recharge le conteneur. Actions : open, apply, reload. Le rechargement refuse les brouillons non enregistrés.",
+    "source_sha256": "26e3d8a7867ea4316e8c26a26f2c8eb8a8f003609a00e8ff171c696b1d8280e7"
+  },
+  "get_ui_clip_project": {
+    "description": "Lit la composition réelle d’un workspace imbriqué, modifications locales comprises. workspace contient les identifiants des conteneurs ancêtres ouverts, dans l’ordre.",
+    "source_sha256": "aa62e9cba2b0eb7d86b0dbeceb9e3898c31a01436e7c08d5d86f326fd76b70c2"
+  },
+  "ui_clip_invoke": {
+    "description": "Exécute une opération métier dans un workspace imbriqué ouvert, avec le schéma habituel de cette opération. Les changements restent dans le brouillon jusqu’à ui_clip_editor apply ; sauvegarde et Undo s’appliquent à ce brouillon.",
+    "source_sha256": "6c29ee9611a9920244f7c8f58b7af1b6c740cb985a2b8390abe03b4e9838f5f0"
+  },
+  "ui_open_source": {
+    "description": "Ouvre un média dans le véritable moniteur Source pour l’inspecter ou monter sa sélection source.",
+    "source_sha256": "4afd730dd403d205d34d78a9c08e4393b5cafd0fb13bf378c6c5069381a5c7ce"
+  },
+  "ui_show_help": {
+    "description": "Ouvre le lecteur CyDoc local existant à une page, langue et ancre précises.",
+    "source_sha256": "5986e04c5c85d6490ee63d4a24ecdb638125787691267e95bde6c4b5f284178a"
+  },
+  "ui_file_list": {
+    "description": "Liste un dossier explicitement fourni pour choisir un média ou projet. Résultat trié et paginé, sans récursion, lecture du contenu ni exécution de shell.",
+    "source_sha256": "28e799d3d04b3680535ff28953b8f97f5aed2b07dd0cb9d092b88d4db4acc5a5"
+  },
+  "ui_input": {
+    "description": "Interagit avec les contrôles ImGui visibles : clic, double clic, clic droit, texte, touche, molette ou glisser. Privilégiez les commandes métier. Utilisez un identifiant de contrôle, ou une fenêtre et ses coordonnées. Interrogez le job retourné avant un autre geste ; file_path évite les sélecteurs bloquants.",
+    "source_sha256": "f587e0fa6e5630d83e487c1b76c623d36d085ddb4bf4092424c2b787710692ae"
+  },
+  "get_ui_input": {
+    "description": "Lit le dernier job de saisie de l’appelant. completed confirme la livraison des événements, pas la réussite d’une modification métier : inspectez l’état obtenu. Les jobs annulés ou échoués ne sont jamais rejoués.",
+    "source_sha256": "a0a90ec58a90b45454d0844c43eb84321c301d02bcf030c538f6bd76ec9950b5"
+  },
+  "ui_cancel_input": {
+    "description": "Annule la saisie en attente de l’appelant et relâche uniquement ses touches et boutons synthétiques. Reste disponible après révocation des droits de modification ; aucune action métier n’est rejouée.",
+    "source_sha256": "01a628afe29d3510ab16b0dede989a4313765804a9a1975d531b457c8cdd8258"
   }
 }

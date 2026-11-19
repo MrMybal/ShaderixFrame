@@ -288,6 +288,7 @@ void Editor::buildLayout(ImGuiID dock, ImVec2 size) {
         break;
     }
     place("Clip Editor", centre);
+    place("Assistant", right ? right : centre);
     // Panels this mode does not show by default still open in a sensible node.
     for (auto &[name, open] : panels)
         place(name.c_str(), bottom ? bottom : centre);

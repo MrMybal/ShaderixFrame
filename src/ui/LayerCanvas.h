@@ -28,6 +28,10 @@ class LayerCanvas {
     Id track = 0;
     bool ownsKeyboard() const {return codeFields.ownsKeyboard();}
     float zoomLevel() const { return ed.zoom; }
+    sx::float2 panOffset() const { return ed.pan; }
+    void setNavigation(float zoom, sx::float2 pan, bool fit) {
+        ed.zoom = std::clamp(zoom, .2f, 2.5f); ed.pan = pan; needsFit = fit;
+    }
     const char *lutLayoutName() const { return lutLayout == 1 ? "atlas" : lutLayout == 2 ? "rg" : "auto"; }
     Id takeLutRequest() {
         Id id = lutRequest;

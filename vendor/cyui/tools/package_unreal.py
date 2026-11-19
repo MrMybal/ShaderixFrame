@@ -16,7 +16,10 @@ DEPENDENCIES = {
     'Nodes': ['Canvas'], 'Timeline': ['Canvas'], 'AudioViews': ['Plots'],
     'Code': [], 'Diff': ['Code'], 'CodeEditor': ['Code'], 'Inspector': [],
     'Assets': [], 'Images': ['Canvas'], 'Viewport': ['Images'], 'Commands': [],
-    'Diagnostics': [], 'DocumentViews': ['Code'], 'Web': [],
+    'Diagnostics': [], 'DocumentViews': ['Code', 'Images'], 'DocumentEditor': ['DocumentViews', 'CodeEditor', 'DataGrid'],
+    'DocumentIO': ['DocumentViews'], 'DocumentWeb': ['DocumentViews', 'Web'], 'Media': ['Images'], 'Web': [], 'DataGrid': [], 'Spreadsheet': ['DataGrid'],
+    'RichDocument': ['DocumentEditor', 'DataGrid'], 'OfficeIO': ['RichDocument', 'Spreadsheet', 'DocumentIO'],
+    'Hierarchy': [], 'DataView': ['Inspector'], 'FilePicker': [],
 }
 # Inside the checkout, output may only go to these ignored build folders.
 OUTPUT_FOLDERS = ('build', 'out')
@@ -87,8 +90,20 @@ def prepare_plugin(output, modules=('Core',), gallery=False, module_name='CyUI')
     shutil.copytree(ROOT/'integrations/unreal/CyUI', output)
     library = output/'ThirdParty/CyUI'
     shutil.copytree(ROOT/'include', library/'include')
-    sources = ['src/Theme.cpp', 'src/Widgets.cpp', 'src/Layout.cpp', 'src/Filter.cpp']
+    shutil.copytree(ROOT/'src/fonts', library/'src/fonts')
+    shutil.copytree(ROOT/'third_party/jetbrains-mono', library/'third_party/jetbrains-mono')
+    sources = ['src/Theme.cpp', 'src/Widgets.cpp', 'src/Layout.cpp', 'src/Filter.cpp', 'src/Numeric.cpp']
     sources += [f'src/modules/{name}.cpp' for name in selected]
+    support = {'Inspector': 'InspectorData', 'Nodes': 'NodeData', 'Timeline': 'TimelineData', 'Commands': 'CommandRegistry'}
+    sources += [f'src/modules/{unit}.cpp' for module, unit in support.items() if module in selected]
+    if 'CodeEditor' in selected:
+        sources.append('src/modules/PagedCodeEditor.cpp')
+    if 'DocumentViews' in selected:
+        sources += ['src/modules/DocumentParser.cpp', 'third_party/md4c/md4c.cpp']
+    if 'DocumentIO' in selected:
+        sources.append('third_party/miniz/miniz_tinfl.cpp')
+    if 'OfficeIO' in selected:
+        sources.append('third_party/pugixml/pugixml.cpp')
     if gallery:
         sources.append('src/Gallery.cpp')
     (library/'src/modules').mkdir(parents=True)
@@ -97,6 +112,14 @@ def prepare_plugin(output, modules=('Core',), gallery=False, module_name='CyUI')
         target = library/source
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT/source, target)
+    if 'DocumentViews' in selected:
+        shutil.copytree(ROOT/'third_party/md4c', library/'third_party/md4c', dirs_exist_ok=True)
+        for name in ('DocumentLayout.h', 'DocumentEntities.h'):
+            shutil.copy2(ROOT/'src/modules'/name, library/'src/modules'/name)
+    if 'DocumentIO' in selected:
+        shutil.copytree(ROOT/'third_party/miniz', library/'third_party/miniz', dirs_exist_ok=True)
+    if 'OfficeIO' in selected:
+        shutil.copytree(ROOT/'third_party/pugixml', library/'third_party/pugixml', dirs_exist_ok=True)
     imgui = library/'third_party/imgui'
     imgui.mkdir(parents=True)
     for name in ('imgui.h', 'imgui_internal.h', 'imconfig.h', 'imstb_rectpack.h', 'imstb_textedit.h', 'imstb_truetype.h', 'LICENSE.txt'):
@@ -119,11 +142,15 @@ def prepare_plugin(output, modules=('Core',), gallery=False, module_name='CyUI')
         shutil.copytree(ROOT/'third_party/texteditor', library/'third_party/texteditor')
         sources.append('third_party/texteditor/TextEditor.cpp')
     private = output/'Source/CyUI/Private'
+    # UBT promotes these MSVC diagnostics to errors. Keep allowances local to
+    # the bridge that includes the corresponding vendor or generated code.
+    source_warnings = {
+        'third_party/md4c/md4c.cpp': '4668 4800 4702',  # Unreachable fallback after MD_UNREACHABLE().
+        'src/modules/code/LanguageData.cpp': '4883',  # Large generated initializer.
+    }
     for index, source in enumerate(sources):
         vendor = source.startswith('third_party/') or source == 'src/modules/CodeEditor.cpp'
-        # MSVC may skip optimization of the generated language catalogue's large
-        # initializer. UBT treats C4883 as an error; scope it to this generated unit.
-        warnings = '4668 4800' if vendor else '4883' if source == 'src/modules/code/LanguageData.cpp' else ''
+        warnings = source_warnings.get(source, '4668 4800' if vendor else '')
         (private/f'CyUILibrary_{index:02}_{Path(source).stem}.cpp').write_text(
             '// Generated source bridge; the implementation remains in ThirdParty/CyUI.\n'
             '#include "CoreTypes.h"\n'
@@ -139,6 +166,7 @@ def prepare_plugin(output, modules=('Core',), gallery=False, module_name='CyUI')
     notices = output/'THIRD_PARTY_NOTICES.md'
     notices.write_text(notices.read_text(encoding='utf8').replace('(third_party/', '(ThirdParty/CyUI/third_party/'), encoding='utf8')
     (output/'.gitattributes').write_text('ThirdParty/CyUI/third_party/** -text !eol\n', encoding='utf8')
+    shutil.copytree(ROOT/'Documentation', library/'Documentation')
     shutil.copytree(ROOT/'docs', library/'docs', ignore=shutil.ignore_patterns('screenshots'))
     (output/'Config').mkdir(exist_ok=True)
     (output/'Config/FilterPlugin.ini').write_text('[FilterPlugin]\n/ThirdParty/...\n/LICENSE\n/THIRD_PARTY_NOTICES.md\n', encoding='utf8')
@@ -171,12 +199,20 @@ def prepare_module(output, modules=('Core',), gallery=False, module_name='CyUI')
             for original, target in sources.items():
                 text = text.replace('../../../ThirdParty/CyUI/'+original, '../Library/'+target)
             bridge.write_text(text, encoding='utf8')
-        version = library/'third_party/texteditor/VERSION.json'
-        if version.exists():
-            data = json.loads(version.read_text(encoding='utf8'))
-            data['files']['TextEditor.inl'] = data['files'].pop('TextEditor.cpp')
-            data['packaged_paths'] = {'TextEditor.cpp': 'TextEditor.inl'}
-            version.write_text(json.dumps(data, indent=2)+'\n', encoding='utf8')
+        for dependency in ('texteditor', 'pugixml'):
+            version = library/'third_party'/dependency/'VERSION.json'
+            if version.exists():
+                data = json.loads(version.read_text(encoding='utf8'))
+                renamed = {}
+                for name in list(data['files']):
+                    original = f'third_party/{dependency}/{name}'
+                    if original in sources:
+                        packaged = Path(sources[original]).name
+                        data['files'][packaged] = data['files'].pop(name)
+                        renamed[name] = packaged
+                if renamed:
+                    data['packaged_paths'] = renamed
+                    version.write_text(json.dumps(data, indent=2)+'\n', encoding='utf8')
         (library/'SOURCE_LAYOUT.json').write_text(json.dumps(sources, indent=2)+'\n', encoding='utf8')
         for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md'):
             shutil.copy2(ROOT/name, output/name)

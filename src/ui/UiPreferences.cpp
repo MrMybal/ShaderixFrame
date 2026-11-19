@@ -42,4 +42,5 @@ void uiPreferencesMenu() {
         ImGui::EndMenu();
     }
 }
+void saveUiPreferences() { save(); }
 }

@@ -16,3 +16,10 @@ condition = "AND"
 paths = ['''(^|/)vendor/imgui/imgui\.cpp$''']
 regexTarget = "secret"
 regexes = ['''^ImGuiKey_(Keypad0|Tab|Space|Apostrophe|Comma|Minus|Period|Slash|Semicolon|Equal|LeftBracket|RightBracket|GraveAccent|KeypadDecimal|KeypadDivide|KeypadMultiply|KeypadSubtract|KeypadAdd|KeypadEqual)$''']
+
+[[allowlists]]
+description = "Verified SHA-256 fingerprints of CyMCPSDK api.cpp, http.cpp and error_credentials.hpp"
+condition = "AND"
+paths = ['''(^|/)cymcp\.lock\.json$''']
+regexTarget = "secret"
+regexes = ['''^75a5ec88760d7500122bb6d2d0d4f0abcaf98fd045addf842d9f1b734b0d185f$''', '''^43dbb8f958241ebc5422daf2cd278a1788ff290ca002ad19813ee5f7ba4dc573$''', '''^f1d04f005864320292857443032bcbd969223e276a48c33c6338d395f1e4a98b$''']

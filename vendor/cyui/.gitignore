@@ -50,3 +50,10 @@ gitleaks-report*.json
 gitleaks-report*.sarif
 .DS_Store
 Thumbs.db
+
+# CyDoc generation dependencies and private working records
+/.CyDocBuild/node_modules/
+/.CyDocBuild/.cache/
+/.CyDocBuild/.cache.config.json
+/.CyDocBuild/internal/
+/.CyDocBuild/assets/

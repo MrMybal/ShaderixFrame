@@ -3,6 +3,7 @@
 // Win32 + Direct3D 11, from Dear ImGui's own example.
 
 #include <cyui/CyUI.h>
+#include "Help.h"
 
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
@@ -249,11 +250,10 @@ bool captureBackBuffer(const wchar_t* path)
     FILE* out {};
     if (_wfopen_s(&out, path, L"wb") != 0 || out == nullptr)
         return false;
-    std::fwrite(&file, sizeof(file), 1, out);
-    std::fwrite(&info, sizeof(info), 1, out);
-    std::fwrite(pixels.data(), 1, pixels.size(), out);
-    std::fclose(out);
-    return true;
+    const bool written = std::fwrite(&file, sizeof(file), 1, out) == 1 &&
+                         std::fwrite(&info, sizeof(info), 1, out) == 1 &&
+                         std::fwrite(pixels.data(), 1, pixels.size(), out) == pixels.size();
+    return std::fclose(out) == 0 && written;
 }
 
 LRESULT WINAPI windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -292,6 +292,11 @@ LRESULT WINAPI windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // ---- The application's interface ---------------------------------------------
 
 struct App {
+    void help(const char* pageId = "overview", const char* section = "")
+    {
+        if (!demo_help::open(cyui::locale(), pageId, section))
+            cyui::notify(cyui::tr("Unable to open local documentation. Keep the Documentation folder beside the demo.").c_str(), cyui::Tone::error);
+    }
     int page = 0;
     cyui::GalleryResources resources;
     int galleryTab = -1;
@@ -327,6 +332,13 @@ struct App {
                         cyui::setTheme(theme.key.c_str());
                 ImGui::EndMenu();
             }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu(trLabel("Help").c_str())) {
+            if (ImGui::MenuItem(trLabel("Documentation").c_str(), "F1")) help();
+            if (ImGui::MenuItem(trLabel("Module reference").c_str())) help("modules");
+            if (ImGui::MenuItem(trLabel("Quick filters").c_str())) help("filtering");
+            if (ImGui::MenuItem(trLabel("Localization guide").c_str())) help("localization");
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -492,11 +504,13 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     // --capture out.bmp [--theme key] [--comfortable] [--tab n]: renders a few
     // frames, writes the window to a BMP and quits.
     std::wstring capturePath,webUrl;
-    bool cefNoSandbox=false, galleryOnly=false, imageGraph=false;
+    bool cefNoSandbox=false, galleryOnly=false, imageGraph=false, pagedCode=false;
     std::string themeKey = "mid-grey";
     std::string language = "en";
     auto comfortable = false;
     auto tab = -1;
+    int documentMode = -1;
+    bool documentZoom = false;
     {
         auto count = 0;
         auto** args = ::CommandLineToArgvW(::GetCommandLineW(), &count);
@@ -506,6 +520,9 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
             if(arg==L"--web-url")webUrl=next();
             else if(arg==L"--gallery-only")galleryOnly=true;
             else if(arg==L"--image-graph")imageGraph=true;
+            else if(arg==L"--paged-code")pagedCode=true;
+            else if(arg==L"--document-zoom")documentZoom=true;
+            else if(arg==L"--document-mode"){const auto mode=next();documentMode=mode==L"split"?1:mode==L"source"?2:mode==L"reading"?3:0;}
             else if(arg==L"--locale") {
                 language.clear();
                 for (const auto c : next()) {
@@ -572,10 +589,12 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     createGalleryTexture();
     createImagePreviews();
     App app;
+    app.resources.openDocumentation = [&](const char* pageId, const char* section) { app.help(pageId, section); };
     app.resources.texture=ImTextureID(reinterpret_cast<std::uintptr_t>(gGalleryTexture));app.resources.width=app.resources.height=256;
     for (std::size_t i = 0; i < gImagePreviews.size(); ++i)
         app.resources.imagePreviews[i] = ImTextureID(reinterpret_cast<std::uintptr_t>(gImagePreviews[i]));
     app.resources.previewImageGraph = imageGraph;
+    app.resources.previewPagedCode = pagedCode;
 #if defined(CYUI_DEMO_CEF)
     std::unique_ptr<cyui::WebBackend> web;
     if(!webUrl.empty()){
@@ -590,9 +609,12 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     (void)webUrl;(void)cefNoSandbox;
 #endif
     app.galleryTab = tab;
+    app.resources.previewDocumentMode=documentMode;
+    app.resources.previewDocumentImage=documentZoom;
     app.resources.previewCommands = !capturePath.empty() && tab == 16;
     cyui::notify(tr("Welcome to the CyUI demo").c_str(), cyui::Tone::accent);
     auto done = false;
+    bool captured = false;
     auto frames = 0;
     const auto captureStart=GetTickCount64();
     while (!done) {
@@ -628,6 +650,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
+        if (ImGui::IsKeyPressed(ImGuiKey_F1, ImGuiInputFlags_None, ImGuiKeyOwner_NoOwner)) app.help();
         if (galleryOnly) {
             const auto* viewport = ImGui::GetMainViewport();
             ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -652,7 +675,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
         const bool browserCaptureReady=true;(void)captureStart;
 #endif
         if (!capturePath.empty() && ++frames >= 40 && browserCaptureReady) {
-            captureBackBuffer(capturePath.c_str());
+            captured = captureBackBuffer(capturePath.c_str());
             done = true;
         }
         const auto presented = gSwapChain->Present(1, 0);
@@ -673,5 +696,5 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     releaseDevice();
     ::DestroyWindow(hwnd);
     ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
-    return 0;
+    return capturePath.empty() || captured ? 0 : 1;
 }

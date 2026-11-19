@@ -15,6 +15,7 @@ window.addEventListener('pointerdown', event => bridge.send('test.pointer.any', 
 bridge.on('host.reply', value => { if(value.focusInput) document.querySelector('#message').focus(); const status = document.querySelector('#status'); status.removeAttribute('data-cyui-i18n'); status.textContent = JSON.stringify(value, null, 2); bridge.send('test.reply', {received: true}); });
 document.querySelector('#send').onclick = () => bridge.send('chat.message', {text: document.querySelector('#message').value});
 const input = document.querySelector('#message');
+input.addEventListener('pointerenter', () => bridge.send('test.input.hover', {}), {once: true});
 input.addEventListener('focus', () => bridge.send('test.focus', {focused: true}));
 input.addEventListener('pointerdown', () => bridge.send('test.pointer', {pressed: true}));
 input.addEventListener('input', () => bridge.send('test.input', {text: input.value}));

@@ -26,6 +26,16 @@
 #define CYUI_VERSION "1.2.0"
 #define CYUI_VERSION_NUM 10200
 
+#if defined(CYUI_HAS_HIERARCHY)
+#include "cyui/modules/Hierarchy.h"
+#endif
+#if defined(CYUI_HAS_DATAVIEW)
+#include "cyui/modules/DataView.h"
+#endif
+#if defined(CYUI_HAS_FILEPICKER)
+#include "cyui/modules/FilePicker.h"
+#endif
+
 // Optional modules selected by the linked CMake targets.
 #if defined(CYUI_HAS_CANVAS)
 #include "cyui/modules/Canvas.h"
@@ -74,6 +84,30 @@
 #endif
 #if defined(CYUI_HAS_DOCUMENTVIEWS)
 #include "cyui/modules/DocumentViews.h"
+#endif
+#if defined(CYUI_HAS_DOCUMENTEDITOR)
+#include "cyui/modules/DocumentEditor.h"
+#endif
+#if defined(CYUI_HAS_DATAGRID)
+#include "cyui/modules/DataGrid.h"
+#endif
+#if defined(CYUI_HAS_SPREADSHEET)
+#include "cyui/modules/Spreadsheet.h"
+#endif
+#if defined(CYUI_HAS_RICHDOCUMENT)
+#include "cyui/modules/RichDocument.h"
+#endif
+#if defined(CYUI_HAS_OFFICEIO)
+#include "cyui/modules/OfficeIO.h"
+#endif
+#if defined(CYUI_HAS_DOCUMENTWEB)
+#include "cyui/modules/DocumentWeb.h"
+#endif
+#if defined(CYUI_HAS_DOCUMENTIO)
+#include "cyui/modules/DocumentIO.h"
+#endif
+#if defined(CYUI_HAS_MEDIA)
+#include "cyui/modules/Media.h"
 #endif
 
 #if defined(CYUI_HAS_WEB)

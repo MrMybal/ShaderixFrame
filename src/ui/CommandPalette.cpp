@@ -65,6 +65,7 @@ std::vector<Editor::Command> Editor::commands() {
     };
     auto bound = [&](const std::string &id, std::function<void()> run, bool enabled = true) {
         add(keymap.get(id).label, keymap.label(id), std::move(run), enabled);
+        list.back().id = id;
     };
     bool selected = s.selected != 0;
     for (auto [id, chosen] : {std::pair{"tool.select", Tool::Select}, {"tool.blade", Tool::Blade},
@@ -125,6 +126,7 @@ std::vector<Editor::Command> Editor::commands() {
             }
         },
         clip && !clip->source.empty() && !clip->hold);
+    list.back().id = "clip.reverse";
     add("Auto Color (White Balance, Exposure)", "",
         [this] {
             Json a = Json::Object();
@@ -179,6 +181,7 @@ std::vector<Editor::Command> Editor::commands() {
     add("Getting Started", "", [this] { showManual("quickstart"); });
     add("Troubleshooting", "", [this] { showManual("troubleshooting"); });
     add("MCP and SDK Reference", "", [this] { showManual("api-links"); });
+    add("Assistant", "", [this] { showAssistant(); });
     add("Undo", "Ctrl+Z", [this] { action("undo"); });
     add("Redo", "Ctrl+Y", [this] { action("redo"); });
     add("Save Project", "Ctrl+S", [this] { saveCommand(); });
@@ -187,6 +190,7 @@ std::vector<Editor::Command> Editor::commands() {
     add("New project", "Ctrl+N", [this] { action("new_project"); });
     add(s.project.hasWorkArea() ? "Pre-render Work Area" : "Pre-render Sequence", "Input",
         [this] { startRenderCache(); });
+    list.back().id = "render.cache";
     for (auto [label, target] : {std::pair{"Normalize Loudness to -14 LUFS (YouTube)", -14.},
                                  {"Normalize Loudness to -16 LUFS (Podcast)", -16.},
                                  {"Normalize Loudness to -23 LUFS (EBU R128)", -23.}})
@@ -198,6 +202,8 @@ std::vector<Editor::Command> Editor::commands() {
     }
     for (auto &[name, open] : panels)
         add("Panel: " + name, "", [this, panel = name] { openPanel(panel); });
+    for (auto &command : list)
+        if (command.id.empty()) command.id = "command/" + command.label;
     return list;
 }
 std::vector<std::string> Editor::paletteMatches(const std::string& query) {

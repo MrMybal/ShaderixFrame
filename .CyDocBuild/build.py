@@ -22,20 +22,27 @@ def source_digest(path):
 
 
 def refresh_mcp(executable):
-    request = json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list'}) + '\n'
+    request = '\n'.join(json.dumps(message) for message in (
+        {'jsonrpc': '2.0', 'id': 0, 'method': 'initialize', 'params': {
+            'protocolVersion': '2025-06-18', 'capabilities': {},
+            'clientInfo': {'name': 'documentation', 'version': '1'}}},
+        {'jsonrpc': '2.0', 'id': 1, 'method': 'tools/list'})) + '\n'
     process = subprocess.run([str(executable.resolve()), '--hidden', '--warp', '--mcp'], input=request,
                              capture_output=True, text=True, encoding='utf-8', timeout=40,
                              creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
                              cwd=ROOT / 'build')
     if process.returncode:
         raise SystemExit('Cannot capture MCP contracts: ' + process.stderr)
-    tools = json.loads(process.stdout)['result']['tools']
+    replies = [json.loads(line) for line in process.stdout.splitlines() if line.strip()]
+    tools = next(reply for reply in replies if reply.get('id') == 1)['result']['tools']
     target = WORK / 'api'
     (target / 'mcp-tools.json').write_text(json.dumps(tools, ensure_ascii=False, indent=2) + '\n', encoding='utf-8', newline='\n')
     (target / 'provenance.json').write_text(json.dumps({
         'producer': 'ShaderixFrame tools/list', 'tools': len(tools),
         'source': 'src/mcp/Protocol.cpp', 'source_sha256': source_digest(ROOT / 'src/mcp/Protocol.cpp'),
-        'source_line_endings': 'lf', 'catalogue_sha256': digest(target / 'mcp-tools.json')
+        'source_line_endings': 'lf', 'catalogue_sha256': digest(target / 'mcp-tools.json'),
+        'sources': {path: source_digest(ROOT / path) for path in (
+            'src/mcp/Protocol.cpp', 'src/mcp/Automation.cpp', 'src/ui/UiAutomation.cpp')}
     }, indent=2) + '\n', encoding='utf-8', newline='\n')
 
 
@@ -63,7 +70,8 @@ def validate_export():
         assert set(en.get('anchors', [])) == set(fr.get('anchors', [])), id
         assert en.get('kind') != 'source' and not en.get('sourcePageId'), id
         assert not any(x in id for x in ('reference-release', 'translation-report', 'manual-maintenance', 'migration', 'source-sdk', 'source-shaders')), id
-    assert sum(p['id'].startswith('mcp-api-') for p in by_locale['en'].values()) == 163
+    contracts = json.loads((WORK / 'api/mcp-tools.json').read_text('utf-8'))
+    assert sum(p['id'].startswith('mcp-api-') for p in by_locale['en'].values()) == len(contracts)
     assert sum(p['id'].startswith('sdk-api-') for p in by_locale['en'].values()) == 7
     for page in manifest['pages']:
         assert not page.get('source'), page['id']
@@ -128,6 +136,8 @@ def main():
         provenance = json.loads((WORK / 'api' / file).read_text('utf-8'))
         assert provenance['source_sha256'] == source_digest(ROOT / provenance['source']), 'Public API changed; refresh its documentation: ' + file
     provenance = json.loads((WORK / 'api/provenance.json').read_text('utf-8'))
+    for path, expected in provenance.get('sources', {}).items():
+        assert source_digest(ROOT / path) == expected, 'Public API changed; refresh its documentation: ' + path
     assert provenance['catalogue_sha256'] == digest(WORK / 'api/mcp-tools.json')
     tools = json.loads((WORK / 'api/mcp-tools.json').read_text('utf-8'))
     french = json.loads((WORK / 'api/mcp-fr.json').read_text('utf-8'))
