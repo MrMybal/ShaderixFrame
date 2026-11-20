@@ -33,7 +33,7 @@ int runCli(const std::vector<std::string> &arguments, const std::filesystem::pat
     bool runtime = false;
     int resultCode = 0;
     try {
-        std::string command = "help", name, payload = "{}", argsFile, project, save, config, connect, info;
+        std::string command = "help", name, payload = "{}", argsFile, project, save, config, connect, info, profile;
         bool writes = false, compact = false, confirm = false;
         int port = 0;
         bool commandSeen = false;
@@ -58,6 +58,8 @@ int runCli(const std::vector<std::string> &arguments, const std::filesystem::pat
                 save = argument.substr(7);
             else if (argument.starts_with("--automation-config="))
                 config = argument.substr(20);
+            else if (argument.starts_with("--mcp-profile="))
+                profile = argument.substr(14);
             else if (argument.starts_with("--connect="))
                 connect = argument.substr(10);
             else if (argument.starts_with("--info="))
@@ -85,10 +87,11 @@ int runCli(const std::vector<std::string> &arguments, const std::filesystem::pat
                     "ShaderixFrameCLI help | list | describe NAME | invoke NAME --json=JSON | mcp | serve"},
                    {"options",
                     {"--project=FILE", "--save=FILE", "--args=JSON_FILE", "--allow-changes",
-                     "--confirm-discard", "--connect=PRIVATE_DESCRIPTOR", "--info=PRIVATE_DESCRIPTOR",
-                     "--automation-config=FILE", "--compact", "--warp", "--port=0"}},
+                     "--confirm-discard", "--connect=ADDRESS_OR_PRIVATE_DESCRIPTOR", "--info=PRIVATE_DESCRIPTOR",
+                     "--automation-config=FILE", "--mcp-profile=free|local_controlled|token_only|protected",
+                     "--compact", "--warp", "--port=0"}},
                    {"notes", "Use ShaderixFrame.exe --cli with the same arguments. A connected call uses the "
-                             "open instance's permissions. Standalone mutations require --allow-changes; use "
+                             "open instance's profile. Free is the default; controlled profiles require --allow-changes. Use "
                              "--save for durable project changes."}});
             return 0;
         }
@@ -108,28 +111,38 @@ int runCli(const std::vector<std::string> &arguments, const std::filesystem::pat
         J args = cymcp::parse_json(payload, cymcp::provider_message_limit);
         if (!connect.empty()) {
             if (command == "mcp" || command == "serve" || !project.empty() || !save.empty() || writes ||
-                confirm)
+                confirm || !profile.empty() || !config.empty())
                 throw cymcp::Error("InvalidArguments",
                                    "Connected mode uses only the instance state and permissions");
-            std::ifstream file(sx::Utf8Path(connect), std::ios::binary);
-            if (!file)
-                throw cymcp::Error("FileError", "Cannot read private connection descriptor");
-            auto descriptor = cymcp::parse_json(std::string(std::istreambuf_iterator<char>(file), {}));
+            J descriptor;
+            if (connect.starts_with("http://"))
+                descriptor = {{"url", connect}};
+            else {
+                std::ifstream file(sx::Utf8Path(connect), std::ios::binary);
+                if (!file)
+                    throw cymcp::Error("FileError", "Cannot read private connection descriptor");
+                descriptor = cymcp::parse_json(std::string(std::istreambuf_iterator<char>(file), {}));
+            }
             auto url = descriptor.at("url").get<std::string>();
+            if (url.ends_with("/mcp")) url.resize(url.size() - 4);
+            if (url.ends_with('/')) url.pop_back();
             auto parsed = cymcp::parse_url(url);
-            if (!parsed.loopback || parsed.scheme != "http")
+            if (!parsed.loopback || parsed.scheme != "http" || parsed.target != "/")
                 throw cymcp::Error("InvalidArguments", "Instance descriptor must use loopback HTTP");
+            auto token = descriptor.value("token", std::string{});
             cymcp::HttpRequest auth;
             auth.url = url + "/v1";
             auth.method = "POST";
             auth.body = "{\"method\":\"describe\"}";
-            auth.headers = {{"Authorization", "Bearer " + descriptor.at("token").get<std::string>()},
-                            {"Content-Type", "application/json"}};
+            auth.headers = {{"Content-Type", "application/json"}};
+            if (!token.empty()) auth.headers["Authorization"] = "Bearer " + token;
             auto authentication = cymcp::HttpClient().perform(auth);
             if (authentication.status == 401 || authentication.status == 403)
                 throw cymcp::Error("AuthenticationRequired",
                                    "The instance rejected the connection credential");
-            cymcp::McpClient client(url + "/mcp", descriptor.at("token").get<std::string>());
+            if (authentication.status != 200)
+                throw cymcp::Error("ConnectionFailed", "Cannot reach the editor endpoint");
+            cymcp::McpClient client(url + "/mcp", token);
             client.connect();
             if (command == "list")
                 print({{"ok", true}, {"operations", client.list_tools()}});
@@ -161,7 +174,12 @@ int runCli(const std::vector<std::string> &arguments, const std::filesystem::pat
                 session.renderer.initialize();
                 session.renderer.library.scan(root);
             }
-            Automation automation(session, AutomationOptions::load(sx::Utf8Path(config)));
+            auto options = AutomationOptions::load(sx::Utf8Path(config));
+            if (!profile.empty()) {
+                options.accessProfile = AutomationOptions::parseProfile(profile);
+                options.explicitProfile = true;
+            }
+            Automation automation(session, options);
             automation.allowChanges(writes);
             if (confirm)
                 automation.confirmDiscard();
@@ -186,8 +204,8 @@ int runCli(const std::vector<std::string> &arguments, const std::filesystem::pat
                         throw cymcp::Error("ExportFailed",
                                            "Background export failed; inspect the export destination");
                 if (!save.empty()) {
-                    if (!writes)
-                        throw cymcp::Error("AccessDenied", "--save requires --allow-changes");
+                    if (!automation.changesAllowed())
+                        throw cymcp::Error("AccessDenied", "--save requires application write access");
                     automation.invoke("save_project", {{"path", save}});
                 }
                 print({{"ok", true}, {"result", value}});

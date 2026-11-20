@@ -20,7 +20,7 @@ projects are read only; video-specific code and English labels live in adapters.
 
 ## Complete alpha from corresponding source
 
-Download `ShaderixFrame-0.15.0-alpha.1-source.zip` from the matching GitHub prerelease.
+Download `ShaderixFrame-0.15.0-alpha.2-source.zip` from the matching GitHub prerelease.
 It includes this repository and the exact JUCE 8.0.15 dependency. Extract it and
 open an x64 Visual Studio developer terminal in `ShaderixFrame-source`:
 
@@ -126,8 +126,8 @@ not add a Linux/macOS backend.
 
 ## CyMCPSDK assistant and command transports
 
-`vendor/cymcp` is a selected, unmodified build-source snapshot of CyMCPSDK 0.7.0,
-revision `791d4d7d7680213b282ec8529d248a10f8494d77`, recorded in `cymcp.lock.json`.
+`vendor/cymcp` is a selected, unmodified build-source snapshot of CyMCPSDK 0.7.1,
+revision `34d4bcae126bc83d1a2925b5047dac36e3d09d92`, recorded in `cymcp.lock.json`.
 It was imported read-only from the local source checkout. CyUI remains version
 1.2.0 but is updated to `6ef01cfcdb197f3a89d64618ce5ef8818c704728` for ChatUI's
 composer/transcript API. Upstream repositories are not changed.
@@ -152,9 +152,22 @@ fixtures, the real chat controller, the console executable and hidden real GUI
 instances. It covers tool calls, cancellation, session restoration, permissions,
 JSON/exit codes, same-instance edits, private chunked results and metadata-only
 metrics. Fixtures do not establish live authentication/inference for every provider.
-The optional standalone audio quality target remains disabled.
+`mcp_access_profiles` starts real editor instances for all four profiles. It verifies
+Free defaults and configuration migration, tokenless HTTP reads/edits, direct-address
+CLI, schema rejection, shared stdio state, protected authentication and controlled
+write/discard permissions. The chat fixture also edits through Free without a write
+flag. The optional standalone audio quality target remains disabled.
 
-`ui_automation` exercises the real hidden editor through authenticated MCP: modes,
+To update a verified SDK snapshot, archive it and import an exact local revision:
+
+```powershell
+python tools/sync_cymcp.py --source PATH_TO_CYMCPSDK --revision FULL_COMMIT_SHA --update
+```
+
+The importer preserves the preceding snapshot under ignored `build/dependency-snapshots/`
+and refuses replacement if the current vendored source has local edits.
+
+`ui_automation` exercises the real hidden editor through the Protected and Free MCP profiles: modes,
 docking, commands, file-path injection, dirty-project protection, nested drafts,
 widget clicks/text, languages, shortcuts and a connected CLI. `native_ui_controls`
 uses a hidden native fixture for scoped Windows accessibility discovery and actions.

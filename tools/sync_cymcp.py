@@ -21,6 +21,7 @@ def main():
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--source', type=Path)
     parser.add_argument('--revision')
+    parser.add_argument('--update', action='store_true', help='Archive and replace a verified snapshot')
     args = parser.parse_args()
     if LOCK.exists():
         record = json.loads(LOCK.read_text('utf-8'))
@@ -29,15 +30,27 @@ def main():
         if args.check:
             print('CyMCPSDK ' + record['version'] + ' @ ' + record['revision'] + ': snapshot verified')
             return
-        raise SystemExit('A snapshot already exists; explicitly review and archive it before replacement')
+        if not args.update:
+            raise SystemExit('Use --update to archive and replace the verified snapshot')
     if args.check or not args.source or not re.fullmatch(r'[0-9a-f]{40}', args.revision or ''):
         parser.error('Provide --source and an exact --revision for the initial snapshot')
     source = args.source.resolve()
     archive = subprocess.check_output(['git', '-c', 'safe.directory='+source.as_posix(),
                                       '-C', str(source), 'archive', '--format=zip', args.revision])
-    if VENDOR.exists():
+    if VENDOR.exists() and not args.update:
         raise SystemExit('Refusing to replace an unrecorded vendor directory')
-    VENDOR.mkdir(parents=True)
+    if args.update and not LOCK.exists():
+        raise SystemExit('An update requires a recorded, verified snapshot')
+    if args.update:
+        backup = ROOT / 'build/dependency-snapshots' / ('cymcp-' + record['revision'] + '.zip')
+        backup.parent.mkdir(parents=True, exist_ok=True)
+        if not backup.exists():
+            with zipfile.ZipFile(backup, 'w', zipfile.ZIP_DEFLATED) as zipped:
+                zipped.writestr('cymcp.lock.json', LOCK.read_bytes())
+                for name in record['files']:
+                    zipped.writestr('vendor/cymcp/' + name, (VENDOR / name).read_bytes())
+    VENDOR.mkdir(parents=True, exist_ok=True)
+    imported = set()
     with zipfile.ZipFile(io.BytesIO(archive)) as zipped:
         for entry in zipped.infolist():
             name = entry.filename
@@ -52,6 +65,12 @@ def main():
                 raise SystemExit('Unsafe source archive member')
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(zipped.read(entry))
+            imported.add(name)
+    if args.update:
+        for name in record['files'].keys() - imported:
+            target = (VENDOR / name).resolve()
+            assert target.is_relative_to(VENDOR.resolve())
+            target.unlink()
     version = re.search(r'project\(CyMCPSDK VERSION ([\d.]+)', (VENDOR/'CMakeLists.txt').read_text()).group(1)
     LOCK.write_text(json.dumps({'repository':'https://github.com/MrMybal/CyMCPSDK',
                                'revision':args.revision, 'version':version,

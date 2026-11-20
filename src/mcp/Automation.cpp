@@ -6,6 +6,48 @@
 
 namespace sf {
 using J = cymcp::Json;
+cymcp::LocalAccessProfile AutomationOptions::parseProfile(const std::string &name) {
+    if (name == "free") return cymcp::LocalAccessProfile::free;
+    if (name == "local_controlled") return cymcp::LocalAccessProfile::local_controlled;
+    if (name == "token_only") return cymcp::LocalAccessProfile::token_only;
+    if (name == "protected" || name == "protected_access") return cymcp::LocalAccessProfile::protected_access;
+    throw cymcp::Error("InvalidArguments", "Unknown MCP access profile");
+}
+const char *AutomationOptions::profileName(cymcp::LocalAccessProfile profile) {
+    switch (profile) {
+    case cymcp::LocalAccessProfile::free: return "free";
+    case cymcp::LocalAccessProfile::local_controlled: return "local_controlled";
+    case cymcp::LocalAccessProfile::token_only: return "token_only";
+    default: return "protected";
+    }
+}
+void AutomationOptions::saveProfile(cymcp::LocalAccessProfile profile) const {
+    auto path = configurationFile.empty() ? privateDirectory / "automation.json" : configurationFile;
+    J data = J::object();
+    if (std::filesystem::exists(path)) {
+        std::ifstream input(path, std::ios::binary);
+        if (!input) throw cymcp::Error("FileError", "Cannot read automation configuration");
+        data = cymcp::parse_json(std::string(std::istreambuf_iterator<char>(input), {}));
+        if (!data.is_object()) throw cymcp::Error("InvalidOptions", "Configuration must be an object");
+    }
+    data["access_profile"] = profileName(profile);
+    if (!std::filesystem::exists(path.parent_path())) cymcp::private_directory(path.parent_path());
+    auto temporary = path;
+    temporary += L"." + sx::Widen(cymcp::random_token(16)) + L".pending";
+    try {
+        auto text = data.dump(2) + "\n";
+        auto stream = cymcp::open_private_output_file(temporary);
+        if (fwrite(text.data(), 1, text.size(), stream.get()) != text.size() || fflush(stream.get()))
+            throw cymcp::Error("FileError", "Cannot save MCP access profile");
+        stream.reset();
+        if (!MoveFileExW(temporary.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+            throw cymcp::Error("FileError", "Cannot publish MCP access profile");
+    } catch (...) {
+        std::error_code ignored;
+        std::filesystem::remove(temporary, ignored);
+        throw;
+    }
+}
 AutomationOptions AutomationOptions::load(const std::filesystem::path &file) {
     AutomationOptions result;
     wchar_t local[32768]{};
@@ -13,13 +55,19 @@ AutomationOptions AutomationOptions::load(const std::filesystem::path &file) {
         result.privateDirectory = std::filesystem::path(local) / L"ShaderixFrame" / L"Assistant";
     else
         result.privateDirectory = std::filesystem::temp_directory_path() / L"ShaderixFrame-Assistant";
-    if (file.empty())
+    result.configurationFile = std::filesystem::absolute(file.empty() ? result.privateDirectory / "automation.json" : file);
+    if (file.empty() && !std::filesystem::exists(result.configurationFile))
         return result;
-    std::ifstream stream(file, std::ios::binary);
+    std::ifstream stream(result.configurationFile, std::ios::binary);
     if (!stream)
         throw cymcp::Error("FileError", "Cannot read automation configuration");
     std::string text((std::istreambuf_iterator<char>(stream)), {});
     auto data = cymcp::parse_json(text);
+    if (!data.is_object()) throw cymcp::Error("InvalidOptions", "Configuration must be an object");
+    if (data.contains("access_profile")) {
+        result.accessProfile = parseProfile(data.at("access_profile").get<std::string>());
+        result.explicitProfile = true;
+    }
     result.compact = data.value("compact", result.compact);
     result.spool = data.value("disk_spooling", result.spool);
     result.notifications = data.value("notifications", result.notifications);
@@ -163,7 +211,7 @@ struct Automation::Impl {
     std::unique_ptr<cymcp::McpServer> server, compactServer;
     std::unique_ptr<cymcp::LocalHttpServer> http;
     std::filesystem::path descriptor;
-    std::string descriptorFingerprint;
+    std::string descriptorFingerprint, httpUrl;
     std::mutex mutex, remoteMutex;
     std::deque<std::function<void()>> pending;
     std::future<void> remoteFuture;
@@ -173,14 +221,15 @@ struct Automation::Impl {
     std::map<std::string, std::function<J(const J &, const cymcp::CallContext &)>> hostHandlers;
     cymcp::Clock::time_point nextSnapshot{};
     Impl(Session &s, AutomationOptions o) : session(s), protocol(s), options(std::move(o)) {
+        const auto access = cymcp::local_access_settings(options.accessProfile);
         operations = std::make_shared<cymcp::Registry>(
-            cymcp::Policy([this](const auto &, const std::string &name, const auto &) {
+            access.control_operations ? cymcp::Policy([this](const auto &, const std::string &name, const auto &) {
                 return !stopping &&
                                (operations->describe(name).at("annotations").value("readOnlyHint", false) ||
                                 writes)
                            ? cymcp::Decision::allow
                            : cymcp::Decision::deny;
-            }));
+            }) : cymcp::Policy::allow_all());
         if (options.notifications) {
             changes = std::make_shared<cymcp::ChangeFeed>();
             operations->set_change_feed(changes);
@@ -253,9 +302,11 @@ struct Automation::Impl {
     J business(const std::string &name, const J &args, const cymcp::CallContext &context) {
         context.cancellation.check();
         if (stopping ||
-            (!operations->describe(name).at("annotations").value("readOnlyHint", false) && !writes))
+            (cymcp::local_access_settings(options.accessProfile).control_operations &&
+             !operations->describe(name).at("annotations").value("readOnlyHint", false) && !writes))
             throw cymcp::Error("AccessDenied", "Application changes are disabled");
-        if (session.dirty && (name == "new_project" || name == "open_project" || name == "restore_version")) {
+        if (cymcp::local_access_settings(options.accessProfile).control_operations && session.dirty &&
+            (name == "new_project" || name == "open_project" || name == "restore_version")) {
             if (!discardOnce && !discardAlways)
                 throw cymcp::Error("ConfirmationRequired",
                                    "Save the current project or explicitly allow replacing unsaved work once "
@@ -359,8 +410,13 @@ void Automation::allowChanges(bool value) {
     impl->writes = value;
 }
 bool Automation::changesAllowed() const {
-    return impl->writes;
+    return !controlsOperations() || impl->writes;
 }
+cymcp::LocalAccessProfile Automation::accessProfile() const { return impl->options.accessProfile; }
+bool Automation::controlsOperations() const {
+    return cymcp::local_access_settings(accessProfile()).control_operations;
+}
+std::string Automation::connectionUrl() const { return impl->http ? impl->httpUrl : ""; }
 void Automation::confirmDiscard(bool persistent) {
     impl->discardOnce = true;
     impl->discardAlways = persistent;
@@ -405,12 +461,14 @@ void Automation::serveStdio(bool compact) {
 int Automation::startHttp(int port, const std::filesystem::path &file) {
     if (impl->http)
         throw cymcp::Error("Busy", "Local MCP server is already running");
-    auto token = cymcp::random_token();
-    auto http = std::make_unique<cymcp::LocalHttpServer>(
-        token, [this](const J &request, const cymcp::CallContext &context) {
+    const auto access = cymcp::local_access_settings(accessProfile());
+    auto token = access.require_token ? cymcp::random_token() : std::string{};
+    auto handler = [this](const J &request, const cymcp::CallContext &context) {
             return request.contains("jsonrpc") ? impl->server->handle(request, context)
                                                : cymcp::dispatch_app(*impl->operations, request, context);
-        });
+        };
+    auto http = access.require_token ? std::make_unique<cymcp::LocalHttpServer>(token, handler)
+                                    : std::make_unique<cymcp::LocalHttpServer>(cymcp::LocalHttpServer::UnauthenticatedLoopback{}, handler);
     auto actual = http->start(port);
     auto path = file.empty() ? impl->options.privateDirectory /
                                    ("instance-" + std::to_string(GetCurrentProcessId()) + ".json")
@@ -420,10 +478,11 @@ int Automation::startHttp(int port, const std::filesystem::path &file) {
         throw cymcp::Error("FileExists", "Connection descriptor already exists; choose a new private file");
     if (!std::filesystem::exists(path.parent_path()))
         cymcp::private_directory(path.parent_path());
-    auto text = J{{"url", "http://127.0.0.1:" + std::to_string(actual)},
-                  {"token", token},
-                  {"pid", GetCurrentProcessId()}}
-                    .dump();
+    auto url = "http://127.0.0.1:" + std::to_string(actual);
+    J connection = {{"url", url}, {"access_profile", AutomationOptions::profileName(accessProfile())},
+                    {"pid", GetCurrentProcessId()}};
+    if (access.require_token) connection["token"] = token;
+    auto text = connection.dump();
     auto temporary = path;
     temporary += L"." + sx::Widen(cymcp::random_token(16)) + L".pending";
     if (temporary.parent_path() != path.parent_path())
@@ -443,6 +502,7 @@ int Automation::startHttp(int port, const std::filesystem::path &file) {
     }
     impl->descriptor = path;
     impl->descriptorFingerprint = cymcp::sha256(text);
+    impl->httpUrl = url + "/mcp";
     impl->http = std::move(http);
     return actual;
 }

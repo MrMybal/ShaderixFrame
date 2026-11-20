@@ -101,7 +101,7 @@ void capture(const std::string &path) {
 } // namespace
 int main() {
     bool mcp = false, hidden = false, cli = false, assistantVisible = false, httpMcp = false, allowChanges = false, compactMcp = false;
-    std::string automationConfig, connectionInfo;
+    std::string automationConfig, connectionInfo, accessProfile;
     std::vector<std::string> cliArguments;
     std::string snapshot, projectPath, view, recoveryDir, viewportReport;
     std::string manualTopic, manualLanguage, helpAnchor, helpMedia, helpNote, helpReport;
@@ -131,6 +131,7 @@ int main() {
         else if(a==L"--allow-changes")allowChanges=true;
         else if(a==L"--mcp-compact"){mcp=true;compactMcp=true;}
         else if(a.starts_with(L"--automation-config="))automationConfig=sx::Narrow(a.substr(20));
+        else if(a.starts_with(L"--mcp-profile="))accessProfile=sx::Narrow(a.substr(14));
         else if(a.starts_with(L"--mcp-info="))connectionInfo=sx::Narrow(a.substr(11));
         else if(a.starts_with(L"--ui-theme="))uiTheme=sx::Narrow(a.substr(11));
         else if(a.starts_with(L"--ui-density="))uiDensity=sx::Narrow(a.substr(13));
@@ -308,9 +309,13 @@ int main() {
             ui.setCompositionPixelZoom(viewZoom / 100);
 
         auto automationOptions=sf::AutomationOptions::load(sx::Utf8Path(automationConfig));
+        if(!accessProfile.empty()) {
+            automationOptions.accessProfile=sf::AutomationOptions::parseProfile(accessProfile);
+            automationOptions.explicitProfile=true;
+        }
         auto automation=std::make_shared<sf::Automation>(session,automationOptions);
-        automation->allowChanges(mcp||allowChanges);
-        if(mcp)automation->confirmDiscard(true); // Preserve the existing dedicated stdio process contract.
+        automation->allowChanges(allowChanges || (mcp && !automationOptions.explicitProfile));
+        if(mcp && !automationOptions.explicitProfile)automation->confirmDiscard(true);
         auto uiAutomation=std::make_unique<sf::UiAutomation>(*automation,ui);
         auto assistant=std::make_unique<sf::Assistant>(*automation,automationOptions);
         ui.assistantPanel=[&]{assistant->draw();};

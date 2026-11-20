@@ -4,7 +4,7 @@ title: About this manual
 description: Learn video editing, node compositing, animation and audio in ShaderixFrame. This manual works entirely offline.
 section: User guide
 order: 0
-revision: 4
+revision: 5
 ---
 
 Learn video editing, node compositing, animation and audio in ShaderixFrame. This manual works entirely offline.
@@ -26,3 +26,5 @@ Images use minimal controls: hover or focus to zoom, pan or enlarge inside this 
 ```
 
 [Start your first edit](doc:quickstart)
+
+[Choose a local MCP access profile](doc:mcp#permissions)

@@ -4,7 +4,7 @@ title: À propos du manuel
 description: Apprenez le montage, la composition par nœuds, l’animation et l’audio dans ShaderixFrame. Ce manuel fonctionne entièrement hors ligne.
 section: Guide utilisateur
 order: 0
-sourceRevision: 4
+sourceRevision: 5
 ---
 
 Apprenez le montage, la composition par nœuds, l’animation et l’audio dans ShaderixFrame. Ce manuel fonctionne entièrement hors ligne.
@@ -26,3 +26,5 @@ Les images affichent leurs commandes au survol ou au focus : zoom, déplacement 
 ```
 
 [Réaliser votre premier montage](doc:quickstart)
+
+[Choisir un profil d’accès MCP local](doc:mcp#permissions)

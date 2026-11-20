@@ -4,7 +4,7 @@ A self-contained English/French presentation of the Windows alpha. Maintained
 inputs live here; the generated artifact is `dist/website/` and is not committed.
 The page uses the existing application logo and nine real captures from
 `docs/screenshots/`. Their capture version remains 0.14.0-alpha.1; the current
-application release is 0.15.0-alpha.1.
+application release is 0.15.0-alpha.2.
 
 ## Build
 

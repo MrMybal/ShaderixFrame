@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 project(ShaderixFrame VERSION 0.15.0 LANGUAGES CXX)
-set(SF_VERSION_SUFFIX "alpha.1")
+set(SF_VERSION_SUFFIX "alpha.2")
 set(SF_APPLICATION_VERSION "${PROJECT_VERSION}-${SF_VERSION_SUFFIX}")
 # CMake decodes French cl.exe diagnostics through the OEM codepage on this machine.
 # Ninja consumes the compiler's UTF-8 output directly. Keep the dependency prefix exact.
@@ -207,6 +207,8 @@ if(Python3_FOUND)
     set_tests_properties(mcp_stdio PROPERTIES TIMEOUT 60)
     add_test(NAME assistant_end_to_end COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/assistant_smoke.py $<TARGET_FILE:ShaderixFrame> $<TARGET_FILE:ShaderixFrameCLI> $<TARGET_FILE:assistant_integration_tests>)
     set_tests_properties(assistant_end_to_end PROPERTIES TIMEOUT 180)
+    add_test(NAME mcp_access_profiles COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/mcp_access_profiles.py $<TARGET_FILE:ShaderixFrame> $<TARGET_FILE:ShaderixFrameCLI>)
+    set_tests_properties(mcp_access_profiles PROPERTIES TIMEOUT 120)
     add_test(NAME ui_automation COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/ui_automation_smoke.py $<TARGET_FILE:ShaderixFrame> $<TARGET_FILE:ShaderixFrameCLI>)
     set_tests_properties(ui_automation PROPERTIES TIMEOUT 150)
     add_test(NAME workspace_modes COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/mode_smoke.py $<TARGET_FILE:ShaderixFrame>)

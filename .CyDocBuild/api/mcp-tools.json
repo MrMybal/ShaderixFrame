@@ -6213,7 +6213,7 @@
       "destructiveHint": true,
       "readOnlyHint": false
     },
-    "description": "Open a video clip's nested editor (creating its container if needed), apply drafts, or reload saved container content. Reload refuses dirty drafts. action: open, apply, reload.",
+    "description": "Open a video clip's nested editor (creating its container if needed), apply drafts, or reload saved container content. Controlled profiles refuse reloading dirty drafts. action: open, apply, reload.",
     "inputSchema": {
       "additionalProperties": false,
       "properties": {

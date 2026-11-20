@@ -60,6 +60,10 @@ Assistant::Assistant(Automation &a, AutomationOptions o) : automation(a), option
          {"Start local MCP", "Démarrer le MCP local"},
          {"Stop local MCP", "Arrêter le MCP local"},
          {"Copy connection file path", "Copier le chemin du fichier de connexion"},
+         {"Copy MCP address", "Copier l’adresse MCP"},
+         {"MCP access profile (restart required)", "Profil d’accès MCP (redémarrage requis)"},
+         {"Restart the application to apply the saved profile.", "Redémarrez l’application pour appliquer le profil enregistré."},
+         {"Local controlled", "Local contrôlé"}, {"Token only", "Jeton seul"}, {"Protected", "Protégé"},
          {"Connect allowed remote tools", "Connecter les outils distants autorisés"},
          {"Configuration applies to the next connection.",
           "La configuration s’applique à la prochaine connexion."}},
@@ -219,7 +223,42 @@ void Assistant::draw() {
                 cyui::endProperties();
             }
             ImGui::Checkbox(T("AI may use application tools").c_str(), &appTools);
+            const std::pair<cymcp::LocalAccessProfile, const char *> profiles[] = {
+                {cymcp::LocalAccessProfile::free, "Free"},
+                {cymcp::LocalAccessProfile::local_controlled, "Local controlled"},
+                {cymcp::LocalAccessProfile::token_only, "Token only"},
+                {cymcp::LocalAccessProfile::protected_access, "Protected"}};
+            const char *selected = "Free";
+            std::optional<cymcp::LocalAccessProfile> requestedProfile;
+            for (const auto &[value, name] : profiles)
+                if (value == options.accessProfile) selected = name;
+            auto profileLabel = cyui::tr("MCP access profile (restart required)");
+            ImGui::TextWrapped("%s", profileLabel.c_str());
+            ImGui::SetNextItemWidth(-1);
+            auto profileId = ImGui::GetID("##mcp-access-profile");
+            bool profileOpen = ImGui::BeginCombo("##mcp-access-profile", cyui::tr(selected).c_str());
+            // BeginCombo has no ItemInfo hook in this ImGui revision; expose its real label.
+            if (GImGui->TestEngineHookItems)
+                ImGuiTestEngineHook_ItemInfo(GImGui, profileId, profileLabel.c_str(), 0);
+            if (profileOpen) {
+                for (const auto &[value, name] : profiles) {
+                    if (ImGui::Selectable(T(name).c_str(), value == options.accessProfile)) {
+                        if (automatedUiInput() && automation.controlsOperations())
+                            rejectAutomatedUiAction("AccessDenied", "MCP profile changes require the user's own action");
+                        else
+                            requestedProfile = value;
+                    }
+                }
+                ImGui::EndCombo();
+            }
+            if (requestedProfile) {
+                options.saveProfile(*requestedProfile);
+                options.accessProfile = *requestedProfile;
+            }
+            if (options.accessProfile != automation.accessProfile())
+                ImGui::TextWrapped("%s", cyui::tr("Restart the application to apply the saved profile.").c_str());
             bool writes = automation.changesAllowed();
+            ImGui::BeginDisabled(!automation.controlsOperations());
             if (ImGui::Checkbox(T("Allow application changes").c_str(), &writes)) {
                 if (automatedUiInput() && writes)
                     rejectAutomatedUiAction("AccessDenied",
@@ -227,6 +266,7 @@ void Assistant::draw() {
                 else
                     automation.allowChanges(writes);
             }
+            ImGui::EndDisabled();
             {
                 cyui::ScopedDisabled disabled(controller.state().busy);
                 if (cyui::primaryButton(T("Connect / New chat").c_str()))
@@ -258,7 +298,7 @@ void Assistant::draw() {
                     cyui::endProperties();
                 }
             }
-            if (ImGui::CollapsingHeader(T("Permissions").c_str())) {
+            if (automation.controlsOperations() && ImGui::CollapsingHeader(T("Permissions").c_str())) {
                 ImGui::TextWrapped("%s", cyui::tr("Allow replacing unsaved project once").c_str());
                 if (ImGui::Button(T("Allow replacing once").c_str())) {
                     if (automatedUiInput())
@@ -278,6 +318,9 @@ void Assistant::draw() {
                 ImGui::SameLine();
                 if (ImGui::Button(T("Copy connection file path").c_str()))
                     ImGui::SetClipboardText(cymcp::path_utf8(automation.connectionFile()).c_str());
+                ImGui::TextWrapped("%s", automation.connectionUrl().c_str());
+                if (ImGui::Button(T("Copy MCP address").c_str()))
+                    ImGui::SetClipboardText(automation.connectionUrl().c_str());
             }
             if (ImGui::CollapsingHeader(T("Other applications").c_str())) {
                 if (ImGui::Button(T("Connect allowed remote tools").c_str()))

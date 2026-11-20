@@ -13,8 +13,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Licence de l’application</sub><br><a href="LICENSE"><strong>GNU AGPL v3 uniquement</strong></a></p>
-      <p><sub>Version</sub><br><a href="docs/RELEASE_0.15-alpha.1.fr.md"><strong>0.15.0-alpha.1</strong></a><br><strong>ALPHA</strong></p>
-      <p><a href="https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.1"><strong>Télécharger</strong></a><br><sub>Windows x64 · installateur / portable</sub></p>
+      <p><sub>Version</sub><br><a href="docs/RELEASE_0.15-alpha.2.fr.md"><strong>0.15.0-alpha.2</strong></a><br><strong>ALPHA</strong></p>
+      <p><a href="https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.2"><strong>Télécharger</strong></a><br><sub>Windows x64 · installateur / portable</sub></p>
     </td>
   </tr>
 </table>
@@ -27,16 +27,18 @@ composition par calques, au motion design et au traitement audio. Assemblez des
 clips sur une timeline, construisez vos graphes de traitement d’image et de son,
 puis animez et exportez le résultat.
 
-> **ALPHA · 0.15.0-alpha.1**
+> **ALPHA · 0.15.0-alpha.2**
 >
 > Une version expérimentale destinée aux essais et aux retours ; les fonctions et
 > la compatibilité peuvent encore évoluer. L’alpha 0.15 ajoute un assistant intégré,
-> un CLI, l’accès MCP authentifié à l’éditeur ouvert et le pilotage de l’interface. Consultez les
-> [notes de version et limites connues](docs/RELEASE_0.15-alpha.1.fr.md).
+> un CLI et le pilotage de l’éditeur ; cette alpha ajoute quatre profils MCP locaux,
+> dont Free par défaut. Consultez les
+> [notes de version et limites connues](docs/RELEASE_0.15-alpha.2.fr.md).
 
 [![Espace de montage ShaderixFrame avec aperçu de composition, clips liés et timeline multipiste](docs/screenshots/editing.png)](docs/screenshots/editing.png)
 
-Les captures montrent la **0.14.0-alpha.1** avec les projets d’exemple fournis.
+Les captures des espaces montrent la **0.14.0-alpha.1** avec les exemples fournis ;
+la capture de l’assistant montre la **0.15.0-alpha.2**.
 Cliquez sur une image pour la voir en taille réelle ; les noms et titres des
 projets peuvent être en français.
 
@@ -87,7 +89,7 @@ et l’analyse du signal ; CyUI fournit les composants d’interface communs.
 - **Livraison et récupération :** export MP4/WAV/AVI/PNG/EXR/GIF en arrière-plan,
   échange EDL/SRT, historique d’annulation, versions des projets et récupération
   de session.
-- **Automatisation et aide :** assistant natif, CLI scriptable et MCP authentifié ;
+- **Automatisation et aide :** assistant natif, CLI scriptable et MCP local configurable ;
   163 opérations métier et 23 outils d’interface, avec manuel CyDoc anglais/français
   et références publiques MCP/SDK C/C++.
 
@@ -96,7 +98,8 @@ et l’analyse du signal ; CyUI fournit les composants d’interface communs.
 [Ouvrir le manuel français](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/fr/welcome)
 ou [read the English manual](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/welcome).
 Les deux ouvrent le même lecteur visuel que le logiciel, avec navigation,
-recherche, captures, schémas et galerie des espaces de travail.
+recherche, captures, schémas et galerie des espaces de travail. Le manuel embarqué correspond à cette
+version ; le manuel en ligne suit le dernier déploiement Pages.
 
 **Help > User Manual** ouvre le fichier fourni `Documentation/Documentation.html`
 par URL `file://` ; **Ctrl+F1** choisit l’aide du panneau actif. Gardez tout le
@@ -113,9 +116,9 @@ La version publiée cible **Windows 10/11 x64** et **Direct3D 11**.
 L’application et l’installateur ne sont pas signés. Les utilisateurs fournissent
 leurs plugins tiers ; les paquets Windows incluent le processus VST3 compatible.
 
-1. [Téléchargez la version 0.15.0-alpha.1](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.1).
-   Choisissez l’[installateur par utilisateur](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.1/ShaderixFrame-0.15.0-alpha.1-Setup.exe)
-   ou le [ZIP portable](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.1/ShaderixFrame-0.15.0-alpha.1-windows-x64.zip).
+1. [Téléchargez la version 0.15.0-alpha.2](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.2).
+   Choisissez l’[installateur par utilisateur](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.2/ShaderixFrame-0.15.0-alpha.2-Setup.exe)
+   ou le [ZIP portable](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.2/ShaderixFrame-0.15.0-alpha.2-windows-x64.zip).
 2. Lancez Setup, ou extrayez toute l’archive portable dans un dossier accessible
    en écriture. Gardez les processus auxiliaires, exemples, licences et documentation
    avec l’application.
@@ -124,9 +127,9 @@ leurs plugins tiers ; les paquets Windows incluent le processus VST3 compatible.
 
 L’installateur ne demande pas de droits administrateur. L’application distribuée
 ne nécessite pas les sources de Shaderixel ou CyDAW. `--warp` sélectionne le rendu
-D3D11 logiciel. La release fournit les [sommes SHA-256](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.1/SHA256SUMS.txt)
-et les [sources correspondantes avec JUCE](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.1/ShaderixFrame-0.15.0-alpha.1-source.zip).
-Consultez les [limites de l’alpha](docs/RELEASE_0.15-alpha.1.fr.md#limites-connues) avant de l’évaluer.
+D3D11 logiciel. La release fournit les [sommes SHA-256](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.2/SHA256SUMS.txt)
+et les [sources correspondantes avec JUCE](https://github.com/MrMybal/ShaderixFrame/releases/download/v0.15.0-alpha.2/ShaderixFrame-0.15.0-alpha.2-source.zip).
+Consultez les [limites de l’alpha](docs/RELEASE_0.15-alpha.2.fr.md#limites-connues) avant de l’évaluer.
 
 ## Assistant, CLI et MCP
 
@@ -136,8 +139,8 @@ connecté partage ces outils et leurs droits. Les contrôles natifs des plugins 
 l’accessibilité Windows lorsqu’elle est prise en charge. Voir **Pilotage de l’interface**
 dans le manuel embarqué.
 
-L’alpha 0.15 intègre **CyMCPSDK 0.7.0** (`791d4d7`) pour un assistant
-natif, `ShaderixFrameCLI.exe` sans fenêtre et l’accès MCP loopback authentifié à un
+ShaderixFrame 0.15.0-alpha.2 intègre **CyMCPSDK 0.7.1** (`34d4bca`) pour un assistant
+natif, `ShaderixFrameCLI.exe` sans fenêtre et l’accès MCP loopback configurable à un
 éditeur ouvert. Le même registre conserve les 163 opérations de montage. Ouvrez
 **View > Assistant** ou lancez `--assistant`, puis configurez un fournisseur installé
 ou un service de modèles local. Modèles et identifiants restent séparés.
@@ -156,6 +159,12 @@ les droits, l’historique, le choix d’instance, les appels JSON et les option
 indépendantes. Ce guide est fourni avec l’application ;
 `docs/assistant-config.example.json` est l’exemple de configuration d’exécution.
 Les options existantes, dont `--mcp`, sont conservées.
+
+Free est le profil MCP par défaut : après **Démarrer le MCP local**, copiez l’adresse
+MCP et connectez-vous sans jeton ni confirmation supplémentaire. **Local contrôlé**,
+**Jeton seul** et **Protégé** restent disponibles par `access_profile` ou
+`--mcp-profile`. Les choix explicites sont conservés ; les configurations sans profil
+utilisent Free. Le manuel embarqué détaille les quatre profils.
 
 ## Sources, compilation et bibliothèques nécessaires
 
@@ -227,7 +236,7 @@ leurs conditions. Consultez les [licences et sources correspondantes](docs/LICEN
 | [JUCE 8.0.15](https://github.com/juce-framework/JUCE) | [Double licence AGPL v3 / commerciale](vendor/juce-license/LICENSE.md) ; option AGPL utilisée ici | Processus VST3 uniquement ; sources exactes et notices des dépendances fournies avec les sources correspondantes. |
 | [OpenFX](https://github.com/AcademySoftwareFoundation/openfx) | [BSD-3-Clause](vendor/openfx/LICENSE.md) | En-têtes OFX natifs et intégration de l’hôte ; certains exemples servent aussi aux tests de développement. |
 | [CyDoc 0.1.0](https://github.com/MrMybal/CyDoc) | [MIT](.CyDocBuild/vendor/cydoc/LICENSE) | Lecteur hors ligne image/galerie et utilitaire natif de liens ; outils de génération séparés. |
-| [CyMCPSDK 0.7.0](https://github.com/MrMybal/CyMCPSDK) | [MIT](vendor/cymcp/LICENSE) | Sources de développement verrouillées pour les opérations, MCP local, les fournisseurs et ChatUI natif ; voir la [provenance](cymcp.lock.json). |
+| [CyMCPSDK 0.7.1](https://github.com/MrMybal/CyMCPSDK) | [MIT](vendor/cymcp/LICENSE) | Sources de développement verrouillées pour les opérations, MCP local, les fournisseurs et ChatUI natif ; voir la [provenance](cymcp.lock.json). |
 
 Les API Windows fournissent D3D11, Media Foundation, WIC et les polices système.
 Les polices système et plugins tiers des utilisateurs ne sont pas redistribués.
@@ -253,8 +262,8 @@ et tous les fichiers de licence fournis avec les sources et les paquets Windows.
   · [English showcase](https://mrmybal.github.io/ShaderixFrame/?lang=en).
 - [Documentation française](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/fr/welcome)
   · [English documentation](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/en/welcome).
-- [Notes de version et limites](docs/RELEASE_0.15-alpha.1.fr.md)
-  · [Téléchargements](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.1).
+- [Notes de version et limites](docs/RELEASE_0.15-alpha.2.fr.md)
+  · [Téléchargements](https://github.com/MrMybal/ShaderixFrame/releases/tag/v0.15.0-alpha.2).
 - [Référence MCP et SDK](https://mrmybal.github.io/ShaderixFrame/Documentation.html#/fr/api-links)
   · [Guide de compilation en anglais](docs/BUILDING.md).
 - [Dépôt des sources](https://github.com/MrMybal/ShaderixFrame)

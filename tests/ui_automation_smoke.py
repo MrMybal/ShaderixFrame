@@ -50,11 +50,13 @@ provider = http.server.ThreadingHTTPServer(('127.0.0.1',0), Provider)
 threading.Thread(target=provider.serve_forever,daemon=True).start()
 
 class App:
-    def __init__(self, writes):
+    def __init__(self, writes, profile='protected'):
         self.descriptor = work/('instance-'+uuid.uuid4().hex+'.json')
         environment = os.environ.copy()
+        environment['LOCALAPPDATA'] = str(work / ('local-' + uuid.uuid4().hex))
+        self.profile_file = Path(environment['LOCALAPPDATA']) / 'ShaderixFrame/Assistant/automation.json'
         environment.pop('OPENAI_API_KEY', None)
-        self.process = subprocess.Popen([str(exe), '--hidden', '--warp', '--assistant', '--mcp-http',
+        self.process = subprocess.Popen([str(exe), '--hidden', '--warp', '--assistant', '--mcp-http', '--mcp-profile='+profile,
             '--mcp-info='+str(self.descriptor), '--ui-snapshot='+str(work/'ui.png'), '--snapshot-frames=2500',
             *(['--allow-changes'] if writes else [])], cwd=work,
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, creationflags=flags, env=environment)
@@ -72,8 +74,10 @@ class App:
         body = {'jsonrpc':'2.0','id':self.counter,'method':method}
         if params is not None:
             body['params'] = params
-        request = urllib.request.Request(self.connection['url']+'/mcp', data=json.dumps(body).encode(),
-            headers={'Authorization':'Bearer '+self.connection['token'],'Content-Type':'application/json'})
+        headers = {'Content-Type':'application/json'}
+        if self.connection.get('token'):
+            headers['Authorization'] = 'Bearer ' + self.connection['token']
+        request = urllib.request.Request(self.connection['url']+'/mcp', data=json.dumps(body).encode(), headers=headers)
         if self.session:
             request.add_header('Mcp-Session-Id', self.session)
         with urllib.request.urlopen(request, timeout=20) as response:
@@ -206,6 +210,7 @@ try:
         app.input({'action':'click','item':tools['id']})
     base = item('##baseurl', '##baseurl')
     app.input({'action':'text','item':base['id'],'text':f'http://127.0.0.1:{provider.server_port}/v1'})
+    app.input({'action':'scroll','window':base['window'],'wheel_y':-6})
     advanced = item('Advanced connection')
     app.input({'action':'click','item':advanced['id']})
     app.input({'action':'scroll','window':advanced['window'],'wheel_y':-10})
@@ -224,3 +229,21 @@ try:
 finally:
     app.close()
     provider.shutdown()
+
+# Free UI input needs no separate write flag and can save an explicit profile choice.
+free = App(False, 'free')
+try:
+    assert 'token' not in free.connection
+    free.call('set_sequence', {'name':'Free GUI edit'})
+    free.call('ui_panel', {'panel':'Assistant','visible':True,'focus':True})
+    selector = free.wait(lambda: next((r for r in free.call('get_ui_items',{'query':'MCP access profile'})['items']),None))
+    free.input({'action':'click','item':selector['id']})
+    protected = free.wait(lambda: next((r for r in free.call('get_ui_items',{'query':'Protected'})['items'] if r['label'].split('##',1)[0]=='Protected'),None))
+    free.input({'action':'click','item':protected['id']})
+    free.wait(lambda: free.profile_file.is_file())
+    assert json.loads(free.profile_file.read_text('utf-8'))['access_profile']=='protected'
+    assert free.call('get_ui_state')['changes_allowed'], 'A saved choice takes effect after restart'
+    free.call('set_sequence', {'name':'Still Free until restart'})
+    print('Free GUI: tokenless edits and actual profile selection persisted without a write flag or extra confirmation')
+finally:
+    free.close()

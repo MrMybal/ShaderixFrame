@@ -103,7 +103,9 @@ void UiAutomation::context(Editor &e, bool active, const std::string &file) {
                     result = automation.invoke(name, input);
                 else {
                     // Nested drafts use the same business registry and validation, on this UI thread.
-                    Automation nested(e.s);
+                    AutomationOptions nestedOptions;
+                    nestedOptions.accessProfile = automation.accessProfile();
+                    Automation nested(e.s, nestedOptions);
                     nested.allowChanges(automation.changesAllowed());
                     result = nested.invoke(name, input);
                 }
@@ -578,7 +580,7 @@ UiAutomation::UiAutomation(Automation &a, Editor &e)
         });
     add("ui_clip_editor",
         "Open a video clip's nested editor (creating its container if needed), apply drafts, or reload saved "
-        "container content. Reload refuses dirty drafts. action: open, apply, reload.",
+        "container content. Controlled profiles refuse reloading dirty drafts. action: open, apply, reload.",
         {{"action", text()}, {"clip", integer()}}, required({"action"}), false,
         [this](const J &a, const auto &) {
             auto &e = target(a);
@@ -592,7 +594,7 @@ UiAutomation::UiAutomation(Automation &a, Editor &e)
                 } else if (action == "open")
                     e.openClipEditor(a.value("clip", e.s.selected));
                 else if (action == "reload") {
-                    if (e.hasClipDrafts())
+                    if (automation.controlsOperations() && e.hasClipDrafts())
                         throw cymcp::Error("ConfirmationRequired",
                                            "Apply or save the nested draft before reloading");
                     e.openClipEditor(e.editedContainer, true);

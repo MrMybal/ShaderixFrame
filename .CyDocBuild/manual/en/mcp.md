@@ -5,7 +5,7 @@ description: Use the integrated assistant, command line and MCP on the same appl
 section: User guide
 parent: api-links
 order: 33
-revision: 6
+revision: 8
 ---
 
 Use the integrated assistant, command line and MCP on the same application operations.
@@ -67,22 +67,32 @@ Use `--args=arguments.json` instead of inline JSON when shell quoting is inconve
 
 ## Connect to the open editor {#instances}
 
-In Assistant settings, **Start local MCP** creates an authenticated loopback server with a random port/token. **Copy connection file path** copies its private descriptor path. Alternatively launch:
+In Assistant settings, **Start local MCP** starts an HTTP server on `127.0.0.1`. Free is the default profile: use **Copy MCP address** and connect with that address alone. The address ends in `/mcp`; direct SDK JSON calls use `/v1`. No public-network interface is bound. Host and Origin checks remain active. The server is started only when requested.
 
 ```powershell
 ShaderixFrame.exe --mcp-http --mcp-info=private/instance.json --assistant
-ShaderixFrameCLI.exe invoke status --connect=private/instance.json
+ShaderixFrameCLI.exe invoke status --connect=http://127.0.0.1:PORT/mcp
+ShaderixFrameCLI.exe invoke set_sequence --json='{"name":"Address-only edit"}' --connect=http://127.0.0.1:PORT/mcp
 ```
 
-Choose the descriptor for the intended instance. The file contains a credential: keep it private and do not commit or share it. It is removed on normal shutdown. External MCP clients use its URL plus `/mcp` and a Bearer token; direct SDK JSON requests use `/v1`. There is no unauthenticated endpoint or public-network bind. The SDK server supports current discovery and negotiated legacy MCP sessions. Standard input/output remains available through `--mcp`; `--mcp-compact` exposes the compact gateway instead. `ShaderixFrameCLI.exe mcp` offers the same tools with no window. `serve --info=private/instance.json` hosts a standalone loopback session.
+Replace `PORT` with the actual address shown in Assistant settings. `--connect=private/instance.json` remains supported. Descriptors are removed on normal shutdown; token-bearing profiles store a private credential in that file. Keep such files out of Git and shared folders. `--mcp` uses stdio; `--mcp-compact` exposes the compact gateway. `ShaderixFrameCLI.exe mcp` and `serve --info=private/instance.json` provide standalone sessions.
 
 ## Permissions and editor state {#permissions}
 
-All 163 existing business operations retain their names and real engine handlers. The chat, CLI and MCP use the same registry and policy. Read operations are permitted by default; **Allow application changes** enables mutations for that instance. A connected CLI cannot override this setting. Calls arriving from workers are queued to the session's owning thread. Project validation, rollback on failure, Undo/Redo and the existing background export/tracking systems remain in use.
+| Profile | HTTP token | Operations |
+| --- | --- | --- |
+| Free (`free`, default) | None | All registered operations, without another confirmation |
+| Local controlled (`local_controlled`) | None | Instance write permission and unsaved-work confirmation |
+| Token only (`token_only`) | Required | All registered operations, without another confirmation |
+| Protected (`protected`) | Required | Instance write permission and unsaved-work confirmation |
 
-Replacing an unsaved project through the new integration requires saving first or explicitly choosing **Allow replacing unsaved project once**. A standalone script may use `--confirm-discard`. The existing dedicated `--mcp` process retains its previous permission/discard behavior for compatibility; its chat and HTTP endpoint share that process policy too. No command is automatically replayed after a timeout, cancellation or expired result reference.
+Set `"access_profile": "protected"` in the automation configuration, or use `--mcp-profile=protected` on either executable. Valid IDs are `free`, `local_controlled`, `token_only` and `protected` (`protected_access` is also accepted). An explicit choice is preserved. Existing configuration files without this field use Free; invalid values report an error. A command-line profile overrides the configured profile for that process.
 
-The running GUI also registers editor interface operations described below. A standalone console process has no editor windows; use `--connect` for those operations. Provider account authentication still uses the provider's own login process. No filesystem shell or unrestricted external tool catalogue is exposed.
+Assistant settings also save a profile choice while preserving other configuration fields. Restart the application to apply it; a running server retains its current profile. Without `--automation-config`, the saved choice lives in `%LOCALAPPDATA%/ShaderixFrame/Assistant/automation.json`. A custom configuration remains the selected configuration file.
+
+The assistant, CLI and MCP share the same operation registry. Free and Token only use `Policy::allow_all()` and permit edits, Undo, saving and replacement of unsaved projects without a write toggle or discard confirmation. The 163 business operations and 23 GUI operations keep their argument schemas, project validation, rollback and owning-thread dispatch. Free does not install a shell or add unselected external tools.
+
+In controlled profiles, **Allow application changes** or `--allow-changes` enables writes; a connected CLI cannot grant it. Replacing unsaved work additionally requires **Allow replacing once** or standalone `--confirm-discard`. Synthetic input cannot grant these permissions or change the saved profile. No operation is automatically replayed after a timeout, cancellation or expired reference. Provider account authentication and native agent permissions remain separate.
 
 ## Editor interface automation {#interface}
 
@@ -100,11 +110,11 @@ The assistant, connected CLI and MCP can inspect and operate the actual editor i
 | Native plugin controls | `get_ui_native_windows`, `get_ui_native_controls`, `ui_native_control` |
 | File selection and help | `ui_file_list`, `ui_show_help` |
 
-All modifying UI calls require **Allow application changes**, including clicks and keyboard input. This prevents UI gestures from enabling their own permission. Business commands triggered through automation retain validation, Undo and unsaved-project confirmation; synthetic input cannot approve the user's confirmation button. File and folder commands accept `file_path`; omitting it reports `PathRequired` instead of opening a blocking native picker. The attachment picker accepts the same path during automated input. Directory discovery reads only the explicitly supplied directory, without recursion or file contents.
+Free and Token only allow registered UI operations without an extra write prompt. In controlled profiles, modifying UI calls require **Allow application changes**, including clicks and keyboard input; synthetic input cannot grant that permission or approve the unsaved-project confirmation. Business validation and Undo remain active in every profile. File and folder commands accept `file_path`; omitting it reports `PathRequired` instead of opening a blocking native picker. The attachment picker accepts the same path during automated input. Directory discovery reads only the explicitly supplied directory, without recursion or file contents.
 
 Prefer semantic commands and parameters. For a remaining visible control, query `get_ui_items` for its ID and current rectangle, then request a click, text replacement, key, wheel or drag with `ui_input`. The input is delivered across render frames entirely inside this application's ImGui context. Poll `get_ui_input` for the returned job before sending the next gesture, and inspect the resulting document/UI state. Completion confirms delivery, not the success of a business edit. Missing/disabled controls fail; cancellation, revoked permissions and application shutdown release synthetic keys/buttons. Input is never replayed. Only the latest input job is retained, privately for its caller. `include_active_text` optionally reads the focused standard text input; password fields are excluded.
 
-Use `workspace: [containerClipId, ...]` to address an already-open nested clip editor. `ui_clip_invoke` accepts a business operation name and its usual JSON arguments. Changes stay in the real local draft until `ui_clip_editor` with `action: "apply"`; reload refuses unsaved drafts. Panels, commands and views accept the same workspace path.
+Use `workspace: [containerClipId, ...]` to address an already-open nested clip editor. `ui_clip_invoke` accepts a business operation name and its usual JSON arguments. Changes stay in the real local draft until `ui_clip_editor` with `action: "apply"`; controlled profiles refuse reloading unsaved drafts; Free and Token only allow it. Panels, commands and views accept the same workspace path.
 
 Native plugin control discovery is limited to this workspace's actual open VST3 worker processes. Windows accessibility provides invoke/value/range/toggle/selection/expand actions where the plugin supports them. Locked channels cannot be edited through this route. Custom plugin surfaces without accessible controls remain controlled through the plugin's exposed parameters and state API. Other applications, browser/account windows and credentials are outside this window bridge.
 
@@ -115,7 +125,7 @@ ShaderixFrameCLI.exe invoke ui_panel --json='{"panel":"DSP Graph","visible":true
 
 ## Independent runtime options {#optimizations}
 
-Pass `--automation-config=FILE.json` to the application or CLI. Start from `docs/assistant-config.example.json`. Each option is independent: `compact`, `disk_spooling`, `notifications`, `performance`, `inline_bytes`, `chunk_bytes`, `memory_bytes`, `disk_bytes`, `retention_seconds` and `cache_seconds`. The default private root is `%LOCALAPPDATA%/ShaderixFrame/Assistant`; `private_directory` overrides it.
+Pass `--automation-config=FILE.json` to the application or CLI. Start from `docs/assistant-config.example.json`. Each option is independent: `access_profile`, `compact`, `disk_spooling`, `notifications`, `performance`, `inline_bytes`, `chunk_bytes`, `memory_bytes`, `disk_bytes`, `retention_seconds` and `cache_seconds`. The default private root is `%LOCALAPPDATA%/ShaderixFrame/Assistant`; `private_directory` overrides it.
 
 Compact chat discovery exposes five tools: search, describe, call, resource read and native literal grep. Search for a command, load its full schema, then call it. Full MCP discovery remains available. `shaderixframe://project` is a bounded immutable JSON snapshot of the current sequence. UI edits refresh that snapshot within about half a second; automation edits refresh it immediately. Resource manifests and `firstUri`/`nextUri` chunks preserve full content during retention. References are private to the calling principal; expired ones fail without rerunning an action. Disk spooling is off by default; when enabled its default quota is 512 MiB. No ripgrep process or arbitrary file tree is enabled.
 
@@ -131,5 +141,5 @@ An explicit `allow_resources` URI list also adds `remote.ID.read_resource`. Only
 
 
 ```image
-{"src":"assets/assistant.png","alt":"ShaderixFrame with the native Assistant panel beside the composition and timeline.","caption":"Assistant settings, live editor and message composer in alpha 0.15."}
+{"src":"assets/assistant.png","alt":"ShaderixFrame with the native Assistant panel beside the composition and timeline.","caption":"Free access profile, live composition and native Assistant settings in alpha 0.15.0-alpha.2."}
 ```

@@ -708,8 +708,8 @@
     "source_sha256": "5947328a90c3a5925fc4817f843e4e791a0f7c437d5b9b202cf2ee1ed9f732ac"
   },
   "ui_clip_editor": {
-    "description": "Ouvre un clip vidéo dans son éditeur imbriqué, en créant son conteneur si nécessaire, applique les brouillons ou recharge le conteneur. Actions : open, apply, reload. Le rechargement refuse les brouillons non enregistrés.",
-    "source_sha256": "26e3d8a7867ea4316e8c26a26f2c8eb8a8f003609a00e8ff171c696b1d8280e7"
+    "description": "Ouvre l’éditeur imbriqué d’un clip vidéo, applique son brouillon ou recharge le conteneur. Les profils contrôlés refusent le rechargement des brouillons modifiés. Actions : open, apply, reload.",
+    "source_sha256": "7dcfc81c21dbf94c36810cbd098f12385ee5a47bbd618edcb13923b2127e144d"
   },
   "get_ui_clip_project": {
     "description": "Lit la composition réelle d’un workspace imbriqué, modifications locales comprises. workspace contient les identifiants des conteneurs ancêtres ouverts, dans l’ordre.",

@@ -122,7 +122,7 @@ try:
     assert len(run([cli, 'list'])['operations']) == 163
     assert run([cli, 'describe', 'set_sequence'])['operation']['inputSchema']['type'] == 'object'
     assert len(run([exe, '--cli', 'list'])['operations']) == 163
-    run([cli, 'invoke', 'set_sequence', '--json={"name":"Denied"}', '--warp'], 3)
+    run([cli, 'invoke', 'set_sequence', '--json={"name":"Denied"}', '--mcp-profile=protected', '--warp'], 3)
     run([cli, 'invoke', 'status', '--json={bad'], 2)
     run([cli, 'serve', '--port=70000'], 2)
     run([cli, 'serve', '--port=invalid'], 2)
@@ -147,7 +147,7 @@ try:
                 legacy.kill()
                 legacy.wait()
     descriptor = work / ('instance-'+uuid.uuid4().hex+'.json')
-    process = subprocess.Popen([str(exe), '--hidden', '--warp', '--mcp', '--mcp-http', '--mcp-info='+str(descriptor)],
+    process = subprocess.Popen([str(exe), '--hidden', '--warp', '--mcp', '--mcp-http', '--mcp-profile=protected', '--allow-changes', '--mcp-info='+str(descriptor)],
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                text=True, encoding='utf-8', cwd=work, creationflags=flags)
     try:
@@ -188,8 +188,8 @@ try:
         if process.poll() is None:
             process.kill()
             process.wait()
-    # A second real GUI instance defaults to read-only automation.
-    readonly = subprocess.Popen([str(exe), '--hidden', '--warp', '--mcp-http', '--mcp-info='+str(descriptor), '--ui-snapshot='+str(work/'readonly.png'), '--snapshot-frames=900'],
+    # An explicitly Protected real GUI instance retains read-only automation.
+    readonly = subprocess.Popen([str(exe), '--hidden', '--warp', '--mcp-http', '--mcp-profile=protected', '--mcp-info='+str(descriptor), '--ui-snapshot='+str(work/'readonly.png'), '--snapshot-frames=900'],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, cwd=work, creationflags=flags)
     try:
         until = time.monotonic()+20

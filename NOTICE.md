@@ -32,8 +32,8 @@ Existing third-party copyright notices and licences remain applicable.
   `vendor/cyui/THIRD_PARTY_NOTICES.md` and `cyui.lock.json`.
 - `vendor/imgui/`: the Dear ImGui docking snapshot used by Shaderixel; MIT licence
   in `vendor/imgui/LICENSE.txt`, distributed as `IMGUI-LICENSE.txt`.
-- `vendor/cymcp/`: CyMCPSDK 0.7.0 development sources, commit
-  `791d4d7d7680213b282ec8529d248a10f8494d77`, MIT. The selected build snapshot and
+- `vendor/cymcp/`: CyMCPSDK 0.7.1 development sources, commit
+  `34d4bcae126bc83d1a2925b5047dac36e3d09d92`, MIT. The selected build snapshot and
   fingerprints are recorded in `cymcp.lock.json`. Core, Platform, Http, MCP, AI
   and ChatUI are linked statically. Local engine/dependency installation, examples,
   benchmark and SDK test applications are disabled. nlohmann/json, cpp-httplib and

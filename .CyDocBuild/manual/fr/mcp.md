@@ -5,7 +5,7 @@ description: Utilisez l’assistant intégré, le terminal et MCP avec les même
 section: Guide utilisateur
 parent: api-links
 order: 33
-sourceRevision: 6
+sourceRevision: 8
 ---
 
 Utilisez l’assistant intégré, le terminal et MCP avec les mêmes opérations de l’application.
@@ -67,22 +67,32 @@ Utilisez `--args=arguments.json` à la place du JSON en ligne si les guillemets 
 
 ## Rejoindre l’éditeur ouvert {#instances}
 
-Dans les paramètres de l’assistant, **Démarrer le MCP local** crée un serveur loopback authentifié avec port et jeton aléatoires. **Copier le chemin du fichier de connexion** copie le chemin de son descripteur privé. Vous pouvez aussi lancer :
+Dans les paramètres de l’assistant, **Démarrer le MCP local** démarre un serveur HTTP sur `127.0.0.1`. Free est le profil par défaut : utilisez **Copier l’adresse MCP** et connectez-vous avec cette adresse seule. L’adresse finit par `/mcp` ; les appels JSON SDK directs utilisent `/v1`. Aucune interface réseau publique n’est ouverte. Les contrôles Host et Origin restent actifs. Le serveur démarre uniquement sur demande.
 
 ```powershell
 ShaderixFrame.exe --mcp-http --mcp-info=private/instance.json --assistant
-ShaderixFrameCLI.exe invoke status --connect=private/instance.json
+ShaderixFrameCLI.exe invoke status --connect=http://127.0.0.1:PORT/mcp
+ShaderixFrameCLI.exe invoke set_sequence --json='{"name":"Address-only edit"}' --connect=http://127.0.0.1:PORT/mcp
 ```
 
-Choisissez le descripteur de l’instance voulue. Ce fichier contient un identifiant d’accès : gardez-le privé, hors de Git et des partages. Il est retiré à l’arrêt normal. Les clients MCP externes utilisent son URL suivie de `/mcp` et un jeton Bearer ; les requêtes JSON SDK directes utilisent `/v1`. Aucun endpoint sans authentification ni écoute sur le réseau public n’est créé. Le serveur SDK prend en charge la découverte actuelle et les sessions MCP historiques négociées. L’entrée/sortie standard reste accessible par `--mcp` ; `--mcp-compact` expose le portail compact à la place. `ShaderixFrameCLI.exe mcp` propose les mêmes outils sans fenêtre. `serve --info=private/instance.json` héberge une session loopback autonome.
+Remplacez `PORT` par le port affiché dans les paramètres de l’assistant. `--connect=private/instance.json` reste disponible. Les descripteurs sont retirés à l’arrêt normal ; les profils avec jeton enregistrent un identifiant privé dans ce fichier. Gardez ces fichiers hors de Git et des partages. `--mcp` utilise stdio ; `--mcp-compact` expose le portail compact. `ShaderixFrameCLI.exe mcp` et `serve --info=private/instance.json` proposent des sessions autonomes.
 
 ## Droits et état de l’éditeur {#permissions}
 
-Les 163 opérations métier existantes gardent leurs noms et leurs véritables handlers moteur. Chat, CLI et MCP utilisent le même registre et la même politique. Les lectures sont autorisées par défaut ; **Autoriser les modifications de l’application** active les mutations de cette instance. Un CLI connecté ne peut pas contourner ce réglage. Les appels reçus depuis des workers rejoignent la file du thread propriétaire de la session. Validation du projet, retour arrière en cas d’échec, Undo/Redo et systèmes d’export et de suivi en arrière-plan restent utilisés.
+| Profil | Jeton HTTP | Opérations |
+| --- | --- | --- |
+| Free (`free`, par défaut) | Aucun | Toutes les opérations enregistrées, sans confirmation supplémentaire |
+| Local contrôlé (`local_controlled`) | Aucun | Droit d’écriture de l’instance et confirmation du travail non enregistré |
+| Jeton seul (`token_only`) | Requis | Toutes les opérations enregistrées, sans confirmation supplémentaire |
+| Protégé (`protected`) | Requis | Droit d’écriture de l’instance et confirmation du travail non enregistré |
 
-Remplacer un projet non enregistré par la nouvelle intégration nécessite de le sauvegarder d’abord ou de choisir explicitement **Autoriser une fois le remplacement du projet non enregistré**. Un script autonome peut utiliser `--confirm-discard`. Le processus dédié `--mcp` conserve son ancien comportement de droits et de remplacement pour les scripts existants ; son chat et son endpoint HTTP partagent aussi cette politique. Aucun appel n’est rejoué automatiquement après expiration d’un délai, annulation ou expiration d’une référence de résultat.
+Définissez `"access_profile": "protected"` dans la configuration d’automatisation, ou utilisez `--mcp-profile=protected` avec l’un des deux exécutables. Les identifiants sont `free`, `local_controlled`, `token_only` et `protected` (`protected_access` est aussi accepté). Un choix explicite est conservé. Les fichiers existants sans ce champ utilisent Free ; une valeur invalide produit une erreur. Le profil de la ligne de commande remplace celui du fichier pour ce processus.
 
-L’interface ouverte enregistre également les opérations d’éditeur décrites ci-dessous. Un processus console autonome n’a pas de fenêtres d’éditeur ; utilisez `--connect` pour ces opérations. L’authentification aux comptes conserve la procédure de connexion propre au fournisseur. Aucun shell de fichiers ni catalogue externe sans sélection n’est exposé.
+Les paramètres de l’assistant permettent aussi d’enregistrer un profil en conservant les autres champs. Redémarrez l’application pour l’appliquer ; le serveur ouvert conserve son profil actuel. Sans `--automation-config`, le choix est enregistré dans `%LOCALAPPDATA%/ShaderixFrame/Assistant/automation.json`. Une configuration personnalisée reste le fichier sélectionné.
+
+Assistant, CLI et MCP partagent le même registre d’opérations. Free et Jeton seul utilisent `Policy::allow_all()` et autorisent modifications, Undo, sauvegarde et remplacement des projets non enregistrés sans case d’écriture ni confirmation de remplacement. Les 163 opérations métier et 23 opérations d’interface conservent schémas d’arguments, validation du projet, retour arrière et exécution sur le thread propriétaire. Free n’installe aucun shell et n’ajoute aucun outil externe non sélectionné.
+
+Dans les profils contrôlés, **Autoriser les modifications de l’application** ou `--allow-changes` active l’écriture ; un CLI connecté ne peut pas l’accorder. Remplacer le travail non enregistré nécessite aussi **Autoriser un remplacement** ou `--confirm-discard` en mode autonome. La saisie simulée ne peut accorder ces droits ni changer le profil enregistré. Aucun appel n’est rejoué après expiration, annulation ou référence expirée. L’authentification du fournisseur et les droits des agents natifs restent séparés.
 
 ## Pilotage de l’interface {#interface}
 
@@ -100,11 +110,11 @@ L’assistant, le CLI connecté et MCP peuvent inspecter et piloter l’interfac
 | Contrôles natifs des plugins | `get_ui_native_windows`, `get_ui_native_controls`, `ui_native_control` |
 | Choix des fichiers et aide | `ui_file_list`, `ui_show_help` |
 
-Tout appel modifiant l’interface exige **Autoriser les modifications de l’application**, clics et clavier compris. Les gestes ne peuvent donc pas s’accorder eux-mêmes ce droit. Les commandes métier déclenchées par automatisation conservent validation, Undo et confirmation des projets non enregistrés ; la saisie synthétique ne peut pas approuver le bouton de confirmation réservé à l’utilisateur. Les commandes de fichiers et dossiers acceptent `file_path` ; son absence renvoie `PathRequired` sans ouvrir de sélecteur natif bloquant. Le sélecteur de pièces jointes accepte ce même chemin pendant une saisie automatisée. La recherche de fichiers ne liste que le dossier explicitement fourni, sans récursion ni lecture du contenu.
+Free et Jeton seul autorisent les opérations d’interface sans confirmation supplémentaire. Dans les profils contrôlés, les appels modifiants exigent **Autoriser les modifications de l’application**, clics et clavier compris ; la saisie synthétique ne peut accorder ce droit ni approuver la confirmation des projets non enregistrés. Validation métier et Undo restent actifs dans chaque profil. Les commandes de fichiers et dossiers acceptent `file_path` ; son absence renvoie `PathRequired` sans ouvrir de sélecteur natif bloquant. Le sélecteur de pièces jointes accepte ce même chemin pendant une saisie automatisée. La recherche de fichiers ne liste que le dossier explicitement fourni, sans récursion ni lecture du contenu.
 
 Privilégiez commandes et paramètres explicites. Pour un autre contrôle visible, recherchez son identifiant et son rectangle avec `get_ui_items`, puis demandez clic, remplacement de texte, touche, molette ou glisser avec `ui_input`. La saisie s’étale sur plusieurs images, entièrement dans le contexte ImGui de l’application. Interrogez `get_ui_input` avec le job retourné avant le geste suivant, puis contrôlez l’état obtenu. La fin du job confirme la livraison des événements, pas la réussite d’une modification métier. Les contrôles absents/désactivés échouent ; annulation, révocation des droits et fermeture relâchent les touches/boutons synthétiques. Aucun geste n’est rejoué. Seul le dernier job est conservé, privé à son appelant. `include_active_text` permet de lire explicitement le champ texte standard focalisé ; les champs de mot de passe sont exclus.
 
-Utilisez `workspace: [identifiantClipConteneur, ...]` pour un éditeur de clip imbriqué déjà ouvert. `ui_clip_invoke` accepte le nom d’une opération métier et ses arguments JSON habituels. Les modifications restent dans le véritable brouillon local jusqu’à `ui_clip_editor` avec `action: "apply"` ; le rechargement refuse les brouillons non enregistrés. Panneaux, commandes et vues acceptent le même chemin de workspace.
+Utilisez `workspace: [identifiantClipConteneur, ...]` pour un éditeur de clip imbriqué déjà ouvert. `ui_clip_invoke` accepte le nom d’une opération métier et ses arguments JSON habituels. Les modifications restent dans le véritable brouillon local jusqu’à `ui_clip_editor` avec `action: "apply"` ; les profils contrôlés refusent de recharger les brouillons non enregistrés, tandis que Free et Jeton seul l’autorisent. Panneaux, commandes et vues acceptent le même chemin de workspace.
 
 La découverte native se limite aux véritables processus VST3 ouverts de ce workspace. L’accessibilité Windows fournit les actions d’activation, valeur, plage, case, sélection et dépliage lorsque le plugin les expose. Les canaux verrouillés ne sont pas modifiables par ce chemin. Les interfaces personnalisées sans contrôles accessibles restent pilotables par les paramètres et états exposés du plugin. Les autres applications, fenêtres de navigateur/compte et identifiants de connexion restent hors de ce pont de fenêtres.
 
@@ -115,7 +125,7 @@ ShaderixFrameCLI.exe invoke ui_panel --json='{"panel":"DSP Graph","visible":true
 
 ## Options indépendantes {#optimizations}
 
-Passez `--automation-config=FICHIER.json` à l’application ou au CLI. Partez de `docs/assistant-config.example.json`. Chaque option est indépendante : `compact`, `disk_spooling`, `notifications`, `performance`, `inline_bytes`, `chunk_bytes`, `memory_bytes`, `disk_bytes`, `retention_seconds` et `cache_seconds`. Le dossier privé par défaut est `%LOCALAPPDATA%/ShaderixFrame/Assistant` ; `private_directory` le remplace.
+Passez `--automation-config=FICHIER.json` à l’application ou au CLI. Partez de `docs/assistant-config.example.json`. Chaque option est indépendante : `access_profile`, `compact`, `disk_spooling`, `notifications`, `performance`, `inline_bytes`, `chunk_bytes`, `memory_bytes`, `disk_bytes`, `retention_seconds` et `cache_seconds`. Le dossier privé par défaut est `%LOCALAPPDATA%/ShaderixFrame/Assistant` ; `private_directory` le remplace.
 
 La découverte compacte du chat expose cinq outils : recherche, description, appel, lecture de ressource et grep littéral natif. Recherchez une commande, chargez son schéma complet puis appelez-la. La découverte MCP complète reste disponible. `shaderixframe://project` est un instantané JSON immuable de la séquence courante. Les modifications d’interface l’actualisent sous environ une demi-seconde ; les modifications d’automatisation l’actualisent immédiatement. Manifestes et morceaux `firstUri`/`nextUri` conservent tout le contenu pendant la rétention. Les références sont privées au principal appelant ; leur expiration produit un refus sans rejouer l’action. Le stockage disque est désactivé par défaut ; son quota par défaut est de 512 Mio lorsqu’il est activé. Aucun processus ripgrep ni arbre de fichiers arbitraire n’est exposé.
 
@@ -131,5 +141,5 @@ Une liste explicite d’URI `allow_resources` ajoute aussi `remote.ID.read_resou
 
 
 ```image
-{"src":"assets/assistant-fr.png","alt":"ShaderixFrame avec le panneau Assistant natif à côté de la composition et de la timeline.","caption":"Paramètres de l’assistant, éditeur ouvert et saisie des messages dans l’alpha 0.15."}
+{"src":"assets/assistant-fr.png","alt":"ShaderixFrame avec le panneau Assistant natif à côté de la composition et de la timeline.","caption":"Profil Free, composition ouverte et paramètres de l’assistant natif dans l’alpha 0.15.0-alpha.2."}
 ```

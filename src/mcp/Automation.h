@@ -6,6 +6,9 @@
 
 namespace sf {
 struct AutomationOptions {
+    cymcp::LocalAccessProfile accessProfile = cymcp::LocalAccessProfile::free;
+    std::filesystem::path configurationFile;
+    bool explicitProfile = false;
     bool compact = true, spool = false, notifications = true, metrics = false;
     size_t inlineBytes = 16384, chunkBytes = 32768, memoryBytes = 64 * 1024 * 1024;
     size_t diskBytes = 512 * 1024 * 1024;
@@ -13,6 +16,9 @@ struct AutomationOptions {
     std::filesystem::path privateDirectory;
     cymcp::Json remoteServers = cymcp::Json::array();
     static AutomationOptions load(const std::filesystem::path & = {});
+    static cymcp::LocalAccessProfile parseProfile(const std::string &);
+    static const char *profileName(cymcp::LocalAccessProfile);
+    void saveProfile(cymcp::LocalAccessProfile) const;
 };
 class Automation {
     struct Impl;
@@ -26,6 +32,9 @@ class Automation {
     std::shared_ptr<cymcp::PerformanceMonitor> performance() const;
     void allowChanges(bool);
     bool changesAllowed() const;
+    cymcp::LocalAccessProfile accessProfile() const;
+    bool controlsOperations() const;
+    std::string connectionUrl() const;
     void confirmDiscard(bool persistent = false);
     void pump();
     void stop();

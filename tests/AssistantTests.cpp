@@ -13,8 +13,27 @@ int main(int argc, char **argv) {
     try {
         require(argc == 3, "Pass fixture base URL and private test directory");
         auto directory = std::filesystem::absolute(sx::Utf8Path(argv[2]));
+        std::filesystem::create_directories(directory);
+        auto migrationFile = directory / "profile-migration.json";
+        {
+            std::ofstream output(migrationFile);
+            output << R"({"compact":false,"custom":{"preserve":42}})";
+        }
+        auto migration = sf::AutomationOptions::load(migrationFile);
+        require(migration.accessProfile == cymcp::LocalAccessProfile::free && !migration.explicitProfile,
+                "Configurations without an explicit profile migrate to Free");
+        for (auto profile : {cymcp::LocalAccessProfile::free, cymcp::LocalAccessProfile::local_controlled,
+                             cymcp::LocalAccessProfile::token_only, cymcp::LocalAccessProfile::protected_access}) {
+            migration.saveProfile(profile);
+            auto reloaded = sf::AutomationOptions::load(migrationFile);
+            require(reloaded.explicitProfile && reloaded.accessProfile == profile && !reloaded.compact,
+                    "An explicit profile persists without changing unrelated configuration");
+            std::ifstream input(migrationFile);
+            require(J::parse(input).at("custom").at("preserve") == 42, "Preserve unknown configuration fields");
+        }
         sf::Session session;
         auto options = sf::AutomationOptions::load();
+        options.accessProfile = cymcp::LocalAccessProfile::protected_access;
         options.privateDirectory = directory;
         options.metrics = true;
         options.spool = true;
@@ -286,6 +305,29 @@ int main(int argc, char **argv) {
         wait();
         require(chat.state().phase == "failed" && !chat.state().error_code.empty(),
                 "Connection/generation errors must be visible");
+        chat.disconnect();
+        wait();
+        // The default Free profile must use the same chat path without granting write access.
+        sf::AutomationOptions freeOptions;
+        sf::Session freeSession;
+        sf::Automation freeAutomation(freeSession, freeOptions);
+        connection.restore = false;
+        connection.history_directory.clear();
+        connection.history_id.clear();
+        connection.provider.tools = freeAutomation.chatTools();
+        chat.open(connection);
+        wait();
+        require(chat.state().connected, chat.state().error_message.c_str());
+        chat.send("change sequence");
+        deadline = cymcp::Clock::now() + std::chrono::seconds(20);
+        while (chat.state().busy && cymcp::Clock::now() < deadline) {
+            freeAutomation.pump();
+            chat.poll();
+            Sleep(3);
+        }
+        require(!chat.state().busy && chat.state().error_code.empty(), "Free chat tool turn failed");
+        require(freeSession.project.name == "Assistant fixture edit",
+                "Free chat edits the actual sequence without allowChanges or confirmation");
         chat.disconnect();
         wait();
         Sleep(5100);

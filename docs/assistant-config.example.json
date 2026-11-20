@@ -1,4 +1,5 @@
 {
+  "access_profile": "free",
   "compact": true,
   "disk_spooling": false,
   "notifications": true,
